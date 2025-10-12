@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports: ["5432:5432"]
+    volumes:
+      - ./infra/development/db-init:/docker-entrypoint-initdb.d

@@ -1,0 +1,2 @@
+// rabbitmq contract
+package contract
