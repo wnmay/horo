@@ -1,6 +1,7 @@
 tmp
 .env
 .envrc
+shared.env
 bin/
 
 # Logs

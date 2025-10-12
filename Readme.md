@@ -11,3 +11,8 @@ Get-Content .env | ForEach-Object {
 }
 go run ./cmd/main.go
 ```
+
+## Initialize new service
+```bash
+make SERVICE=service-name
+```
