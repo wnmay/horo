@@ -34,3 +34,9 @@ from ./shared/env
 port := env.GetString("REST_PORT", "3001")
 num  := env.GetInt("SECRET_INT", 3000)
 ```
+
+## Generate pb file
+from Makefile
+```bash
+make proto PROTO_PKG=pkgname
+```
