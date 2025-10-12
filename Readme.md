@@ -18,12 +18,12 @@ go run ./cmd/main.go
 make SERVICE=service-name
 ```
 
-## Read config
+## Read env
 
-from ./shared/config
+from ./shared/env
 
 ```go
-_ = config.LoadEnv("payment-service")
+_ = env.LoadEnv("payment-service")
 ```
 
 ## Get .env
@@ -36,7 +36,9 @@ num  := env.GetInt("SECRET_INT", 3000)
 ```
 
 ## Generate pb file
+
 from Makefile
+
 ```bash
 make proto PROTO_PKG=pkgname
 ```
