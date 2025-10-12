@@ -1,7 +1,11 @@
 package grpcinfra
 
+import (
+	pb "github.com/wnmay/horo/shared/proto/user-management"
+)
+
 type GrpcClients struct {
-	UserManagementClient *UserManagementClient
+	UserManagementClient pb.UserManagementServiceClient
 	connManager          *ConnectionManager
 }
 
@@ -12,10 +16,11 @@ func NewGrpcClients(userManagementAddr string) (*GrpcClients, error) {
 	if err != nil {
 		return nil, err
 	}
+	userManagementClient := pb.NewUserManagementServiceClient(userManagementConn)
 
 	return &GrpcClients{
-		UserManagementClient:   NewUserManagementClient(userManagementConn),
-		connManager:   cm,
+		UserManagementClient: userManagementClient,
+		connManager:          cm,
 	}, nil
 }
 
