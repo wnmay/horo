@@ -1,1 +1,2 @@
-//proto file
+// proto file
+package proto
