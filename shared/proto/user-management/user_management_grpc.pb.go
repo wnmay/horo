@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserManagementService_Register_FullMethodName = "/usermanagement.UserManagementService/Register"
-	UserManagementService_Login_FullMethodName    = "/usermanagement.UserManagementService/Login"
+	UserManagementService_Register_FullMethodName  = "/usermanagement.UserManagementService/Register"
+	UserManagementService_GetClaims_FullMethodName = "/usermanagement.UserManagementService/GetClaims"
 )
 
 // UserManagementServiceClient is the client API for UserManagementService service.
@@ -28,7 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserManagementServiceClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
-	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	GetClaims(ctx context.Context, in *GetClaimsRequest, opts ...grpc.CallOption) (*GetClaimsResponse, error)
 }
 
 type userManagementServiceClient struct {
@@ -49,10 +49,10 @@ func (c *userManagementServiceClient) Register(ctx context.Context, in *Register
 	return out, nil
 }
 
-func (c *userManagementServiceClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
+func (c *userManagementServiceClient) GetClaims(ctx context.Context, in *GetClaimsRequest, opts ...grpc.CallOption) (*GetClaimsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(LoginResponse)
-	err := c.cc.Invoke(ctx, UserManagementService_Login_FullMethodName, in, out, cOpts...)
+	out := new(GetClaimsResponse)
+	err := c.cc.Invoke(ctx, UserManagementService_GetClaims_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (c *userManagementServiceClient) Login(ctx context.Context, in *LoginReques
 // for forward compatibility.
 type UserManagementServiceServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
-	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+	GetClaims(context.Context, *GetClaimsRequest) (*GetClaimsResponse, error)
 	mustEmbedUnimplementedUserManagementServiceServer()
 }
 
@@ -78,8 +78,8 @@ type UnimplementedUserManagementServiceServer struct{}
 func (UnimplementedUserManagementServiceServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
-func (UnimplementedUserManagementServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+func (UnimplementedUserManagementServiceServer) GetClaims(context.Context, *GetClaimsRequest) (*GetClaimsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetClaims not implemented")
 }
 func (UnimplementedUserManagementServiceServer) mustEmbedUnimplementedUserManagementServiceServer() {}
 func (UnimplementedUserManagementServiceServer) testEmbeddedByValue()                               {}
@@ -120,20 +120,20 @@ func _UserManagementService_Register_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UserManagementService_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(LoginRequest)
+func _UserManagementService_GetClaims_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetClaimsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserManagementServiceServer).Login(ctx, in)
+		return srv.(UserManagementServiceServer).GetClaims(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: UserManagementService_Login_FullMethodName,
+		FullMethod: UserManagementService_GetClaims_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserManagementServiceServer).Login(ctx, req.(*LoginRequest))
+		return srv.(UserManagementServiceServer).GetClaims(ctx, req.(*GetClaimsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -150,8 +150,8 @@ var UserManagementService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UserManagementService_Register_Handler,
 		},
 		{
-			MethodName: "Login",
-			Handler:    _UserManagementService_Login_Handler,
+			MethodName: "GetClaims",
+			Handler:    _UserManagementService_GetClaims_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

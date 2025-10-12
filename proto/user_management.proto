@@ -6,37 +6,25 @@ option go_package = "github.com/wnmay/horo/shared/proto/usermanagement;usermanag
 
 service UserManagementService {
   rpc Register(RegisterRequest) returns (RegisterResponse);
-  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc GetClaims(GetClaimsRequest) returns (GetClaimsResponse);
 }
 
 message RegisterRequest {
-  string email = 1;
-  string password = 2;
+  string firebase_token = 1;
   string full_name = 3;
   string role = 4;
 }
 
 message RegisterResponse {
+  bool success = 1;
+}
+
+message GetClaimsRequest {
+  string firebase_token = 1;
+}
+
+message GetClaimsResponse {
   string user_id = 1;
   string email = 2;
-  string full_name = 3;
-  string created_at = 4;
-}
-
-message LoginRequest {
-  string email = 1;
-  string password = 2;
-}
-
-message LoginResponse {
-  string access_token = 1;
-  string refresh_token = 2;
-  string expires_at = 3;
-  User user = 4;
-}
-
-message User {
-  string id = 1;
-  string email = 2;
-  string role = 4;
+  string role = 3;
 }
