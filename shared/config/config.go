@@ -12,7 +12,7 @@ import (
 func LoadEnv(serviceName string) error {
 	// Check if running in Docker
 	inDocker := os.Getenv("DOCKER_ENV") == "true" || fileExists("/.dockerenv")
-	
+
 	if inDocker {
 		return nil
 	}
@@ -34,7 +34,7 @@ func LoadEnv(serviceName string) error {
 	}
 
 	// Load service-specific .env
-	serviceEnvPath := filepath.Join(rootDir, serviceName, ".env")
+	serviceEnvPath := filepath.Join(rootDir, "services", serviceName, ".env")
 	if fileExists(serviceEnvPath) {
 		if err := godotenv.Overload(serviceEnvPath); err != nil {
 			return fmt.Errorf("failed to load service .env: %w", err)
