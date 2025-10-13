@@ -1,8 +1,20 @@
 package inbound
 
-import "github.com/wnmay/horo/services/payment-service/internal/domain"
+import (
+	"context"
 
-type PersonService interface {
-	Create(name string) (domain.Person, error)
-	GetAll() ([]domain.Person, error)
+	"github.com/wnmay/horo/services/payment-service/internal/domain"
+)
+
+type PaymentService interface {
+	CreatePaymentFromOrder(ctx context.Context, cmd CreatePaymentCommand) (*domain.Payment, error)
+	GetPayment(ctx context.Context, paymentID string) (*domain.Payment, error)
+	GetPaymentByOrderID(ctx context.Context, orderID string) (*domain.Payment, error)
+	UpdatePaymentStatus(ctx context.Context, paymentID string, status domain.PaymentStatus) error
+	CompletePayment(ctx context.Context, paymentID string) error
+}
+
+type CreatePaymentCommand struct {
+	OrderID string  `json:"order_id"`
+	Amount  float64 `json:"amount"`
 }

@@ -1,0 +1,91 @@
+package app
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/google/uuid"
+	"github.com/wnmay/horo/services/order-service/internal/domain/entity"
+	"github.com/wnmay/horo/services/order-service/internal/ports/inbound"
+	"github.com/wnmay/horo/services/order-service/internal/ports/outbound"
+)
+
+type OrderService struct {
+	orderRepo      outbound.OrderRepository
+	eventPublisher outbound.EventPublisher
+	paymentService outbound.PaymentService
+}
+
+func NewOrderService(
+	orderRepo outbound.OrderRepository,
+	eventPublisher outbound.EventPublisher,
+	paymentService outbound.PaymentService,
+) inbound.OrderService {
+	return &OrderService{
+		orderRepo:      orderRepo,
+		eventPublisher: eventPublisher,
+		paymentService: paymentService,
+	}
+}
+
+func (s *OrderService) CreateOrder(ctx context.Context, cmd inbound.CreateOrderCommand) (*entity.Order, error) {
+	// Create new order entity
+	order := entity.NewOrder(cmd.CustomerID, cmd.CourseID, cmd.Amount)
+
+	// Save order to repository
+	if err := s.orderRepo.Create(ctx, order); err != nil {
+		return nil, fmt.Errorf("failed to create order: %w", err)
+	}
+
+	// Publish order created event
+	if err := s.eventPublisher.PublishOrderCreated(ctx, order); err != nil {
+		return nil, fmt.Errorf("failed to publish order created event: %w", err)
+	}
+
+	// Create payment asynchronously (could be done via event as well)
+	if err := s.paymentService.CreatePayment(ctx, order.OrderID, order.Amount, order.CustomerID); err != nil {
+		// Log error but don't fail the order creation
+		// Payment creation will be retried via message queue
+		fmt.Printf("Failed to create payment for order %s: %v\n", order.OrderID, err)
+	}
+
+	return order, nil
+}
+
+func (s *OrderService) GetOrder(ctx context.Context, orderID uuid.UUID) (*entity.Order, error) {
+	order, err := s.orderRepo.GetByID(ctx, orderID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get order: %w", err)
+	}
+	return order, nil
+}
+
+func (s *OrderService) GetOrdersByCustomer(ctx context.Context, customerID uuid.UUID) ([]*entity.Order, error) {
+	orders, err := s.orderRepo.GetByCustomerID(ctx, customerID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get orders for customer: %w", err)
+	}
+	return orders, nil
+}
+
+func (s *OrderService) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status entity.OrderStatus) error {
+	order, err := s.orderRepo.GetByID(ctx, orderID)
+	if err != nil {
+		return fmt.Errorf("failed to get order: %w", err)
+	}
+
+	// Update order status
+	order.Status = status
+
+	// Save updated order
+	if err := s.orderRepo.Update(ctx, order); err != nil {
+		return fmt.Errorf("failed to update order: %w", err)
+	}
+
+	// Publish status change event
+	if err := s.eventPublisher.PublishOrderStatusChanged(ctx, order); err != nil {
+		return fmt.Errorf("failed to publish order status changed event: %w", err)
+	}
+
+	return nil
+}

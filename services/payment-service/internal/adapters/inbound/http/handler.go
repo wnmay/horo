@@ -5,25 +5,79 @@ import (
 	"github.com/wnmay/horo/services/payment-service/internal/ports/inbound"
 )
 
-type Handler struct{ svc inbound.PersonService }
+type Handler struct {
+	personSvc  inbound.PersonService
+	paymentSvc inbound.PaymentService
+}
 
-func NewHandler(s inbound.PersonService) *Handler { return &Handler{svc: s} }
+func NewHandler(personSvc inbound.PersonService, paymentSvc inbound.PaymentService) *Handler {
+	return &Handler{
+		personSvc:  personSvc,
+		paymentSvc: paymentSvc,
+	}
+}
 
 func (h *Handler) Register(app *fiber.App) {
+	api := app.Group("/api/v1")
+	payments := api.Group("/payments")
 
-	app.Post("/person", func(c *fiber.Ctx) error {
-		var body struct{ Name string `json:"name"` }
-		if err := c.BodyParser(&body); err != nil || body.Name == "" {
-			return fiber.NewError(fiber.StatusBadRequest, "name is required")
-		}
-		p, err := h.svc.Create(body.Name)
-		if err != nil { return fiber.NewError(fiber.StatusInternalServerError, err.Error()) }
-		return c.Status(fiber.StatusCreated).JSON(p)
-	})
+	payments.Get("/:id", h.GetPayment)
+	payments.Get("/order/:orderID", h.GetPaymentByOrder)
+	payments.Put("/:id/complete", h.CompletePayment)
+}
 
-	app.Get("/person", func(c *fiber.Ctx) error {
-		list, err := h.svc.GetAll()
-		if err != nil { return fiber.NewError(fiber.StatusInternalServerError, err.Error()) }
-		return c.JSON(list)
+func (h *Handler) GetPayment(c *fiber.Ctx) error {
+	paymentID := c.Params("id")
+	if paymentID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Payment ID is required",
+		})
+	}
+
+	payment, err := h.paymentSvc.GetPayment(c.Context(), paymentID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(payment)
+}
+
+func (h *Handler) GetPaymentByOrder(c *fiber.Ctx) error {
+	orderID := c.Params("orderID")
+	if orderID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Order ID is required",
+		})
+	}
+
+	payment, err := h.paymentSvc.GetPaymentByOrderID(c.Context(), orderID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(payment)
+}
+
+func (h *Handler) CompletePayment(c *fiber.Ctx) error {
+	paymentID := c.Params("id")
+	if paymentID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Payment ID is required",
+		})
+	}
+
+	if err := h.paymentSvc.CompletePayment(c.Context(), paymentID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Payment completed successfully",
+		"payment_id": paymentID,
 	})
 }
