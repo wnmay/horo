@@ -66,9 +66,8 @@ const ProfileForm = () => {
               required
             >
               <option value="">Select a role</option>
-              <option value="user">User</option>
-              <option value="teacher">Teacher</option>
-              <option value="student">Student</option>
+              <option value="customer">ลูกดวง</option>
+              <option value="prophet">หมอดู</option>
             </select>
           </div>
 

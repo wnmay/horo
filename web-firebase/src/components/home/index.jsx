@@ -31,7 +31,7 @@ const Home = () => {
     <div className="pt-14">
       <div className="text-2xl font-bold">
         Hello{" "}
-        {currentUser.displayName ? currentUser.displayName : currentUser.email},
+        {currentUser.email},
         you are now logged in.
       </div>
 
