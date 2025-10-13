@@ -2,9 +2,11 @@ package db
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/wnmay/horo/services/user-management-service/internal/domain"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -16,6 +18,7 @@ type MongoUserRepository struct {
 }
 
 func NewMongoUserRepository(uri, dbName, collectionName string) (*MongoUserRepository, error) {
+	log.Println("[DEBUG]", uri)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -32,11 +35,16 @@ func NewMongoUserRepository(uri, dbName, collectionName string) (*MongoUserRepos
 	}, nil
 }
 
+// in your repository layer
 func (r *MongoUserRepository) Save(ctx context.Context, user domain.User) error {
-	filter := map[string]interface{}{"id": user.ID}
-	update := map[string]interface{}{
-		"$set": user,
+	model := UserModel{
+		ID:       user.ID,
+		Email:    user.Email,
+		FullName: user.FullName,
 	}
+
+	filter := bson.M{"id": model.ID}
+	update := bson.M{"$set": model}
 	opts := options.Update().SetUpsert(true)
 
 	_, err := r.collection.UpdateOne(ctx, filter, update, opts)

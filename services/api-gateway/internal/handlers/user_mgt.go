@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"strings"
-
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	grpcinfra "github.com/wnmay/horo/services/api-gateway/internal/grpc"
@@ -15,32 +13,20 @@ type UserHandler struct {
 }
 
 type RegisterRequest struct {
+	IdToken  string `json:"idToken" validate:"required"`
 	FullName string `json:"fullName" validate:"required"`
 	Role     string `json:"role" validate:"required"`
 }
 
 func NewUserHandler(client *grpcinfra.GrpcClients) *UserHandler {
+	validate := validator.New()
 	return &UserHandler{
 		UserManagementClient: client.UserManagementClient,
+		validator:            validate,
 	}
 }
 
 func (h *UserHandler) Register(c *fiber.Ctx) error {
-	// Extract Bearer token from Authorization header
-	authHeader := c.Get("Authorization")
-	if authHeader == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "missing authorization header",
-		})
-	}
-
-	// Remove "Bearer " prefix
-	idToken := strings.TrimPrefix(authHeader, "Bearer ")
-	if idToken == authHeader {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "invalid authorization header format",
-		})
-	}
 
 	// Parse request body
 	var req RegisterRequest
@@ -61,7 +47,7 @@ func (h *UserHandler) Register(c *fiber.Ctx) error {
 	ctx := c.Context()
 
 	grpcReq := &pb.RegisterRequest{
-		FirebaseToken: idToken,
+		FirebaseToken: req.IdToken,
 		FullName:      req.FullName,
 		Role:          req.Role,
 	}
