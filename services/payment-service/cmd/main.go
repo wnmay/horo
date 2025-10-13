@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/gofiber/fiber/v2"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/wnmay/horo/services/payment-service/internal/adapters/outbound/db"
 	"github.com/wnmay/horo/shared/config"
 	"github.com/wnmay/horo/shared/env"
@@ -39,13 +41,10 @@ func main() {
 	log.Println("RabbitMQ connected successfully")
 
 	// Declare the queue for receiving order created events
-	orderCreatedQueue := "order_created_queue"
-	if err := rabbit.DeclareQueue(orderCreatedQueue, "order.created"); err != nil {
-		log.Fatal("Failed to declare order created queue:", err)
+	if err := rabbit.DeclareQueue("create_payment_queue", "order.created"); err != nil {
+		log.Fatal("Failed to declare create payment queue:", err)
 	}
-
-	// TODO: Initialize message consumer for order created events
-	// TODO: Initialize event publisher for payment completed events
+	log.Println("Payment queue declared successfully")
 
 	// Initialize HTTP server  
 	app := fiber.New()
@@ -72,6 +71,35 @@ func main() {
 		}
 	}()
 	
+	// Start listening for order created events (RabbitMQ already initialized above)
+	go func() {
+			queueName := "payment_queue"
+			routingKey := "order.created"
+			
+			// Declare queue
+			if err := rabbit.DeclareQueue(queueName, routingKey); err != nil {
+				log.Printf("Failed to declare queue: %v", err)
+				return
+			}
+			
+			log.Printf("Listening for order events on queue: %s", queueName)
+			
+			// Simple message handler for now
+			handler := func(ctx context.Context, delivery amqp.Delivery) error {
+				log.Printf("Received order event: %s", string(delivery.Body))
+				
+				// TODO: Parse the order data and create payment in database
+				// For now, just log that we received it
+				log.Println("Payment should be created here!")
+				
+				return nil
+			}
+			
+			if err := rabbit.ConsumeMessages(queueName, handler); err != nil {
+				log.Printf("Failed to start consuming messages: %v", err)
+			}
+		}()
+
 	log.Println("Payment service started successfully! Press Ctrl+C to stop.")
 	waitForSignal()
 	_ = app.Shutdown()
