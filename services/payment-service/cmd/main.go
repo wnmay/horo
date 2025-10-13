@@ -16,6 +16,7 @@ import (
 	"github.com/wnmay/horo/services/payment-service/internal/adapters/outbound/db"
 	"github.com/wnmay/horo/services/payment-service/internal/domain"
 	"github.com/wnmay/horo/shared/config"
+	"github.com/wnmay/horo/shared/contract"
 	"github.com/wnmay/horo/shared/env"
 	sharedDB "github.com/wnmay/horo/shared/db"
 	sharedMessage "github.com/wnmay/horo/shared/message"
@@ -62,10 +63,85 @@ func main() {
 		})
 	})
 
+	// API routes with versioning
+	api := app.Group("/api/v1")
+	
 	// Basic payment endpoints for testing
-	app.Get("/payments", func(c *fiber.Ctx) error {
+	api.Get("/payments", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"message": "Payments endpoint - ready for implementation",
+		})
+	})
+
+	// Payment completion endpoint
+	api.Put("/payments/:id/complete", func(c *fiber.Ctx) error {
+		paymentID := c.Params("id")
+		if paymentID == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Payment ID is required",
+			})
+		}
+
+		log.Printf("Processing payment completion for ID: %s", paymentID)
+
+		// Get the payment from database
+		payment, err := paymentRepo.GetByID(c.Context(), paymentID)
+		if err != nil {
+			log.Printf("Failed to get payment: %v", err)
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "Payment not found",
+			})
+		}
+
+		// Update payment status to completed
+		payment.Status = "COMPLETED"
+		payment.CreatedAt = time.Now() // Update timestamp
+
+		if err := paymentRepo.Update(c.Context(), payment); err != nil {
+			log.Printf("Failed to update payment: %v", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to update payment status",
+			})
+		}
+
+		log.Printf("Payment %s marked as completed", paymentID)
+
+		// Publish payment completed event to notify order service
+		go func() {
+			ctx := context.Background()
+			
+			// Create payment completion message
+			paymentCompletedData := map[string]interface{}{
+				"payment_id": payment.ID,
+				"order_id":   payment.OrderID,
+				"status":     "COMPLETED",
+				"amount":     payment.Amount,
+			}
+
+			dataBytes, err := json.Marshal(paymentCompletedData)
+			if err != nil {
+				log.Printf("Failed to marshal payment completion data: %v", err)
+				return
+			}
+
+			// Create AMQP message using proper contract structure
+			amqpMessage := contract.AmqpMessage{
+				OwnerID: payment.UserID,
+				Data:    dataBytes,
+			}
+
+			if err := rabbit.PublishMessage(ctx, "payment.completed", amqpMessage); err != nil {
+				log.Printf("Failed to publish payment completion event: %v", err)
+			} else {
+				log.Printf("Published payment completed event for order: %s", payment.OrderID)
+			}
+		}()
+
+		return c.JSON(fiber.Map{
+			"message":    "Payment completed successfully",
+			"payment_id": paymentID,
+			"order_id":   payment.OrderID,
+			"status":     "COMPLETED",
 		})
 	})
 

@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/wnmay/horo/services/order-service/internal/domain/entity"
 	"github.com/wnmay/horo/services/order-service/internal/ports/inbound"
-	"github.com/wnmay/horo/shared/contract"
 	"github.com/wnmay/horo/shared/message"
 )
 
@@ -28,9 +27,10 @@ func NewConsumer(orderService inbound.OrderService, rabbit *message.RabbitMQ) *C
 func (c *Consumer) StartListening() error {
 	// Listen to the UpdateOrderStatusQueue for payment success events
 	queueName := message.UpdateOrderStatusQueue
+	routingKey := "payment.completed" // Listen for payment completion events
 
 	// Declare the queue first before consuming
-	if err := c.rabbit.DeclareQueue(queueName, queueName); err != nil {
+	if err := c.rabbit.DeclareQueue(queueName, routingKey); err != nil {
 		return err
 	}
 
@@ -39,22 +39,39 @@ func (c *Consumer) StartListening() error {
 }
 
 func (c *Consumer) handlePaymentSuccess(ctx context.Context, delivery amqp.Delivery) error {
-	log.Printf("Received payment success event: %s", delivery.Body)
+	log.Printf("Received payment completion event: %s", delivery.Body)
 
-	var amqpMessage contract.AmqpMessage
+	// Parse the AMQP message
+	var amqpMessage struct {
+		OwnerID string `json:"ownerId"`
+		Data    []byte `json:"data"`
+	}
 	if err := json.Unmarshal(delivery.Body, &amqpMessage); err != nil {
 		log.Printf("Failed to unmarshal AMQP message: %v", err)
 		return err
 	}
 
-	var paymentData message.PaymentSuccessData
+	// Parse payment completion data
+	var paymentData struct {
+		PaymentID string  `json:"payment_id"`
+		OrderID   string  `json:"order_id"`
+		Status    string  `json:"status"`
+		Amount    float64 `json:"amount"`
+	}
+
 	if err := json.Unmarshal(amqpMessage.Data, &paymentData); err != nil {
-		log.Printf("Failed to unmarshal payment success data: %v", err)
+		log.Printf("Failed to unmarshal payment completion data: %v", err)
 		return err
 	}
 
-	log.Printf("Processing payment success event for order: %s, transaction: %s", 
-		paymentData.OrderID, paymentData.TransactionID)
+	log.Printf("Processing payment completion for order: %s, payment: %s, status: %s", 
+		paymentData.OrderID, paymentData.PaymentID, paymentData.Status)
+
+	// Only process if payment is completed
+	if paymentData.Status != "COMPLETED" {
+		log.Printf("Payment status is %s, not processing", paymentData.Status)
+		return nil
+	}
 
 	// Parse OrderID
 	orderID, err := uuid.Parse(paymentData.OrderID)
@@ -69,6 +86,6 @@ func (c *Consumer) handlePaymentSuccess(ctx context.Context, delivery amqp.Deliv
 		return err
 	}
 
-	log.Printf("Successfully updated order %s status to CONFIRMED", paymentData.OrderID)
+	log.Printf("Successfully updated order %s status to CONFIRMED after payment completion", paymentData.OrderID)
 	return nil
 }
