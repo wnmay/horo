@@ -30,7 +30,7 @@ func NewOrderService(
 
 func (s *OrderService) CreateOrder(ctx context.Context, cmd inbound.CreateOrderCommand) (*entity.Order, error) {
 	// Create new order entity
-	order := entity.NewOrder(cmd.CustomerID, cmd.CourseID, cmd.Amount)
+	order := entity.NewOrder(cmd.CustomerID, cmd.CourseID)
 
 	// Save order to repository
 	if err := s.orderRepo.Create(ctx, order); err != nil {
@@ -43,7 +43,8 @@ func (s *OrderService) CreateOrder(ctx context.Context, cmd inbound.CreateOrderC
 	}
 
 	// Create payment asynchronously (could be done via event as well)
-	if err := s.paymentService.CreatePayment(ctx, order.OrderID, order.Amount, order.CustomerID); err != nil {
+	// Note: Payment amount will be determined by the payment service based on course pricing
+	if err := s.paymentService.CreatePayment(ctx, order.OrderID, 0.0); err != nil {
 		// Log error but don't fail the order creation
 		// Payment creation will be retried via message queue
 		fmt.Printf("Failed to create payment for order %s: %v\n", order.OrderID, err)

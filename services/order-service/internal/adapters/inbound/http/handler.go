@@ -28,9 +28,8 @@ func (h *Handler) Register(app *fiber.App) {
 }
 
 type CreateOrderRequest struct {
-	CustomerID string  `json:"customer_id" validate:"required"`
-	CourseID   string  `json:"course_id" validate:"required"`
-	Amount     float64 `json:"amount" validate:"required,gt=0"`
+	CustomerID string `json:"customer_id" validate:"required"`
+	CourseID   string `json:"course_id" validate:"required"`
 }
 
 type UpdateOrderStatusRequest struct {
@@ -64,7 +63,6 @@ func (h *Handler) CreateOrder(c *fiber.Ctx) error {
 	cmd := inbound.CreateOrderCommand{
 		CustomerID: customerID,
 		CourseID:   courseID,
-		Amount:     req.Amount,
 	}
 
 	// Call service

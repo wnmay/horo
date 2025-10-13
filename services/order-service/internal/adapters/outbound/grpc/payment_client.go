@@ -18,10 +18,10 @@ func NewPaymentClient() outbound.PaymentService {
 	return &PaymentClient{}
 }
 
-func (p *PaymentClient) CreatePayment(ctx context.Context, orderID uuid.UUID, amount float64, customerID uuid.UUID) error {
+func (p *PaymentClient) CreatePayment(ctx context.Context, orderID uuid.UUID, amount float64) error {
 	// TODO: Implement actual gRPC call to payment service
 	// For now, just log the action
-	fmt.Printf("Creating payment for order: %s, amount: %.2f, customer: %s\n", orderID, amount, customerID)
+	fmt.Printf("Creating payment for order: %s, amount: %.2f\n", orderID, amount)
 	
 	// Simulate success
 	return nil

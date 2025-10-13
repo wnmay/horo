@@ -20,7 +20,6 @@ type Order struct {
 	CourseID    uuid.UUID   `gorm:"type:uuid;not null"`
 	PaymentID   uuid.UUID   `gorm:"type:uuid"` 
 	Status      OrderStatus `gorm:"type:varchar(20);not null"`
-	Amount      float64     `gorm:"type:decimal(10,2);not null"`
 	OrderDate   time.Time   `gorm:"not null"`
 }
 

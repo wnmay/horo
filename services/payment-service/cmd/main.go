@@ -112,7 +112,7 @@ func main() {
 			
 			// Create payment completion message
 			paymentCompletedData := map[string]interface{}{
-				"payment_id": payment.ID,
+				"payment_id": payment.PaymentID,
 				"order_id":   payment.OrderID,
 				"status":     "COMPLETED",
 				"amount":     payment.Amount,
@@ -126,7 +126,7 @@ func main() {
 
 			// Create AMQP message using proper contract structure
 			amqpMessage := contract.AmqpMessage{
-				OwnerID: payment.UserID,
+				OwnerID: payment.OrderID,
 				Data:    dataBytes,
 			}
 
@@ -202,17 +202,19 @@ func main() {
 					return err
 				}
 				
-				log.Printf("Creating payment for order: %s, amount: %.2f", orderData.OrderID, orderData.Amount)
+				// Default payment amount (in real scenario, this would be fetched based on course pricing)
+				defaultAmount := 149.99
+				
+				log.Printf("Creating payment for order: %s, amount: %.2f", orderData.OrderID, defaultAmount)
 				
 				// Create payment using our domain entity
 				payment := &domain.Payment{
-					ID:       uuid.New().String(),
-					OrderID:  orderData.OrderID,
-					UserID:   orderData.CustomerID,
-					Amount:   orderData.Amount,
-					Currency: "USD",
-					Status:   "pending",
+					PaymentID: uuid.New().String(),
+					OrderID:   orderData.OrderID,
+					Amount:    defaultAmount,
+					Status:    "pending",
 					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
 				}
 				
 				// Save payment to database
@@ -221,7 +223,7 @@ func main() {
 					return err
 				}
 				
-				log.Printf("Payment created successfully: %s for order: %s", payment.ID, orderData.OrderID)
+				log.Printf("Payment created successfully: %s for order: %s", payment.PaymentID, orderData.OrderID)
 				return nil
 			}
 			

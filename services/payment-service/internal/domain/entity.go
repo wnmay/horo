@@ -15,34 +15,33 @@ const (
 )
 
 type Payment struct {
-	ID       string        `json:"id"`
-	OrderID  string        `json:"order_id"`
-	UserID   string        `json:"user_id"`
-	Amount   float64       `json:"amount"`
-	Currency string        `json:"currency"`
-	Status   string        `json:"status"`
-	CreatedAt time.Time    `json:"created_at"`
+	PaymentID string    `json:"payment_id"`
+	OrderID   string    `json:"order_id"`
+	Amount    float64   `json:"amount"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func NewPayment(orderID, userID string, amount float64, currency string) *Payment {
+func NewPayment(orderID string, amount float64) *Payment {
+	now := time.Now()
 	return &Payment{
-		ID:       uuid.New().String(),
-		OrderID:  orderID,
-		UserID:   userID,
-		Amount:   amount,
-		Currency: currency,
+		PaymentID: uuid.New().String(),
+		OrderID:   orderID,
+		Amount:    amount,
 		Status:    string(PaymentStatusPending),
-		CreatedAt: time.Now(),
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 }
 
 func (p *Payment) Complete() {
 	p.Status = string(PaymentStatusCompleted)
-	p.CreatedAt = time.Now()
+	p.UpdatedAt = time.Now()
 }
 
 func (p *Payment) Fail() {
 	p.Status = string(PaymentStatusFailed)
-	p.CreatedAt = time.Now()
+	p.UpdatedAt = time.Now()
 }
 

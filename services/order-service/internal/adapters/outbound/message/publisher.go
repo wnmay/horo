@@ -26,7 +26,6 @@ func (p *Publisher) PublishOrderCreated(ctx context.Context, order *entity.Order
 	orderData := message.OrderData{
 		OrderID:    order.OrderID.String(),
 		CustomerID: order.CustomerID.String(),
-		Amount:     order.Amount,
 		Status:     string(order.Status),
 	}
 

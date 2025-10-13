@@ -75,6 +75,9 @@ func (r *Repository) Delete(ctx context.Context, orderID uuid.UUID) error {
 
 // AutoMigrate runs database migrations for the Order table
 func (r *Repository) AutoMigrate() error {
+	// Drop existing table to handle schema changes
+	_ = r.db.Migrator().DropTable(&Order{})
+	
 	return r.db.AutoMigrate(&Order{})
 }
 
@@ -85,7 +88,6 @@ func toOrderModel(order *entity.Order) *Order {
 		CustomerID: order.CustomerID,
 		CourseID:   order.CourseID,
 		Status:     OrderStatus(order.Status),
-		Amount:     order.Amount,
 		OrderDate:  order.OrderDate,
 	}
 	
@@ -102,7 +104,6 @@ func toOrderEntity(model *Order) *entity.Order {
 		CustomerID: model.CustomerID,
 		CourseID:   model.CourseID,
 		Status:     entity.OrderStatus(model.Status),
-		Amount:     model.Amount,
 		OrderDate:  model.OrderDate,
 	}
 	

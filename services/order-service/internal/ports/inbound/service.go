@@ -19,5 +19,4 @@ type OrderService interface {
 type CreateOrderCommand struct {
 	CustomerID uuid.UUID `json:"customer_id" validate:"required"`
 	CourseID   uuid.UUID `json:"course_id" validate:"required"`
-	Amount     float64   `json:"amount" validate:"required,gt=0"`
 }

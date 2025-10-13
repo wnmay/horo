@@ -11,10 +11,9 @@ const (
 // ---- DATA STRUCTURES ----
 
 type OrderData struct {
-	OrderID    string  `json:"order_id"`
-	CustomerID string  `json:"customer_id"`
-	Amount     float64 `json:"amount"`
-	Status     string  `json:"status"`
+	OrderID    string `json:"order_id"`
+	CustomerID string `json:"customer_id"`
+	Status     string `json:"status"`
 }
 
 type PaymentSuccessData struct {

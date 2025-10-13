@@ -23,5 +23,5 @@ type EventPublisher interface {
 
 // PaymentService defines the interface for payment operations
 type PaymentService interface {
-	CreatePayment(ctx context.Context, orderID uuid.UUID, amount float64, customerID uuid.UUID) error
+	CreatePayment(ctx context.Context, orderID uuid.UUID, amount float64) error
 }

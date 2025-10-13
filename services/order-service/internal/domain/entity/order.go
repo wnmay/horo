@@ -20,17 +20,15 @@ type Order struct {
 	CourseID   uuid.UUID   `json:"course_id"`
 	PaymentID  *uuid.UUID  `json:"payment_id,omitempty"`
 	Status     OrderStatus `json:"status"`
-	Amount     float64     `json:"amount"`
 	OrderDate  time.Time   `json:"order_date"`
 }
 
-func NewOrder(customerID, courseID uuid.UUID, amount float64) *Order {
+func NewOrder(customerID, courseID uuid.UUID) *Order {
 	return &Order{
 		OrderID:    uuid.New(),
 		CustomerID: customerID,
 		CourseID:   courseID,
 		Status:     StatusPending,
-		Amount:     amount,
 		OrderDate:  time.Now(),
 	}
 }
