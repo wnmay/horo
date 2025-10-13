@@ -11,7 +11,7 @@ import (
 )
 
 func InitFirebase(ctx context.Context, cfg *config.Config) *auth.Client {
-	var firebaseKeyfile = cfg.FirebaseServiceAccountKeyFile
+	var firebaseKeyfile = cfg.FirebaseAccountKeyFile
 	opt := option.WithCredentialsFile(firebaseKeyfile)
 	app, err := firebase.NewApp(ctx, nil, opt)
 	if err != nil {
