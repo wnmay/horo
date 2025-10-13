@@ -11,13 +11,12 @@ import (
 	httpadapter "github.com/wnmay/horo/services/order-service/internal/adapters/inbound/http"
 	dbout "github.com/wnmay/horo/services/order-service/internal/adapters/outbound/db"
 	"github.com/wnmay/horo/services/order-service/internal/app"
-	"github.com/wnmay/horo/shared/config"
 	"github.com/wnmay/horo/shared/db"
 	"github.com/wnmay/horo/shared/env"
 )
 
 func main() {
-	_ = config.LoadEnv("order-service")
+	_ = env.LoadEnv("order-service")
 	port := env.GetString("REST_PORT", "3002")
 
 	dbName := env.GetString("DB_NAME", "orderdb")
