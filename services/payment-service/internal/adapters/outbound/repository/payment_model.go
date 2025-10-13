@@ -2,8 +2,6 @@ package repository
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type PaymentStatus string

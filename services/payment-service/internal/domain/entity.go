@@ -6,11 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type Person struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-}
-
 type PaymentStatus string
 
 const (
@@ -20,30 +15,34 @@ const (
 )
 
 type Payment struct {
-	PaymentID     string        `json:"payment_id"`
-	OrderID       string        `json:"order_id"`
-	Amount        float64       `json:"amount"`
-	PaymentStatus PaymentStatus `json:"payment_status"`
-	PaymentDate   time.Time     `json:"payment_date"`
+	ID       string        `json:"id"`
+	OrderID  string        `json:"order_id"`
+	UserID   string        `json:"user_id"`
+	Amount   float64       `json:"amount"`
+	Currency string        `json:"currency"`
+	Status   string        `json:"status"`
+	CreatedAt time.Time    `json:"created_at"`
 }
 
-func NewPayment(orderID string, amount float64) *Payment {
+func NewPayment(orderID, userID string, amount float64, currency string) *Payment {
 	return &Payment{
-		PaymentID:     uuid.New().String(),
-		OrderID:       orderID,
-		Amount:        amount,
-		PaymentStatus: PaymentStatusPending,
-		PaymentDate:   time.Now(),
+		ID:       uuid.New().String(),
+		OrderID:  orderID,
+		UserID:   userID,
+		Amount:   amount,
+		Currency: currency,
+		Status:    string(PaymentStatusPending),
+		CreatedAt: time.Now(),
 	}
 }
 
 func (p *Payment) Complete() {
-	p.PaymentStatus = PaymentStatusCompleted
-	p.PaymentDate = time.Now()
+	p.Status = string(PaymentStatusCompleted)
+	p.CreatedAt = time.Now()
 }
 
 func (p *Payment) Fail() {
-	p.PaymentStatus = PaymentStatusFailed
-	p.PaymentDate = time.Now()
+	p.Status = string(PaymentStatusFailed)
+	p.CreatedAt = time.Now()
 }
 

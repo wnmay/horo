@@ -6,7 +6,6 @@ import (
 
 	"gorm.io/gorm"
 	"github.com/wnmay/horo/services/payment-service/internal/domain"
-	"github.com/wnmay/horo/services/payment-service/internal/ports/outbound"
 )
 
 // Repository implements the PaymentRepository interface

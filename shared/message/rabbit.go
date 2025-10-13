@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"log"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/wnmay/horo/shared/contract"
+	"github.com/wnmay/horo/shared/retry"
+	"github.com/wnmay/horo/shared/tracing"
 )
 
 const (
@@ -35,13 +38,45 @@ func NewRabbitMQ(uri string) (*RabbitMQ, error) {
 		Channel: ch,
 	}
 
-	if err := rmq.setupExchangesAndQueues(); err != nil {
-		// Clean up if setup fails
+	// Setup exchanges
+	if err := rmq.setupExchanges(); err != nil {
 		rmq.Close()
-		return nil, fmt.Errorf("failed to setup exchanges and queues: %v", err)
+		return nil, fmt.Errorf("failed to setup exchanges: %v", err)
 	}
 
 	return rmq, nil
+}
+
+func (r *RabbitMQ) setupExchanges() error {
+	// Declare main exchange
+	err := r.Channel.ExchangeDeclare(
+		AppExchange,
+		"topic",
+		true,  // durable
+		false, // auto-deleted
+		false, // internal
+		false, // no-wait
+		nil,   // arguments
+	)
+	if err != nil {
+		return fmt.Errorf("failed to declare app exchange: %v", err)
+	}
+
+	// Declare dead letter exchange
+	err = r.Channel.ExchangeDeclare(
+		DeadLetterExchange,
+		"topic",
+		true,  // durable
+		false, // auto-deleted
+		false, // internal
+		false, // no-wait
+		nil,   // arguments
+	)
+	if err != nil {
+		return fmt.Errorf("failed to declare DLX: %v", err)
+	}
+
+	return nil
 }
 
 type MessageHandler func(context.Context, amqp.Delivery) error
@@ -116,7 +151,7 @@ func (r *RabbitMQ) ConsumeMessages(queueName string, handler MessageHandler) err
 	return nil
 }
 
-func (r *RabbitMQ) PublishMessage(ctx context.Context, routingKey string, message contracts.AmqpMessage) error {
+func (r *RabbitMQ) PublishMessage(ctx context.Context, routingKey string, message contract.AmqpMessage) error {
 	log.Printf("Publishing message with routing key: %s", routingKey)
 
 	jsonMsg, err := json.Marshal(message)
@@ -130,7 +165,7 @@ func (r *RabbitMQ) PublishMessage(ctx context.Context, routingKey string, messag
 		Body:         jsonMsg,
 	}
 
-	return tracing.TracedPublisher(ctx, TripExchange, routingKey, msg, r.publish)
+	return tracing.TracedPublisher(ctx, AppExchange, routingKey, msg, r.publish)
 }
 
 func (r *RabbitMQ) publish(ctx context.Context, exchange, routingKey string, msg amqp.Publishing) error {
@@ -240,6 +275,40 @@ func (r *RabbitMQ) declareAndBindQueue(queueName string, messageTypes []string, 
 		}
 	}
 
+	return nil
+}
+
+// DeclareQueue declares a queue with dead letter exchange configuration
+func (r *RabbitMQ) DeclareQueue(queueName, routingKey string) error {
+	// Add dead letter configuration
+	args := amqp.Table{
+		"x-dead-letter-exchange": DeadLetterExchange,
+	}
+
+	_, err := r.Channel.QueueDeclare(
+		queueName, // name
+		true,      // durable
+		false,     // delete when unused
+		false,     // exclusive
+		false,     // no-wait
+		args,      // arguments with DLX config
+	)
+	if err != nil {
+		return fmt.Errorf("failed to declare queue %s: %v", queueName, err)
+	}
+
+	// Bind queue to exchange with routing key
+	if err := r.Channel.QueueBind(
+		queueName,   // queue name
+		routingKey,  // routing key
+		AppExchange, // exchange
+		false,
+		nil,
+	); err != nil {
+		return fmt.Errorf("failed to bind queue %s: %v", queueName, err)
+	}
+
+	log.Printf("Queue %s declared and bound successfully", queueName)
 	return nil
 }
 

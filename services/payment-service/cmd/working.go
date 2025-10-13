@@ -11,12 +11,11 @@ import (
 	"github.com/wnmay/horo/shared/config"
 	"github.com/wnmay/horo/shared/env"
 	sharedDB "github.com/wnmay/horo/shared/db"
-	sharedMessage "github.com/wnmay/horo/shared/message"
 )
 
 func main() {
 	_ = config.LoadEnv("payment-service")
-	port := env.GetString("REST_PORT", "3001")
+	port := env.GetString("REST_PORT", "3002")
 
 	log.Println("Starting payment service...")
 
@@ -27,25 +26,6 @@ func main() {
 	// Initialize payment repository (this will auto-migrate the table)
 	paymentRepo := db.NewGormPaymentRepository(gormDB)
 	log.Printf("Payment table migrated successfully, repository: %v", paymentRepo != nil)
-
-	// Initialize RabbitMQ
-	rabbitURL := env.GetString("RABBIT_URL", "amqp://guest:guest@localhost:5672/")
-	log.Printf("Connecting to RabbitMQ: %s", rabbitURL)
-	rabbit, err := sharedMessage.NewRabbitMQ(rabbitURL)
-	if err != nil {
-		log.Fatal("Failed to initialize RabbitMQ:", err)
-	}
-	defer rabbit.Close()
-	log.Println("RabbitMQ connected successfully")
-
-	// Declare the queue for receiving order created events
-	orderCreatedQueue := "order_created_queue"
-	if err := rabbit.DeclareQueue(orderCreatedQueue, "order.created"); err != nil {
-		log.Fatal("Failed to declare order created queue:", err)
-	}
-
-	// TODO: Initialize message consumer for order created events
-	// TODO: Initialize event publisher for payment completed events
 
 	// Initialize HTTP server  
 	app := fiber.New()

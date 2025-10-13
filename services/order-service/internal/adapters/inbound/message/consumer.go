@@ -29,6 +29,11 @@ func (c *Consumer) StartListening() error {
 	// Listen to the UpdateOrderStatusQueue for payment success events
 	queueName := message.UpdateOrderStatusQueue
 
+	// Declare the queue first before consuming
+	if err := c.rabbit.DeclareQueue(queueName, queueName); err != nil {
+		return err
+	}
+
 	// Start consuming messages
 	return c.rabbit.ConsumeMessages(queueName, c.handlePaymentSuccess)
 }

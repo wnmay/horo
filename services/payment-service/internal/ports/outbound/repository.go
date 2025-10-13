@@ -6,11 +6,6 @@ import (
 	"github.com/wnmay/horo/services/payment-service/internal/domain"
 )
 
-type PersonRepository interface {
-	Save(p domain.Person) error
-	GetAll() ([]domain.Person, error)
-}
-
 type PaymentRepository interface {
 	Create(ctx context.Context, payment *domain.Payment) error
 	GetByID(ctx context.Context, paymentID string) (*domain.Payment, error)

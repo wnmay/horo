@@ -1,4 +1,4 @@
-package postgres
+package repository
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"github.com/wnmay/horo/services/order-service/internal/domain/entity"
-	"github.com/wnmay/horo/services/order-service/internal/ports/outbound"
 )
 
 // Repository implements the OrderRepository interface

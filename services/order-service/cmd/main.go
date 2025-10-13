@@ -14,7 +14,7 @@ import (
 	inboundMessage "github.com/wnmay/horo/services/order-service/internal/adapters/inbound/message"
 	"github.com/wnmay/horo/services/order-service/internal/adapters/outbound/grpc"
 	"github.com/wnmay/horo/services/order-service/internal/adapters/outbound/message"
-	"github.com/wnmay/horo/services/order-service/internal/adapters/outbound/repository/postgres"
+	"github.com/wnmay/horo/services/order-service/internal/adapters/outbound/repository"
 	"github.com/wnmay/horo/services/order-service/internal/app"
 	"github.com/wnmay/horo/services/order-service/internal/ports/outbound"
 	"github.com/wnmay/horo/shared/config"
@@ -29,13 +29,13 @@ func main() {
 		log.Fatal("Failed to load env:", err)
 	}
 	
-	port := env.GetString("REST_PORT", "3001")
+	port := env.GetString("REST_PORT", "3002")
 
 	// Initialize database
 	gormDB := db.MustOpen()
 	
 	// Initialize repository
-	repo := postgres.NewRepository(gormDB)
+	repo := repository.NewRepository(gormDB)
 	
 	// Run migrations
 	if err := repo.AutoMigrate(); err != nil {
@@ -47,6 +47,7 @@ func main() {
 
 	// Initialize message broker (RabbitMQ)
 	rabbitURL := env.GetString("RABBIT_URL", "amqp://guest:guest@localhost:5672/")
+	log.Printf("Using RabbitMQ URL: %s", rabbitURL)
 	rabbit, err := sharedMessage.NewRabbitMQ(rabbitURL)
 	if err != nil {
 		log.Fatal("Failed to initialize RabbitMQ:", err)

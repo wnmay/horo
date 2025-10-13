@@ -82,10 +82,5 @@ func (s *OrderService) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID,
 		return fmt.Errorf("failed to update order: %w", err)
 	}
 
-	// Publish status change event
-	if err := s.eventPublisher.PublishOrderStatusChanged(ctx, order); err != nil {
-		return fmt.Errorf("failed to publish order status changed event: %w", err)
-	}
-
 	return nil
 }

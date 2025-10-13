@@ -6,13 +6,11 @@ import (
 )
 
 type Handler struct {
-	personSvc  inbound.PersonService
 	paymentSvc inbound.PaymentService
 }
 
-func NewHandler(personSvc inbound.PersonService, paymentSvc inbound.PaymentService) *Handler {
+func NewHandler(paymentSvc inbound.PaymentService) *Handler {
 	return &Handler{
-		personSvc:  personSvc,
 		paymentSvc: paymentSvc,
 	}
 }
