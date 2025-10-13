@@ -10,12 +10,12 @@ import (
 )
 
 type AuthMiddleware struct {
-	authGrpcClient pb.UserManagementServiceClient
+	authGrpcClient pb.AuthServiceClient
 }
 
 func NewAuthMiddleware(clients *grpcinfra.GrpcClients) *AuthMiddleware {
 	return &AuthMiddleware{
-		authGrpcClient: clients.UserManagementClient,
+		authGrpcClient: clients.AuthServiceClient,
 	}
 }
 
