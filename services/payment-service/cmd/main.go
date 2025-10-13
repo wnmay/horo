@@ -2,14 +2,19 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/wnmay/horo/services/payment-service/internal/adapters/outbound/db"
+	"github.com/wnmay/horo/services/payment-service/internal/domain"
 	"github.com/wnmay/horo/shared/config"
 	"github.com/wnmay/horo/shared/env"
 	sharedDB "github.com/wnmay/horo/shared/db"
@@ -84,14 +89,63 @@ func main() {
 			
 			log.Printf("Listening for order events on queue: %s", queueName)
 			
-			// Simple message handler for now
+			// Payment creation handler
 			handler := func(ctx context.Context, delivery amqp.Delivery) error {
 				log.Printf("Received order event: %s", string(delivery.Body))
 				
-				// TODO: Parse the order data and create payment in database
-				// For now, just log that we received it
-				log.Println("Payment should be created here!")
+				// Parse the AMQP message
+				var amqpMessage struct {
+					OwnerID string `json:"ownerId"`
+					Data    string `json:"data"` // Base64 encoded JSON
+				}
 				
+				if err := json.Unmarshal(delivery.Body, &amqpMessage); err != nil {
+					log.Printf("Failed to unmarshal AMQP message: %v", err)
+					return err
+				}
+				
+				// Decode base64 data
+				decodedData, err := base64.StdEncoding.DecodeString(amqpMessage.Data)
+				if err != nil {
+					log.Printf("Failed to decode base64 data: %v", err)
+					return err
+				}
+				
+				log.Printf("Decoded order data: %s", string(decodedData))
+				
+				// Parse the order data
+				var orderData struct {
+					OrderID    string  `json:"order_id"`
+					CustomerID string  `json:"customer_id"`
+					Amount     float64 `json:"amount"`
+					Status     string  `json:"status"`
+				}
+				
+				if err := json.Unmarshal(decodedData, &orderData); err != nil {
+					log.Printf("Failed to unmarshal order data: %v", err)
+					return err
+				}
+				
+				log.Printf("Creating payment for order: %s, amount: %.2f", orderData.OrderID, orderData.Amount)
+				
+				// Create payment using our domain entity
+				payment := &domain.Payment{
+					ID:       uuid.New().String(),
+					OrderID:  orderData.OrderID,
+					UserID:   orderData.CustomerID,
+					Amount:   orderData.Amount,
+					Currency: "USD",
+					Status:   "pending",
+					CreatedAt: time.Now(),
+				}
+				
+				// Save payment to database
+				if err := paymentRepo.Create(ctx, payment); err != nil {
+					log.Printf("Failed to create payment: %v", err)
+					return err
+				}
+				
+				log.Printf("Payment created successfully: %s for order: %s", payment.ID, orderData.OrderID)
 				return nil
 			}
 			
