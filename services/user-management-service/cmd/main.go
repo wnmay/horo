@@ -39,11 +39,6 @@ func main() {
 	userServer := grpcadapter.NewUserManagementServer(userApp)
 	authServer := grpcadapter.NewAuthServer(authApp)
 
-	// --- Start gRPC Server ---
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GRPCPort))
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
 
 	grpcServer := grpc.NewServer()
 
@@ -53,7 +48,7 @@ func main() {
 
 	// Start listening
 	address := fmt.Sprintf(":%s", cfg.GRPCPort)
-	lis, err = net.Listen("tcp", address)
+	lis, err := net.Listen("tcp", address)
 	if err != nil {
 		log.Fatalf("failed to listen on port %s: %v", cfg.GRPCPort, err)
 	}

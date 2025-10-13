@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	grpcinfra "github.com/wnmay/horo/services/api-gateway/internal/grpc"
 	"github.com/wnmay/horo/services/api-gateway/internal/handlers"
+	"github.com/wnmay/horo/services/api-gateway/internal/middleware"
 )
 
 type Router struct {
@@ -30,6 +31,7 @@ func (r *Router) SetupRoutes() {
 
 	// Setup all service routes
 	r.setupUserRoutes(api)
+	r.setupTestRouter(api)
 }
 
 func (r *Router) setupUserRoutes(api fiber.Router) {
@@ -37,4 +39,21 @@ func (r *Router) setupUserRoutes(api fiber.Router) {
 
 	users := api.Group("/users")
 	users.Post("/register", userHandler.Register)
+}
+
+func (r *Router) setupTestRouter(api fiber.Router) {
+	authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
+	api.Post("/test-auth", authMiddleware.AddClaims, func(c *fiber.Ctx) error {
+		var body map[string]interface{}
+		if err := c.BodyParser(&body); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "failed to parse body",
+			})
+		}
+		return c.JSON(fiber.Map{
+			"message": "middleware worked!",
+			"body":    body,
+		})
+	})
+
 }

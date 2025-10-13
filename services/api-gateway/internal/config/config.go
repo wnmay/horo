@@ -10,6 +10,6 @@ type Config struct {
 func LoadConfig() *Config {
 	return &Config{
 		Port:               env.GetString("PORT", "3000"),
-		UserManagementAddr: env.GetString("USER_MANAGEMENT_ADDR", "50051"),
+		UserManagementAddr: env.GetString("USER_MANAGEMENT_ADDR", "localhost:50051"),
 	}
 }
