@@ -6,8 +6,8 @@ import (
 	"log"
 	"net"
 
+	firebase "github.com/wnmay/horo/services/user-management-service/internal/adapters/auth"
 	"github.com/wnmay/horo/services/user-management-service/internal/adapters/db"
-	"github.com/wnmay/horo/services/user-management-service/internal/adapters/firebase"
 	grpcadapter "github.com/wnmay/horo/services/user-management-service/internal/adapters/grpc"
 	"github.com/wnmay/horo/services/user-management-service/internal/app"
 	"github.com/wnmay/horo/services/user-management-service/internal/config"
@@ -24,21 +24,24 @@ func main() {
 	_ = env.LoadEnv(service_name)
 	cfg := config.LoadConfig()
 
+	// Init db adapter
 	userRepo, err := db.NewMongoUserRepository(cfg.MongoURI, cfg.MongoDBName, cfg.UserCollectionName)
 	if err != nil {
 		log.Fatalf("failed to connect: %v", err)
 	}
 
+	// Init firebase and adapter
 	ctx := context.Background()
 	firebaseClient := firebase.InitFirebase(ctx, cfg.FirebaseAccountKeyFile)
-	firebaseAdapter := firebase.NewAuthAdapter(firebaseClient)
+	firebaseAdapter := firebase.NewFirebaseAuthAdapter(firebaseClient)
 
+	// Init core service
 	userApp := app.NewUserManagementService(firebaseAdapter, userRepo)
 	authApp := app.NewAuthService(firebaseAdapter)
 
+	// Create grpc server
 	userServer := grpcadapter.NewUserManagementServer(userApp)
 	authServer := grpcadapter.NewAuthServer(authApp)
-
 
 	grpcServer := grpc.NewServer()
 

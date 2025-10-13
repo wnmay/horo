@@ -7,15 +7,15 @@ import (
 	"github.com/wnmay/horo/services/user-management-service/internal/ports"
 )
 
-type AuthAdapter struct {
+type FirebaseAuthAdapter struct {
 	client *auth.Client
 }
 
-func NewAuthAdapter(client *auth.Client) *AuthAdapter {
-	return &AuthAdapter{client: client}
+func NewFirebaseAuthAdapter(client *auth.Client) * FirebaseAuthAdapter {
+	return & FirebaseAuthAdapter{client: client}
 }
 
-func (f *AuthAdapter) VerifyIDToken(ctx context.Context, token string) (*ports.Claims, error) {
+func (f *FirebaseAuthAdapter) VerifyIDToken(ctx context.Context, token string) (*ports.Claims, error) {
 	t, err := f.client.VerifyIDToken(ctx, token)
 	if err != nil {
 		return nil, err
@@ -36,4 +36,8 @@ func (f *AuthAdapter) VerifyIDToken(ctx context.Context, token string) (*ports.C
 	}
 
 	return claims, nil
+}
+
+func (f *FirebaseAuthAdapter) SetCustomUserClaims(ctx context.Context, uid string, customClaims map[string]interface{}) (error){
+	return f.client.SetCustomUserClaims(ctx, uid, customClaims)
 }
