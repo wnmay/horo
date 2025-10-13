@@ -245,9 +245,10 @@ const file_user_management_proto_rawDesc = "" +
 	"\x11GetClaimsResponse\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x12\n" +
-	"\x04role\x18\x03 \x01(\tR\x04role2\xb8\x01\n" +
+	"\x04role\x18\x03 \x01(\tR\x04role2f\n" +
 	"\x15UserManagementService\x12M\n" +
-	"\bRegister\x12\x1f.usermanagement.RegisterRequest\x1a .usermanagement.RegisterResponse\x12P\n" +
+	"\bRegister\x12\x1f.usermanagement.RegisterRequest\x1a .usermanagement.RegisterResponse2_\n" +
+	"\vAuthService\x12P\n" +
 	"\tGetClaims\x12 .usermanagement.GetClaimsRequest\x1a!.usermanagement.GetClaimsResponseBBZ@github.com/wnmay/horo/shared/proto/usermanagement;usermanagementb\x06proto3"
 
 var (
@@ -271,9 +272,9 @@ var file_user_management_proto_goTypes = []any{
 }
 var file_user_management_proto_depIdxs = []int32{
 	0, // 0: usermanagement.UserManagementService.Register:input_type -> usermanagement.RegisterRequest
-	2, // 1: usermanagement.UserManagementService.GetClaims:input_type -> usermanagement.GetClaimsRequest
+	2, // 1: usermanagement.AuthService.GetClaims:input_type -> usermanagement.GetClaimsRequest
 	1, // 2: usermanagement.UserManagementService.Register:output_type -> usermanagement.RegisterResponse
-	3, // 3: usermanagement.UserManagementService.GetClaims:output_type -> usermanagement.GetClaimsResponse
+	3, // 3: usermanagement.AuthService.GetClaims:output_type -> usermanagement.GetClaimsResponse
 	2, // [2:4] is the sub-list for method output_type
 	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -294,7 +295,7 @@ func file_user_management_proto_init() {
 			NumEnums:      0,
 			NumMessages:   4,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
 		GoTypes:           file_user_management_proto_goTypes,
 		DependencyIndexes: file_user_management_proto_depIdxs,

@@ -6,6 +6,9 @@ option go_package = "github.com/wnmay/horo/shared/proto/usermanagement;usermanag
 
 service UserManagementService {
   rpc Register(RegisterRequest) returns (RegisterResponse);
+}
+
+service AuthService {
   rpc GetClaims(GetClaimsRequest) returns (GetClaimsResponse);
 }
 

@@ -15,7 +15,6 @@ type MongoUserRepository struct {
 	collection *mongo.Collection
 }
 
-// NewMongoUserRepository connects to MongoDB and returns a repo instance.
 func NewMongoUserRepository(uri, dbName, collectionName string) (*MongoUserRepository, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -33,12 +32,7 @@ func NewMongoUserRepository(uri, dbName, collectionName string) (*MongoUserRepos
 	}, nil
 }
 
-// Save inserts or updates a user document
-func (r *MongoUserRepository) Save(user domain.User) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	// If the document already exists, replace it; otherwise, insert it.
+func (r *MongoUserRepository) Save(ctx context.Context, user domain.User) error {
 	filter := map[string]interface{}{"id": user.ID}
 	update := map[string]interface{}{
 		"$set": user,

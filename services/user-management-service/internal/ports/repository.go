@@ -1,7 +1,11 @@
 package ports
 
-import "github.com/wnmay/horo/services/user-management-service/internal/domain"
+import (
+	"context"
 
-type UserRepository interface {
-	Save(user domain.User) error
+	"github.com/wnmay/horo/services/user-management-service/internal/domain"
+)
+
+type UserRepositoryPort interface {
+	Save(ctx context.Context, user domain.User) error
 }

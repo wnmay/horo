@@ -7,6 +7,7 @@ import (
 	"net"
 
 	"github.com/wnmay/horo/services/user-management-service/internal/adapters/db"
+	"github.com/wnmay/horo/services/user-management-service/internal/adapters/firebase"
 	grpcadapter "github.com/wnmay/horo/services/user-management-service/internal/adapters/grpc"
 	"github.com/wnmay/horo/services/user-management-service/internal/app"
 	"github.com/wnmay/horo/services/user-management-service/internal/config"
@@ -23,26 +24,42 @@ func main() {
 	_ = env.LoadEnv(service_name)
 	cfg := config.LoadConfig()
 
-	repo, err := db.NewMongoUserRepository(cfg.MongoURI, cfg.MongoDBName, cfg.UserCollectionName)
+	userRepo, err := db.NewMongoUserRepository(cfg.MongoURI, cfg.MongoDBName, cfg.UserCollectionName)
 	if err != nil {
 		log.Fatalf("failed to connect: %v", err)
 	}
 
 	ctx := context.Background()
-	userManagementService := app.NewUserManagementService(ctx, repo, cfg)
-	grpcServer := grpcadapter.NewGRPCServer(userManagementService)
-	server := grpc.NewServer()
-	proto.RegisterUserManagementServiceServer(server, grpcServer)
+	firebaseClient := firebase.InitFirebase(ctx, cfg.FirebaseAccountKeyFile)
+	firebaseAdapter := firebase.NewAuthAdapter(firebaseClient)
+
+	userApp := app.NewUserManagementService(firebaseAdapter, userRepo)
+	authApp := app.NewAuthService(firebaseAdapter)
+
+	userServer := grpcadapter.NewUserManagementServer(userApp)
+	authServer := grpcadapter.NewAuthServer(authApp)
+
+	// --- Start gRPC Server ---
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GRPCPort))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+
+	grpcServer := grpc.NewServer()
+
+	// Register both services on the same server
+	proto.RegisterUserManagementServiceServer(grpcServer, userServer)
+	proto.RegisterAuthServiceServer(grpcServer, authServer)
 
 	// Start listening
 	address := fmt.Sprintf(":%s", cfg.GRPCPort)
-	lis, err := net.Listen("tcp", address)
+	lis, err = net.Listen("tcp", address)
 	if err != nil {
 		log.Fatalf("failed to listen on port %s: %v", cfg.GRPCPort, err)
 	}
 
 	log.Printf("gRPC server started on port %s", cfg.GRPCPort)
-	if err := server.Serve(lis); err != nil {
+	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve gRPC: %v", err)
 	}
 }

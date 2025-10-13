@@ -19,8 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserManagementService_Register_FullMethodName  = "/usermanagement.UserManagementService/Register"
-	UserManagementService_GetClaims_FullMethodName = "/usermanagement.UserManagementService/GetClaims"
+	UserManagementService_Register_FullMethodName = "/usermanagement.UserManagementService/Register"
 )
 
 // UserManagementServiceClient is the client API for UserManagementService service.
@@ -28,7 +27,6 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserManagementServiceClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
-	GetClaims(ctx context.Context, in *GetClaimsRequest, opts ...grpc.CallOption) (*GetClaimsResponse, error)
 }
 
 type userManagementServiceClient struct {
@@ -49,22 +47,11 @@ func (c *userManagementServiceClient) Register(ctx context.Context, in *Register
 	return out, nil
 }
 
-func (c *userManagementServiceClient) GetClaims(ctx context.Context, in *GetClaimsRequest, opts ...grpc.CallOption) (*GetClaimsResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetClaimsResponse)
-	err := c.cc.Invoke(ctx, UserManagementService_GetClaims_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // UserManagementServiceServer is the server API for UserManagementService service.
 // All implementations must embed UnimplementedUserManagementServiceServer
 // for forward compatibility.
 type UserManagementServiceServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
-	GetClaims(context.Context, *GetClaimsRequest) (*GetClaimsResponse, error)
 	mustEmbedUnimplementedUserManagementServiceServer()
 }
 
@@ -77,9 +64,6 @@ type UnimplementedUserManagementServiceServer struct{}
 
 func (UnimplementedUserManagementServiceServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
-}
-func (UnimplementedUserManagementServiceServer) GetClaims(context.Context, *GetClaimsRequest) (*GetClaimsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetClaims not implemented")
 }
 func (UnimplementedUserManagementServiceServer) mustEmbedUnimplementedUserManagementServiceServer() {}
 func (UnimplementedUserManagementServiceServer) testEmbeddedByValue()                               {}
@@ -120,24 +104,6 @@ func _UserManagementService_Register_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UserManagementService_GetClaims_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetClaimsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserManagementServiceServer).GetClaims(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: UserManagementService_GetClaims_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserManagementServiceServer).GetClaims(ctx, req.(*GetClaimsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // UserManagementService_ServiceDesc is the grpc.ServiceDesc for UserManagementService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -149,9 +115,107 @@ var UserManagementService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "Register",
 			Handler:    _UserManagementService_Register_Handler,
 		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "user_management.proto",
+}
+
+const (
+	AuthService_GetClaims_FullMethodName = "/usermanagement.AuthService/GetClaims"
+)
+
+// AuthServiceClient is the client API for AuthService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type AuthServiceClient interface {
+	GetClaims(ctx context.Context, in *GetClaimsRequest, opts ...grpc.CallOption) (*GetClaimsResponse, error)
+}
+
+type authServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewAuthServiceClient(cc grpc.ClientConnInterface) AuthServiceClient {
+	return &authServiceClient{cc}
+}
+
+func (c *authServiceClient) GetClaims(ctx context.Context, in *GetClaimsRequest, opts ...grpc.CallOption) (*GetClaimsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetClaimsResponse)
+	err := c.cc.Invoke(ctx, AuthService_GetClaims_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// AuthServiceServer is the server API for AuthService service.
+// All implementations must embed UnimplementedAuthServiceServer
+// for forward compatibility.
+type AuthServiceServer interface {
+	GetClaims(context.Context, *GetClaimsRequest) (*GetClaimsResponse, error)
+	mustEmbedUnimplementedAuthServiceServer()
+}
+
+// UnimplementedAuthServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedAuthServiceServer struct{}
+
+func (UnimplementedAuthServiceServer) GetClaims(context.Context, *GetClaimsRequest) (*GetClaimsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetClaims not implemented")
+}
+func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
+func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
+
+// UnsafeAuthServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AuthServiceServer will
+// result in compilation errors.
+type UnsafeAuthServiceServer interface {
+	mustEmbedUnimplementedAuthServiceServer()
+}
+
+func RegisterAuthServiceServer(s grpc.ServiceRegistrar, srv AuthServiceServer) {
+	// If the following call pancis, it indicates UnimplementedAuthServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&AuthService_ServiceDesc, srv)
+}
+
+func _AuthService_GetClaims_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetClaimsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).GetClaims(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_GetClaims_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).GetClaims(ctx, req.(*GetClaimsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var AuthService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "usermanagement.AuthService",
+	HandlerType: (*AuthServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "GetClaims",
-			Handler:    _UserManagementService_GetClaims_Handler,
+			Handler:    _AuthService_GetClaims_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

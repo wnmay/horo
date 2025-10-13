@@ -9,8 +9,4 @@ type User struct {
 	Role     string
 }
 
-type Claims struct {
-	UserID string
-	Email  string
-	Role   string
-}
+
