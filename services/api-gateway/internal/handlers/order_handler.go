@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/wnmay/horo/shared/env"
@@ -18,11 +19,13 @@ type OrderHandler struct {
 }
 
 func NewOrderHandler() *OrderHandler {
-	orderServiceURL := env.GetString("ORDER_SERVICE_URL", "http://localhost:3002")
+	orderServiceURL := env.GetString("ORDER_SERVICE_URL", "localhost:3002")
 
 	return &OrderHandler{
 		orderServiceURL: orderServiceURL,
-		client:          &http.Client{},
+		client: &http.Client{
+			Timeout: 30 * time.Second,
+		},
 	}
 }
 

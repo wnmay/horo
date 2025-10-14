@@ -85,7 +85,6 @@ func customErrorHandler(c *fiber.Ctx, err error) error {
 func main() {
 	_ = env.LoadEnv(service_name)
 	cfg := config.LoadConfig()
-
 	// Create API Gateway
 	gateway, err := NewAPIGateway(cfg)
 	if err != nil {

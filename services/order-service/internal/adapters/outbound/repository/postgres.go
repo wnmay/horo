@@ -6,8 +6,8 @@ import (
 	"log"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"github.com/wnmay/horo/services/order-service/internal/domain/entity"
+	"gorm.io/gorm"
 )
 
 // Repository implements the OrderRepository interface
@@ -33,14 +33,14 @@ func (r *Repository) Create(ctx context.Context, order *entity.Order) error {
 func (r *Repository) GetByID(ctx context.Context, orderID uuid.UUID) (*entity.Order, error) {
 	var orderModel Order
 	result := r.db.WithContext(ctx).Where("order_id = ?", orderID).First(&orderModel)
-	
+
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, errors.New("order not found")
 		}
 		return nil, result.Error
 	}
-	
+
 	return toOrderEntity(&orderModel), nil
 }
 
@@ -48,16 +48,16 @@ func (r *Repository) GetByID(ctx context.Context, orderID uuid.UUID) (*entity.Or
 func (r *Repository) GetByCustomerID(ctx context.Context, customerID string) ([]*entity.Order, error) {
 	var orderModels []Order
 	result := r.db.WithContext(ctx).Where("customer_id = ?", customerID).Find(&orderModels)
-	
+
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	
+
 	orders := make([]*entity.Order, len(orderModels))
 	for i, model := range orderModels {
 		orders[i] = toOrderEntity(&model)
 	}
-	
+
 	return orders, nil
 }
 
@@ -76,18 +76,11 @@ func (r *Repository) Delete(ctx context.Context, orderID uuid.UUID) error {
 
 // AutoMigrate runs database migrations for the Order table
 func (r *Repository) AutoMigrate() error {
-	// Drop existing table to handle schema changes
-	if err := r.db.Migrator().DropTable(&Order{}); err != nil {
-		log.Printf("Warning: Could not drop orders table: %v", err)
-	} else {
-		log.Printf("Dropped orders table successfully")
-	}
-	
 	if err := r.db.AutoMigrate(&Order{}); err != nil {
 		log.Printf("Migration failed: %v", err)
 		return err
 	}
-	
+
 	log.Printf("Orders table migrated successfully")
 	return nil
 }
@@ -101,11 +94,11 @@ func toOrderModel(order *entity.Order) *Order {
 		Status:     OrderStatus(order.Status),
 		OrderDate:  order.OrderDate,
 	}
-	
+
 	if order.PaymentID != nil {
 		model.PaymentID = *order.PaymentID
 	}
-	
+
 	return model
 }
 
@@ -117,10 +110,10 @@ func toOrderEntity(model *Order) *entity.Order {
 		Status:     entity.OrderStatus(model.Status),
 		OrderDate:  model.OrderDate,
 	}
-	
+
 	if model.PaymentID != (uuid.UUID{}) {
 		order.PaymentID = &model.PaymentID
 	}
-	
+
 	return order
 }

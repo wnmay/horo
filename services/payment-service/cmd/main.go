@@ -16,8 +16,8 @@ import (
 	"github.com/wnmay/horo/services/payment-service/internal/adapters/outbound/db"
 	"github.com/wnmay/horo/services/payment-service/internal/domain"
 	"github.com/wnmay/horo/shared/contract"
-	"github.com/wnmay/horo/shared/env"
 	sharedDB "github.com/wnmay/horo/shared/db"
+	"github.com/wnmay/horo/shared/env"
 	sharedMessage "github.com/wnmay/horo/shared/message"
 )
 
@@ -33,18 +33,18 @@ func main() {
 
 	// Initialize payment repository (this will auto-migrate the table)
 	paymentRepo := db.NewGormPaymentRepository(gormDB)
-	
+
 	// Verify table exists
 	if gormDB.Migrator().HasTable("payments") {
 		log.Println("✅ Payments table exists")
-		
-		// Count rows to verify table structure  
+
+		// Count rows to verify table structure
 		var count int64
 		gormDB.Table("payments").Count(&count)
 		log.Printf("Payments table has %d rows", count)
 	} else {
 		log.Println("❌ Payments table does NOT exist")
-		
+
 		// List all tables in database
 		var tables []string
 		gormDB.Raw("SELECT tablename FROM pg_tables WHERE schemaname = 'public'").Scan(&tables)
@@ -67,7 +67,7 @@ func main() {
 	}
 	log.Println("Payment queue declared successfully")
 
-	// Initialize HTTP server  
+	// Initialize HTTP server
 	app := fiber.New()
 
 	// Health check
@@ -79,8 +79,8 @@ func main() {
 	})
 
 	// API routes with versioning
-	api := app.Group("/api/v1")
-	
+	api := app.Group("/api")
+
 	// Basic payment endpoints for testing
 	api.Get("/payments", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
@@ -124,7 +124,7 @@ func main() {
 		// Publish payment completed event to notify order service
 		go func() {
 			ctx := context.Background()
-			
+
 			// Create payment completion message
 			paymentCompletedData := map[string]interface{}{
 				"payment_id": payment.PaymentID,
@@ -166,86 +166,86 @@ func main() {
 			log.Println("Server stopped:", err)
 		}
 	}()
-	
+
 	// Start listening for order created events (RabbitMQ already initialized above)
 	go func() {
-			queueName := "payment_queue"
-			routingKey := "order.created"
-			
-			// Declare queue
-			if err := rabbit.DeclareQueue(queueName, routingKey); err != nil {
-				log.Printf("Failed to declare queue: %v", err)
-				return
+		queueName := "payment_queue"
+		routingKey := "order.created"
+
+		// Declare queue
+		if err := rabbit.DeclareQueue(queueName, routingKey); err != nil {
+			log.Printf("Failed to declare queue: %v", err)
+			return
+		}
+
+		log.Printf("Listening for order events on queue: %s", queueName)
+
+		// Payment creation handler
+		handler := func(ctx context.Context, delivery amqp.Delivery) error {
+			log.Printf("Received order event: %s", string(delivery.Body))
+
+			// Parse the AMQP message
+			var amqpMessage struct {
+				OwnerID string `json:"ownerId"`
+				Data    string `json:"data"` // Base64 encoded JSON
 			}
-			
-			log.Printf("Listening for order events on queue: %s", queueName)
-			
-			// Payment creation handler
-			handler := func(ctx context.Context, delivery amqp.Delivery) error {
-				log.Printf("Received order event: %s", string(delivery.Body))
-				
-				// Parse the AMQP message
-				var amqpMessage struct {
-					OwnerID string `json:"ownerId"`
-					Data    string `json:"data"` // Base64 encoded JSON
-				}
-				
-				if err := json.Unmarshal(delivery.Body, &amqpMessage); err != nil {
-					log.Printf("Failed to unmarshal AMQP message: %v", err)
-					return err
-				}
-				
-				// Decode base64 data
-				decodedData, err := base64.StdEncoding.DecodeString(amqpMessage.Data)
-				if err != nil {
-					log.Printf("Failed to decode base64 data: %v", err)
-					return err
-				}
-				
-				log.Printf("Decoded order data: %s", string(decodedData))
-				
-				// Parse the order data
-				var orderData struct {
-					OrderID    string  `json:"order_id"`
-					CustomerID string  `json:"customer_id"`
-					Amount     float64 `json:"amount"`
-					Status     string  `json:"status"`
-				}
-				
-				if err := json.Unmarshal(decodedData, &orderData); err != nil {
-					log.Printf("Failed to unmarshal order data: %v", err)
-					return err
-				}
-				
-				// Default payment amount (in real scenario, this would be fetched based on course pricing)
-				defaultAmount := 149.99
-				
-				log.Printf("Creating payment for order: %s, amount: %.2f", orderData.OrderID, defaultAmount)
-				
-				// Create payment using our domain entity
-				payment := &domain.Payment{
-					PaymentID: uuid.New().String(),
-					OrderID:   orderData.OrderID,
-					Amount:    defaultAmount,
-					Status:    "pending",
-					CreatedAt: time.Now(),
-					UpdatedAt: time.Now(),
-				}
-				
-				// Save payment to database
-				if err := paymentRepo.Create(ctx, payment); err != nil {
-					log.Printf("Failed to create payment: %v", err)
-					return err
-				}
-				
-				log.Printf("Payment created successfully: %s for order: %s", payment.PaymentID, orderData.OrderID)
-				return nil
+
+			if err := json.Unmarshal(delivery.Body, &amqpMessage); err != nil {
+				log.Printf("Failed to unmarshal AMQP message: %v", err)
+				return err
 			}
-			
-			if err := rabbit.ConsumeMessages(queueName, handler); err != nil {
-				log.Printf("Failed to start consuming messages: %v", err)
+
+			// Decode base64 data
+			decodedData, err := base64.StdEncoding.DecodeString(amqpMessage.Data)
+			if err != nil {
+				log.Printf("Failed to decode base64 data: %v", err)
+				return err
 			}
-		}()
+
+			log.Printf("Decoded order data: %s", string(decodedData))
+
+			// Parse the order data
+			var orderData struct {
+				OrderID    string  `json:"order_id"`
+				CustomerID string  `json:"customer_id"`
+				Amount     float64 `json:"amount"`
+				Status     string  `json:"status"`
+			}
+
+			if err := json.Unmarshal(decodedData, &orderData); err != nil {
+				log.Printf("Failed to unmarshal order data: %v", err)
+				return err
+			}
+
+			// Default payment amount (in real scenario, this would be fetched based on course pricing)
+			defaultAmount := 149.99
+
+			log.Printf("Creating payment for order: %s, amount: %.2f", orderData.OrderID, defaultAmount)
+
+			// Create payment using our domain entity
+			payment := &domain.Payment{
+				PaymentID: uuid.New().String(),
+				OrderID:   orderData.OrderID,
+				Amount:    defaultAmount,
+				Status:    "pending",
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			}
+
+			// Save payment to database
+			if err := paymentRepo.Create(ctx, payment); err != nil {
+				log.Printf("Failed to create payment: %v", err)
+				return err
+			}
+
+			log.Printf("Payment created successfully: %s for order: %s", payment.PaymentID, orderData.OrderID)
+			return nil
+		}
+
+		if err := rabbit.ConsumeMessages(queueName, handler); err != nil {
+			log.Printf("Failed to start consuming messages: %v", err)
+		}
+	}()
 
 	log.Println("Payment service started successfully! Press Ctrl+C to stop.")
 	waitForSignal()

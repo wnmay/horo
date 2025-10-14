@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/wnmay/horo/shared/env"
@@ -18,26 +19,28 @@ type PaymentHandler struct {
 }
 
 func NewPaymentHandler() *PaymentHandler {
-	paymentServiceURL := env.GetString("ORDER_SERVICE_URL", "http://localhost:3001")
+	paymentServiceURL := env.GetString("PAYMENT_SERVICE_URL", "http://localhost:3001")
 	return &PaymentHandler{
 		paymentServiceURL: paymentServiceURL,
-		client:            &http.Client{},
+		client: &http.Client{
+			Timeout: 30 * time.Second,
+		},
 	}
 }
 
 func (h *PaymentHandler) GetPayment(c *fiber.Ctx) error {
 	id := c.Params("id")
-	return h.proxyRequest(c, "GET", fmt.Sprintf("/api/v1/payments/%s", id))
+	return h.proxyRequest(c, "GET", fmt.Sprintf("/api/payments/%s", id))
 }
 
 func (h *PaymentHandler) GetPaymentByOrder(c *fiber.Ctx) error {
 	orderID := c.Params("orderID")
-	return h.proxyRequest(c, "GET", fmt.Sprintf("/api/v1/payments/order/%s", orderID))
+	return h.proxyRequest(c, "GET", fmt.Sprintf("/api/payments/order/%s", orderID))
 }
 
 func (h *PaymentHandler) CompletePayment(c *fiber.Ctx) error {
 	id := c.Params("id")
-	return h.proxyRequest(c, "PUT", fmt.Sprintf("/api/v1/payments/%s/complete", id))
+	return h.proxyRequest(c, "PUT", fmt.Sprintf("/api/payments/%s/complete", id))
 }
 
 func (h *PaymentHandler) proxyRequest(c *fiber.Ctx, method, path string) error {
@@ -72,8 +75,9 @@ func (h *PaymentHandler) proxyRequest(c *fiber.Ctx, method, path string) error {
 	// Make request
 	resp, err := h.client.Do(req)
 	if err != nil {
+		errstr := fmt.Sprintf("Failed to reach payment service: %v\n", err) // ADD THIS
 		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{
-			"error": "failed to reach payment service",
+			"error": errstr,
 		})
 	}
 	defer resp.Body.Close()
