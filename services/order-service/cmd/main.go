@@ -42,6 +42,23 @@ func main() {
 		log.Fatal("Failed to migrate database:", err)
 	}
 	
+	// Verify table exists
+	if gormDB.Migrator().HasTable("orders") {
+		log.Println("✅ Orders table exists")
+		
+		// Count rows to verify table structure
+		var count int64
+		gormDB.Table("orders").Count(&count)
+		log.Printf("Orders table has %d rows", count)
+	} else {
+		log.Println("❌ Orders table does NOT exist")
+		
+		// List all tables in database
+		var tables []string
+		gormDB.Raw("SELECT tablename FROM pg_tables WHERE schemaname = 'public'").Scan(&tables)
+		log.Printf("Available tables: %v", tables)
+	}
+	
 	// Use the repo as orderRepo (cast to interface)
 	orderRepo := outbound.OrderRepository(repo)
 
