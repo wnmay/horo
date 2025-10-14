@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/wnmay/horo/services/order-service/internal/domain/entity"
@@ -27,9 +28,13 @@ func (h *Handler) Register(app *fiber.App) {
 	orders.Put("/:id/status", h.UpdateOrderStatus)
 }
 
+type Claims struct {
+	CustomerID string `json:"customerId" validate:"required"`
+}
+
 type CreateOrderRequest struct {
-	CustomerID string `json:"customer_id" validate:"required"`
-	CourseID   string `json:"course_id" validate:"required"`
+	Claims   Claims `json:"claims" validate:"required"`
+	CourseID string `json:"course_id" validate:"required"`
 }
 
 type UpdateOrderStatusRequest struct {
@@ -44,14 +49,26 @@ func (h *Handler) CreateOrder(c *fiber.Ctx) error {
 		})
 	}
 
-	// Parse UUIDs
-	customerID, err := uuid.Parse(req.CustomerID)
-	if err != nil {
+	// Debug logging to see what we received
+	fmt.Printf("Received request: %+v\n", req)
+	fmt.Printf("Claims: %+v\n", req.Claims)
+	fmt.Printf("CustomerID: '%s'\n", req.Claims.CustomerID)
+	fmt.Printf("CourseID: '%s'\n", req.CourseID)
+
+	// Validate required fields
+	if req.Claims.CustomerID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid customer ID format",
+			"error": "Customer ID is required in claims",
 		})
 	}
 
+	if req.CourseID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Course ID is required",
+		})
+	}
+
+	// Parse course UUID
 	courseID, err := uuid.Parse(req.CourseID)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -61,7 +78,7 @@ func (h *Handler) CreateOrder(c *fiber.Ctx) error {
 
 	// Create command
 	cmd := inbound.CreateOrderCommand{
-		CustomerID: customerID,
+		CustomerID: req.Claims.CustomerID, // Firebase userId as string
 		CourseID:   courseID,
 	}
 
@@ -95,10 +112,10 @@ func (h *Handler) GetOrder(c *fiber.Ctx) error {
 }
 
 func (h *Handler) GetOrdersByCustomer(c *fiber.Ctx) error {
-	customerID, err := uuid.Parse(c.Params("customerID"))
-	if err != nil {
+	customerID := c.Params("customerID")
+	if customerID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid customer ID format",
+			"error": "Customer ID is required",
 		})
 	}
 

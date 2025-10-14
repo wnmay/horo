@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"log"
 	"time"
 	"github.com/wnmay/horo/services/payment-service/internal/domain"
 	"github.com/wnmay/horo/services/payment-service/internal/ports/outbound"
@@ -25,10 +26,19 @@ var _ outbound.PaymentRepository = (*GormPaymentRepository)(nil)
 
 func NewGormPaymentRepository(db *gorm.DB) *GormPaymentRepository {
 	// Drop existing table to handle schema changes
-	_ = db.Migrator().DropTable(&paymentModel{})
+	if err := db.Migrator().DropTable(&paymentModel{}); err != nil {
+		log.Printf("Warning: Could not drop payments table: %v", err)
+	} else {
+		log.Printf("Dropped payments table successfully")
+	}
 	
 	// Auto-migrate payment table
-	_ = db.AutoMigrate(&paymentModel{})
+	if err := db.AutoMigrate(&paymentModel{}); err != nil {
+		log.Printf("Payment migration failed: %v", err)
+	} else {
+		log.Printf("Payments table migrated successfully")
+	}
+	
 	return &GormPaymentRepository{db: db}
 }
 

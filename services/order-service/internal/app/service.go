@@ -61,7 +61,7 @@ func (s *OrderService) GetOrder(ctx context.Context, orderID uuid.UUID) (*entity
 	return order, nil
 }
 
-func (s *OrderService) GetOrdersByCustomer(ctx context.Context, customerID uuid.UUID) ([]*entity.Order, error) {
+func (s *OrderService) GetOrdersByCustomer(ctx context.Context, customerID string) ([]*entity.Order, error) {
 	orders, err := s.orderRepo.GetByCustomerID(ctx, customerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get orders for customer: %w", err)

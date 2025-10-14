@@ -23,7 +23,7 @@ import (
 )
 
 func main() {
-	_ = env.LoadEnv("payment-service")
+	_ = config.LoadEnv("payment-service")
 	port := env.GetString("REST_PORT", "3001")
 
 	log.Println("Starting payment service...")
@@ -34,7 +34,23 @@ func main() {
 
 	// Initialize payment repository (this will auto-migrate the table)
 	paymentRepo := db.NewGormPaymentRepository(gormDB)
-	log.Printf("Payment table migrated successfully, repository: %v", paymentRepo != nil)
+	
+	// Verify table exists
+	if gormDB.Migrator().HasTable("payments") {
+		log.Println("✅ Payments table exists")
+		
+		// Count rows to verify table structure  
+		var count int64
+		gormDB.Table("payments").Count(&count)
+		log.Printf("Payments table has %d rows", count)
+	} else {
+		log.Println("❌ Payments table does NOT exist")
+		
+		// List all tables in database
+		var tables []string
+		gormDB.Raw("SELECT tablename FROM pg_tables WHERE schemaname = 'public'").Scan(&tables)
+		log.Printf("Available tables: %v", tables)
+	}
 
 	// Initialize RabbitMQ
 	rabbitURL := env.GetString("RABBIT_URL", "amqp://guest:guest@localhost:5672/")

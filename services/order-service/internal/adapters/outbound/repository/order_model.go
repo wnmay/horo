@@ -16,7 +16,7 @@ const (
 
 type Order struct {
 	OrderID     uuid.UUID   `gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
-	CustomerID  uuid.UUID   `gorm:"type:uuid;not null"`
+	CustomerID  string      `gorm:"type:varchar(255);not null"`
 	CourseID    uuid.UUID   `gorm:"type:uuid;not null"`
 	PaymentID   uuid.UUID   `gorm:"type:uuid"` 
 	Status      OrderStatus `gorm:"type:varchar(20);not null"`
@@ -24,5 +24,5 @@ type Order struct {
 }
 
 func (o *Order) TableName() string {
-	return "ordert"
+	return "orders"
 }

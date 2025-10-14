@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -44,7 +45,7 @@ func (r *Repository) GetByID(ctx context.Context, orderID uuid.UUID) (*entity.Or
 }
 
 // GetByCustomerID retrieves all orders for a specific customer
-func (r *Repository) GetByCustomerID(ctx context.Context, customerID uuid.UUID) ([]*entity.Order, error) {
+func (r *Repository) GetByCustomerID(ctx context.Context, customerID string) ([]*entity.Order, error) {
 	var orderModels []Order
 	result := r.db.WithContext(ctx).Where("customer_id = ?", customerID).Find(&orderModels)
 	
@@ -76,9 +77,19 @@ func (r *Repository) Delete(ctx context.Context, orderID uuid.UUID) error {
 // AutoMigrate runs database migrations for the Order table
 func (r *Repository) AutoMigrate() error {
 	// Drop existing table to handle schema changes
-	_ = r.db.Migrator().DropTable(&Order{})
+	if err := r.db.Migrator().DropTable(&Order{}); err != nil {
+		log.Printf("Warning: Could not drop orders table: %v", err)
+	} else {
+		log.Printf("Dropped orders table successfully")
+	}
 	
-	return r.db.AutoMigrate(&Order{})
+	if err := r.db.AutoMigrate(&Order{}); err != nil {
+		log.Printf("Migration failed: %v", err)
+		return err
+	}
+	
+	log.Printf("Orders table migrated successfully")
+	return nil
 }
 
 // Mapping functions between domain entity and database model

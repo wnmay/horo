@@ -11,7 +11,7 @@ import (
 type OrderRepository interface {
 	Create(ctx context.Context, order *entity.Order) error
 	GetByID(ctx context.Context, orderID uuid.UUID) (*entity.Order, error)
-	GetByCustomerID(ctx context.Context, customerID uuid.UUID) ([]*entity.Order, error)
+	GetByCustomerID(ctx context.Context, customerID string) ([]*entity.Order, error)
 	Update(ctx context.Context, order *entity.Order) error
 	Delete(ctx context.Context, orderID uuid.UUID) error
 }

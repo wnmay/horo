@@ -6,6 +6,7 @@
 cd services/order-service
 go run ./cmd/main.go
 ```
+
 # Services
 
 # API design
@@ -14,10 +15,11 @@ go run ./cmd/main.go
 
 ```
 $body = @{
-    customer_id = "123e4567-e89b-12d3-a456-426614174000"
+    claims = @{
+        customerId = "abc123def456"
+    }
     course_id = "456e7890-e89b-12d3-a456-426614174001"
-    amount = 149.99
-} | ConvertTo-Json
+} | ConvertTo-Json -Depth 3
 
 Invoke-RestMethod -Uri "http://localhost:3002/api/v1/orders" -Method POST -Body $body -ContentType "application/json"
 ```

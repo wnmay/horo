@@ -25,7 +25,7 @@ func (p *Publisher) PublishOrderCreated(ctx context.Context, order *entity.Order
 	// Create order data for the event
 	orderData := message.OrderData{
 		OrderID:    order.OrderID.String(),
-		CustomerID: order.CustomerID.String(),
+		CustomerID: order.CustomerID,
 		Status:     string(order.Status),
 	}
 
@@ -37,7 +37,7 @@ func (p *Publisher) PublishOrderCreated(ctx context.Context, order *entity.Order
 
 	// Create AMQP message using contract structure
 	amqpMessage := contract.AmqpMessage{
-		OwnerID: order.CustomerID.String(),
+		OwnerID: order.CustomerID,
 		Data:    data,
 	}
 
