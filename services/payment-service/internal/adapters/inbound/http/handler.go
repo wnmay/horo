@@ -16,7 +16,7 @@ func NewHandler(paymentSvc inbound.PaymentService) *Handler {
 }
 
 func (h *Handler) Register(app *fiber.App) {
-	api := app.Group("/api/v1")
+	api := app.Group("/api")
 	payments := api.Group("/payments")
 
 	payments.Get("/:id", h.GetPayment)

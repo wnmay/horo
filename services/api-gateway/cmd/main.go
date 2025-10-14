@@ -11,6 +11,7 @@ import (
 	"github.com/wnmay/horo/services/api-gateway/internal/config"
 	grpcinfra "github.com/wnmay/horo/services/api-gateway/internal/grpc"
 	gw_router "github.com/wnmay/horo/services/api-gateway/internal/router"
+	"github.com/wnmay/horo/shared/env"
 )
 
 type APIGateway struct {
@@ -19,6 +20,10 @@ type APIGateway struct {
 	router      *gw_router.Router
 	port        string
 }
+
+const (
+	service_name = "api-gateway"
+)
 
 func NewAPIGateway(cfg *config.Config) (*APIGateway, error) {
 	// Initialize gRPC clients with all service addresses
@@ -78,6 +83,7 @@ func customErrorHandler(c *fiber.Ctx, err error) error {
 }
 
 func main() {
+	_ = env.LoadEnv(service_name)
 	cfg := config.LoadConfig()
 
 	// Create API Gateway
