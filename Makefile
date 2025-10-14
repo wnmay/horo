@@ -74,3 +74,9 @@ clean:
 PROTO_DIR := proto
 PROTO_SRC := $(wildcard $(PROTO_DIR)/*.proto)
 GO_OUT := .
+
+
+run:
+	go run ./services/api-gateway/cmd/main.go &
+	go run ./services/user-management-service/cmd/main.go &
+	wait

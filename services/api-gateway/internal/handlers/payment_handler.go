@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/wnmay/horo/shared/env"
 )
 
 type PaymentHandler struct {
@@ -18,11 +18,7 @@ type PaymentHandler struct {
 }
 
 func NewPaymentHandler() *PaymentHandler {
-	paymentServiceURL := os.Getenv("PAYMENT_SERVICE_URL")
-	if paymentServiceURL == "" {
-		paymentServiceURL = "http://localhost:3001" // Default fallback
-	}
-
+	paymentServiceURL := env.GetString("ORDER_SERVICE_URL", "http://localhost:3001")
 	return &PaymentHandler{
 		paymentServiceURL: paymentServiceURL,
 		client:            &http.Client{},
@@ -99,12 +95,12 @@ func (h *PaymentHandler) proxyRequest(c *fiber.Ctx, method, path string) error {
 
 	// Return response
 	c.Status(resp.StatusCode)
-	
+
 	// Try to parse as JSON, if fails return as raw
 	var jsonResp interface{}
 	if err := json.Unmarshal(respBody, &jsonResp); err == nil {
 		return c.JSON(jsonResp)
 	}
-	
+
 	return c.Send(respBody)
 }

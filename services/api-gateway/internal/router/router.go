@@ -43,8 +43,8 @@ func (r *Router) setupUserRoutes(api fiber.Router) {
 }
 
 func (r *Router) setupOrderRoutes(api fiber.Router) {
+	authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
 	orderHandler := handlers.NewOrderHandler()
-
 	orders := api.Group("/orders")
 
 	orders.Post("/", authMiddleware.AddClaims, orderHandler.CreateOrder)
