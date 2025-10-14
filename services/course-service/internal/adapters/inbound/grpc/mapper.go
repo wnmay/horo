@@ -1,8 +1,8 @@
 package grpc
 
 import (
-	pb "github.com/wnmay/horo/services/course-service/internal/adapter/grpc/pb"
 	"github.com/wnmay/horo/services/course-service/internal/domain"
+	pb "github.com/wnmay/horo/shared/proto/course"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -39,11 +39,11 @@ func toPbCourse(c *domain.Course) *pb.Course {
 	}
 	return &pb.Course{
 		Id:          c.ID,
-		ProphetId:   c.Prophet_id,
-		Coursename:  c.Coursename,
+		ProphetId:   c.ProphetID,
+		Coursename:  c.CourseName,
 		Description: c.Description,
 		Price:       c.Price,
 		Duration:    toPbDuration(c.Duration),
-		CreatedTime: timestamppb.New(c.Created_time),
+		CreatedTime: timestamppb.New(c.CreatedAt),
 	}
 }

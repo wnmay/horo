@@ -9,7 +9,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// Handler struct ที่รับ service มาจากชั้น app
 type Handler struct {
 	service app.CourseService
 }
@@ -19,7 +18,6 @@ func NewHandler(s app.CourseService) *Handler {
 	return &Handler{service: s}
 }
 
-// Register — รวม endpoint ทั้งหมดของ course service
 func (h *Handler) Register(router fiber.Router) {
 	router.Post("/courses", h.CreateCourse)
 	router.Get("/courses/:id", h.GetCourseByID)

@@ -13,9 +13,9 @@ import (
 	httpadapter "github.com/wnmay/horo/services/course-service/internal/adapters/inbound/http"
 	dbout "github.com/wnmay/horo/services/course-service/internal/adapters/outbound/db"
 	"github.com/wnmay/horo/services/course-service/internal/app"
-	pb "github.com/wnmay/horo/shared/course/proto"
 	"github.com/wnmay/horo/shared/db"
 	"github.com/wnmay/horo/shared/env"
+	pb "github.com/wnmay/horo/shared/proto/course"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -24,7 +24,7 @@ import (
 func main() {
 	// === 1. Load configuration ===
 	_ = env.LoadEnv("course-service")
-	restPort := env.GetString("REST_PORT", "3002")
+	restPort := env.GetString("REST_PORT", "3003")
 	grpcPort := env.GetString("GRPC_PORT", "50052")
 
 	dbName := env.GetString("DB_NAME", "coursedb")
@@ -37,8 +37,8 @@ func main() {
 	database := db.GetDatabase(client, cfg)
 
 	// === 2. Setup domain & service ===
-	repo := dbout.NewMongoPersonRepository(database)
-	svc := app.NewService(repo)
+	repo := dbout.NewMongoCourseRepo(database)
+	svc := app.NewCourseService(repo)
 
 	// === 3. Setup Fiber (REST API) ===
 	appFiber := fiber.New()

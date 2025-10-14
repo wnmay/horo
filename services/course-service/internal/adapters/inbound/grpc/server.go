@@ -3,8 +3,8 @@ package grpc
 import (
 	"context"
 
-	pb "github.com/wnmay/horo/services/course-service/internal/adapter/grpc/pb"
 	"github.com/wnmay/horo/services/course-service/internal/app"
+	pb "github.com/wnmay/horo/shared/proto/course"
 )
 
 type CourseGRPCServer struct {
