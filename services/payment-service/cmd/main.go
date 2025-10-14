@@ -15,7 +15,6 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/wnmay/horo/services/payment-service/internal/adapters/outbound/db"
 	"github.com/wnmay/horo/services/payment-service/internal/domain"
-	"github.com/wnmay/horo/shared/config"
 	"github.com/wnmay/horo/shared/contract"
 	"github.com/wnmay/horo/shared/env"
 	sharedDB "github.com/wnmay/horo/shared/db"
@@ -23,7 +22,7 @@ import (
 )
 
 func main() {
-	_ = config.LoadEnv("payment-service")
+	_ = env.LoadEnv("payment-service")
 	port := env.GetString("REST_PORT", "3001")
 
 	log.Println("Starting payment service...")

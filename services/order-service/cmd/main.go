@@ -17,7 +17,6 @@ import (
 	"github.com/wnmay/horo/services/order-service/internal/adapters/outbound/repository"
 	"github.com/wnmay/horo/services/order-service/internal/app"
 	"github.com/wnmay/horo/services/order-service/internal/ports/outbound"
-	"github.com/wnmay/horo/shared/config"
 	"github.com/wnmay/horo/shared/db"
 	"github.com/wnmay/horo/shared/env"
 	sharedMessage "github.com/wnmay/horo/shared/message"
@@ -25,7 +24,7 @@ import (
 
 func main() {
 	// Load environment variables
-	if err := config.LoadEnv("order-service"); err != nil {
+	if err := env.LoadEnv("order-service"); err != nil {
 		log.Fatal("Failed to load env:", err)
 	}
 	
