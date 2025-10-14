@@ -31,6 +31,7 @@ func (r *Router) SetupRoutes() {
 
 	// Setup all service routes
 	r.setupUserRoutes(api)
+	r.setupOrderRoutes(api)
 	r.setupTestRouter(api)
 }
 
@@ -39,6 +40,28 @@ func (r *Router) setupUserRoutes(api fiber.Router) {
 
 	users := api.Group("/users")
 	users.Post("/register", userHandler.Register)
+}
+
+func (r *Router) setupOrderRoutes(api fiber.Router) {
+	orderHandler := handlers.NewOrderHandler()
+
+	orders := api.Group("/orders")
+
+	orders.Post("/", authMiddleware.AddClaims, orderHandler.CreateOrder)
+	orders.Get("/:id", authMiddleware.AddClaims, orderHandler.GetOrder)
+	// TO DO: don't use cust id here, use from claims
+	orders.Get("/customer/:customerID", authMiddleware.AddClaims, orderHandler.GetOrdersByCustomer)
+	orders.Put("/:id/status", authMiddleware.AddClaims, orderHandler.UpdateOrderStatus)
+}
+
+func (r *Router) setupPaymentRoutes(api fiber.Router) {
+	authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
+	paymentHandler := handlers.NewPaymentHandler()
+
+	payments := api.Group("/payments")
+	payments.Get("/:id", authMiddleware.AddClaims, paymentHandler.GetPayment)
+	payments.Get("/order/:orderID", authMiddleware.AddClaims, paymentHandler.GetPaymentByOrder)
+	payments.Put("/:id/complete", authMiddleware.AddClaims, paymentHandler.CompletePayment)
 }
 
 func (r *Router) setupTestRouter(api fiber.Router) {

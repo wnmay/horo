@@ -18,7 +18,7 @@ func NewHandler(orderService inbound.OrderService) *Handler {
 }
 
 func (h *Handler) Register(app *fiber.App) {
-	api := app.Group("/api/v1")
+	api := app.Group("/api")
 	orders := api.Group("/orders")
 
 	orders.Post("/", h.CreateOrder)
