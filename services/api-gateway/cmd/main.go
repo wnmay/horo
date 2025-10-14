@@ -20,6 +20,10 @@ type APIGateway struct {
 	port        string
 }
 
+const (
+	service_name = "api-gateway"
+)
+
 func NewAPIGateway(cfg *config.Config) (*APIGateway, error) {
 	// Initialize gRPC clients with all service addresses
 	grpcClients, err := grpcinfra.NewGrpcClients(
@@ -78,6 +82,7 @@ func customErrorHandler(c *fiber.Ctx, err error) error {
 }
 
 func main() {
+	_ := env.LoadEnv(service_name)
 	cfg := config.LoadConfig()
 
 	// Create API Gateway
