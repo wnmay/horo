@@ -23,7 +23,7 @@ import (
 )
 
 func main() {
-	_ = config.LoadEnv("payment-service")
+	_ = env.LoadEnv("payment-service")
 	port := env.GetString("REST_PORT", "3001")
 
 	log.Println("Starting payment service...")

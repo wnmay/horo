@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package usermanagement;
+
+option go_package = "github.com/wnmay/horo/shared/proto/usermanagement;usermanagement";
+
+service UserManagementService {
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+}
+
+service AuthService {
+  rpc GetClaims(GetClaimsRequest) returns (GetClaimsResponse);
+}
+
+message RegisterRequest {
+  string firebase_token = 1;
+  string full_name = 3;
+  string role = 4;
+}
+
+message RegisterResponse {
+  bool success = 1;
+}
+
+message GetClaimsRequest {
+  string firebase_token = 1;
+}
+
+message GetClaimsResponse {
+  string user_id = 1;
+  string email = 2;
+  string role = 3;
+}
