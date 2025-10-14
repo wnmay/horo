@@ -7,8 +7,23 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
-	go.mongodb.org/mongo-driver v1.17.4
+	github.com/rabbitmq/amqp091-go v1.10.0
+	go.opentelemetry.io/otel v1.38.0
+	go.opentelemetry.io/otel/trace v1.38.0
 	gorm.io/driver/postgres v1.6.0
+	gorm.io/gorm v1.31.0
+)
+
+require (
+	github.com/gofiber/fiber/v2 v2.52.9
+	github.com/golang-jwt/jwt/v5 v5.3.0
+	github.com/google/uuid v1.6.0
+	github.com/joho/godotenv v1.5.1
+	github.com/rabbitmq/amqp091-go v1.10.0
+	go.opentelemetry.io/otel v1.38.0
+	go.opentelemetry.io/otel/trace v1.38.0
+	gorm.io/driver/postgres v1.6.0
+	go.mongodb.org/mongo-driver v1.17.4
 	gorm.io/gorm v1.31.0
 )
 
@@ -85,6 +100,8 @@ require (
 	go.opentelemetry.io/otel/sdk v1.37.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.37.0 // indirect
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
+	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
+	go.opentelemetry.io/otel/metric v1.38.0 // indirect
 	golang.org/x/crypto v0.43.0 // indirect
 	golang.org/x/net v0.45.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
