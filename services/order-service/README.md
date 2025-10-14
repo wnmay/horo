@@ -21,5 +21,5 @@ $body = @{
     course_id = "456e7890-e89b-12d3-a456-426614174001"
 } | ConvertTo-Json -Depth 3
 
-Invoke-RestMethod -Uri "http://localhost:3002/api/v1/orders" -Method POST -Body $body -ContentType "application/json"
+Invoke-RestMethod -Uri "http://localhost:3002/api/orders" -Method POST -Body $body -ContentType "application/json"
 ```

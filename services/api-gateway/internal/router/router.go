@@ -32,6 +32,7 @@ func (r *Router) SetupRoutes() {
 	// Setup all service routes
 	r.setupUserRoutes(api)
 	r.setupOrderRoutes(api)
+	r.setupPaymentRoutes(api)
 	r.setupTestRouter(api)
 }
 
