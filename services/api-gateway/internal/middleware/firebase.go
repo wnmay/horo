@@ -51,12 +51,12 @@ func (a *AuthMiddleware) AddClaims(c *fiber.Ctx) error {
 	// Strip any existing X-User-* headers from incoming request to prevent header injection
 	c.Request().Header.Del("X-User-Id")
 	c.Request().Header.Del("X-User-Email")
-	c.Request().Header.Del("X-User-Roles")
+	c.Request().Header.Del("X-User-Role")
 
 	// Add claims as headers for upstream services
 	c.Request().Header.Set("X-User-Id", claimsResp.UserId)
 	c.Request().Header.Set("X-User-Email", claimsResp.Email)
-	c.Request().Header.Set("X-User-Roles", claimsResp.Role)
+	c.Request().Header.Set("X-User-Role", claimsResp.Role)
 
 	// Continue to next handler (proxy to upstream service)
 	return c.Next()
