@@ -9,8 +9,9 @@ SERVICE_DIR := services
 PROTO_SRC_DIR := proto
 PROTO_OUT_DIR := shared/proto
 
-PROTOC_GEN_GO := $(shell which protoc-gen-go)
-PROTOC_GEN_GO_GRPC := $(shell which protoc-gen-go-grpc)
+# Use PowerShell to check for protoc plugins on Windows
+PROTOC_GEN_GO := $(shell powershell -Command "Get-Command protoc-gen-go -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source")
+PROTOC_GEN_GO_GRPC := $(shell powershell -Command "Get-Command protoc-gen-go-grpc -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source")
 
 .PHONY: all create proto clean
 
@@ -21,104 +22,44 @@ all: create
 # ------------------------------
 create:
 	@echo "Creating Go service: $(SERVICE)"
-	cd $(SERVICE_DIR) && \
-	mkdir -p $(SERVICE)/cmd && \
-	mkdir -p $(SERVICE)/internal/adapters/inbound && \
-	mkdir -p $(SERVICE)/internal/adapters/outbound && \
-	mkdir -p $(SERVICE)/internal/app && \
-	mkdir -p $(SERVICE)/internal/domain && \
-	mkdir -p $(SERVICE)/internal/ports/inbound && \
-	mkdir -p $(SERVICE)/internal/ports/outbound && \
-	touch $(SERVICE)/cmd/main.go
+	@if not exist "$(SERVICE_DIR)\$(SERVICE)" mkdir "$(SERVICE_DIR)\$(SERVICE)\cmd"
+	@if not exist "$(SERVICE_DIR)\$(SERVICE)\internal\adapters\inbound" mkdir "$(SERVICE_DIR)\$(SERVICE)\internal\adapters\inbound"
+	@if not exist "$(SERVICE_DIR)\$(SERVICE)\internal\adapters\outbound" mkdir "$(SERVICE_DIR)\$(SERVICE)\internal\adapters\outbound"
+	@if not exist "$(SERVICE_DIR)\$(SERVICE)\internal\app" mkdir "$(SERVICE_DIR)\$(SERVICE)\internal\app"
+	@if not exist "$(SERVICE_DIR)\$(SERVICE)\internal\domain" mkdir "$(SERVICE_DIR)\$(SERVICE)\internal\domain"
+	@if not exist "$(SERVICE_DIR)\$(SERVICE)\internal\ports\inbound" mkdir "$(SERVICE_DIR)\$(SERVICE)\internal\ports\inbound"
+	@if not exist "$(SERVICE_DIR)\$(SERVICE)\internal\ports\outbound" mkdir "$(SERVICE_DIR)\$(SERVICE)\internal\ports\outbound"
+	@type nul > "$(SERVICE_DIR)\$(SERVICE)\cmd\main.go"
 	@echo "Project structure for $(SERVICE) created inside $(SERVICE_DIR)/"
 
 # ------------------------------
 # Generate protobufs (with package-safe structure)
 # ------------------------------
-# --- Proto Generation Configuration ---
-PROTO_SRC_DIR := proto
-PROTO_OUT_DIR := shared/proto
-PROTO_PKG ?= usermanagement_v1  
-
-PROTOC_GEN_GO := $(shell which protoc-gen-go)
-PROTOC_GEN_GO_GRPC := $(shell which protoc-gen-go-grpc)
 
 # List all available proto files
 list-protos:
 	@echo "Available proto files:"
-	@find $(PROTO_SRC_DIR) -name "*.proto" -type f | sed 's|$(PROTO_SRC_DIR)/||' | nl
+	@powershell -Command "Get-ChildItem -Path $(PROTO_SRC_DIR) -Filter *.proto -Recurse -File | ForEach-Object { $$_.Name }"
 
 # Generate proto code for a specific file
 # Usage: make proto FILE=user_management.proto
 # or:    make proto FILE=proto/user_management.proto
 proto:
-	@if [ -z "$(FILE)" ]; then \
-		echo "Error: FILE parameter is required"; \
-		echo ""; \
-		echo "Usage: make proto FILE=<proto-file>"; \
-		echo ""; \
-		echo "Available proto files:"; \
-		find $(PROTO_SRC_DIR) -name "*.proto" -type f | sed 's|$(PROTO_SRC_DIR)/||' | sed 's/^/  - /'; \
-		echo ""; \
-		echo "Example: make proto FILE=user_management.proto"; \
-		exit 1; \
-	fi
-	@echo "🔧 Generating Go gRPC code for: $(FILE)"
-	@if [ -z "$(shell which protoc-gen-go)" ] || [ -z "$(shell which protoc-gen-go-grpc)" ]; then \
-		echo "protoc-gen-go or protoc-gen-go-grpc not found in PATH."; \
-		echo "   Please run:"; \
-		echo "   go install google.golang.org/protobuf/cmd/protoc-gen-go@latest"; \
-		echo "   go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest"; \
-		exit 1; \
-	fi
-	$(eval PROTO_FILE := $(shell find $(PROTO_SRC_DIR) -name "$(FILE)" -o -name "$(notdir $(FILE))" | head -n 1))
-	@if [ -z "$(PROTO_FILE)" ]; then \
-		echo "Error: Proto file '$(FILE)' not found in $(PROTO_SRC_DIR)"; \
-		echo ""; \
-		echo "Available proto files:"; \
-		find $(PROTO_SRC_DIR) -name "*.proto" -type f | sed 's|$(PROTO_SRC_DIR)/||' | sed 's/^/  - /'; \
-		exit 1; \
-	fi
-	$(eval PKG_NAME := $(basename $(notdir $(PROTO_FILE))))
-	@echo "Package name: $(PKG_NAME)"
-	@mkdir -p $(PROTO_OUT_DIR)/$(PKG_NAME)
-	@protoc \
-		--proto_path=$(PROTO_SRC_DIR) \
-		--go_out=$(PROTO_OUT_DIR)/$(PKG_NAME) \
-		--go-grpc_out=$(PROTO_OUT_DIR)/$(PKG_NAME) \
-		--go_opt=paths=source_relative \
-		--go-grpc_opt=paths=source_relative \
-		$(PROTO_FILE)
-	@echo "Protobufs generated successfully in $(PROTO_OUT_DIR)/$(PKG_NAME)"
+	@powershell -Command "if ('$(FILE)' -eq '') { Write-Host 'Error: FILE parameter is required'; Write-Host ''; Write-Host 'Usage: make proto FILE=<proto-file>'; Write-Host ''; Write-Host 'Available proto files:'; Get-ChildItem -Path $(PROTO_SRC_DIR) -Filter *.proto -Recurse -File | ForEach-Object { Write-Host \"  - $($_.Name)\" }; Write-Host ''; Write-Host 'Example: make proto FILE=user_management.proto'; exit 1 }"
+	@echo 🔧 Generating Go gRPC code for: $(FILE)
+	@powershell -Command "if (-not (Get-Command protoc-gen-go -ErrorAction SilentlyContinue) -or -not (Get-Command protoc-gen-go-grpc -ErrorAction SilentlyContinue)) { Write-Host 'protoc-gen-go or protoc-gen-go-grpc not found in PATH.'; Write-Host '   Please run:'; Write-Host '   go install google.golang.org/protobuf/cmd/protoc-gen-go@latest'; Write-Host '   go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest'; exit 1 }"
+	@powershell -Command "$$protoFile = Get-ChildItem -Path $(PROTO_SRC_DIR) -Filter '$(FILE)' -Recurse -File | Select-Object -First 1; if (-not $$protoFile) { $$protoFile = Get-ChildItem -Path $(PROTO_SRC_DIR) -Filter '$(Split-Path -Leaf $(FILE))' -Recurse -File | Select-Object -First 1 }; if (-not $$protoFile) { Write-Host \"Error: Proto file '$(FILE)' not found in $(PROTO_SRC_DIR)\"; Write-Host ''; Write-Host 'Available proto files:'; Get-ChildItem -Path $(PROTO_SRC_DIR) -Filter *.proto -Recurse -File | ForEach-Object { Write-Host \"  - $($_.Name)\" }; exit 1 }; $$pkgName = [System.IO.Path]::GetFileNameWithoutExtension($$protoFile.Name); $$relativePath = $$protoFile.FullName.Substring((Get-Location).Path.Length + 1); Write-Host \"Package name: $$pkgName\"; Write-Host \"Proto file: $$relativePath\"; New-Item -ItemType Directory -Force -Path $(PROTO_OUT_DIR)\$$pkgName | Out-Null; protoc --proto_path=$(PROTO_SRC_DIR) --go_out=$(PROTO_OUT_DIR)\$$pkgName --go-grpc_out=$(PROTO_OUT_DIR)\$$pkgName --go_opt=paths=source_relative --go-grpc_opt=paths=source_relative $$relativePath; if ($$LASTEXITCODE -eq 0) { Write-Host \"Protobufs generated successfully in $(PROTO_OUT_DIR)\$$pkgName\" }"
 
 # Generate all proto files
 proto-all:
-	@echo "🔧 Generating Go gRPC code for all proto files"
-	@if [ -z "$(shell which protoc-gen-go)" ] || [ -z "$(shell which protoc-gen-go-grpc)" ]; then \
-		echo "protoc-gen-go or protoc-gen-go-grpc not found in PATH."; \
-		echo "   Please run:"; \
-		echo "   go install google.golang.org/protobuf/cmd/protoc-gen-go@latest"; \
-		echo "   go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest"; \
-		exit 1; \
-	fi
-	@for proto_file in $$(find $(PROTO_SRC_DIR) -name "*.proto"); do \
-		pkg_name=$$(basename $$proto_file .proto); \
-		echo "Generating $$pkg_name from $$proto_file"; \
-		mkdir -p $(PROTO_OUT_DIR)/$$pkg_name; \
-		protoc \
-			--proto_path=$(PROTO_SRC_DIR) \
-			--go_out=$(PROTO_OUT_DIR)/$$pkg_name \
-			--go-grpc_out=$(PROTO_OUT_DIR)/$$pkg_name \
-			--go_opt=paths=source_relative \
-			--go-grpc_opt=paths=source_relative \
-			$$proto_file; \
-	done
-	@echo "All protobufs generated successfully"
+	@echo 🔧 Generating Go gRPC code for all proto files
+	@powershell -Command "if (-not (Get-Command protoc-gen-go -ErrorAction SilentlyContinue) -or -not (Get-Command protoc-gen-go-grpc -ErrorAction SilentlyContinue)) { Write-Host 'protoc-gen-go or protoc-gen-go-grpc not found in PATH.'; Write-Host '   Please run:'; Write-Host '   go install google.golang.org/protobuf/cmd/protoc-gen-go@latest'; Write-Host '   go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest'; exit 1 }"
+	@powershell -Command "Get-ChildItem -Path $(PROTO_SRC_DIR) -Filter *.proto -Recurse -File | ForEach-Object { $$protoFile = $$_; $$pkgName = [System.IO.Path]::GetFileNameWithoutExtension($$protoFile.Name); $$relativePath = $$protoFile.FullName.Substring((Get-Location).Path.Length + 1); Write-Host ('Generating ' + $$pkgName + ' from ' + $$relativePath); New-Item -ItemType Directory -Force -Path $(PROTO_OUT_DIR)\$$pkgName | Out-Null; protoc --proto_path=$(PROTO_SRC_DIR) --go_out=$(PROTO_OUT_DIR)\$$pkgName --go-grpc_out=$(PROTO_OUT_DIR)\$$pkgName --go_opt=paths=source_relative --go-grpc_opt=paths=source_relative $$relativePath; if ($$LASTEXITCODE -ne 0) { Write-Host ('❌ Failed to generate ' + $$pkgName); exit 1 } }; Write-Host '✅ All protobufs generated successfully'"
 
 # Clean generated files
 proto-clean:
 	@echo "Cleaning generated proto files..."
-	@rm -rf $(PROTO_OUT_DIR)
+	@powershell -Command "if (Test-Path $(PROTO_OUT_DIR)) { Remove-Item -Recurse -Force $(PROTO_OUT_DIR) }"
 	@echo "Clean complete"
 
 .PHONY: proto proto-all proto-clean list-protos
@@ -128,17 +69,16 @@ proto-clean:
 # ------------------------------
 clean:
 	@echo "Cleaning generated protobuf files..."
-	@rm -rf $(PROTO_OUT_DIR)
+	@powershell -Command "if (Test-Path $(PROTO_OUT_DIR)) { Remove-Item -Recurse -Force $(PROTO_OUT_DIR) }"
 	@echo "Clean complete."
 
 PROTO_DIR := proto
 PROTO_SRC := $(wildcard $(PROTO_DIR)/*.proto)
 GO_OUT := .
 
-
 run:
-	go run ./services/api-gateway/cmd/main.go &
-	go run ./services/user-management-service/cmd/main.go &
-	go run ./services/order-service/cmd/main.go &
-	go run ./services/payment-service/cmd/main.go &
-	wait
+	@powershell -Command "Start-Process -NoNewWindow go -ArgumentList 'run', './services/api-gateway/cmd/main.go'"
+	@powershell -Command "Start-Process -NoNewWindow go -ArgumentList 'run', './services/user-management-service/cmd/main.go'"
+	@powershell -Command "Start-Process -NoNewWindow go -ArgumentList 'run', './services/order-service/cmd/main.go'"
+	@powershell -Command "Start-Process -NoNewWindow go -ArgumentList 'run', './services/payment-service/cmd/main.go'"
+	@echo "All services started"

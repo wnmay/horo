@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"encoding/json"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -49,29 +48,16 @@ func (a *AuthMiddleware) AddClaims(c *fiber.Ctx) error {
 		})
 	}
 
-	// Parse existing body
-	var body map[string]interface{}
-	if err := c.BodyParser(&body); err != nil {
-		// If body is empty or invalid, create new map
-		body = make(map[string]interface{})
-	}
+	// Strip any existing X-User-* headers from incoming request to prevent header injection
+	c.Request().Header.Del("X-User-Id")
+	c.Request().Header.Del("X-User-Email")
+	c.Request().Header.Del("X-User-Role")
 
-	// Add claims to body
-	body["claims"] = map[string]string{
-		"user_id": claimsResp.UserId,
-		"email":   claimsResp.Email,
-		"role":    claimsResp.Role,
-	}
+	// Add claims as headers for upstream services
+	c.Request().Header.Set("X-User-Id", claimsResp.UserId)
+	c.Request().Header.Set("X-User-Email", claimsResp.Email)
+	c.Request().Header.Set("X-User-Role", claimsResp.Role)
 
-	// Update request body with claims
-	c.Request().SetBody([]byte(mustMarshal(body)))
-	c.Request().Header.SetContentType("application/json")
-
-	// Continue to next handler
+	// Continue to next handler (proxy to upstream service)
 	return c.Next()
-}
-
-func mustMarshal(v interface{}) string {
-	b, _ := json.Marshal(v)
-	return string(b)
 }
