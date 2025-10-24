@@ -1,15 +1,21 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	grpcinfra "github.com/wnmay/horo/services/api-gateway/internal/grpc"
-	pb "github.com/wnmay/horo/shared/proto/user-management"
 )
 
 type UserHandler struct {
-	UserManagementClient pb.UserManagementServiceClient
-	validator            *validator.Validate
+	userManagementURL string
+	httpClient        *http.Client
+	validator         *validator.Validate
 }
 
 type RegisterRequest struct {
@@ -18,16 +24,32 @@ type RegisterRequest struct {
 	Role     string `json:"role" validate:"required"`
 }
 
-func NewUserHandler(client *grpcinfra.GrpcClients) *UserHandler {
+type RegisterHTTPRequest struct {
+	FirebaseToken string `json:"firebaseToken"`
+	FullName      string `json:"fullName"`
+	Role          string `json:"role"`
+}
+
+type RegisterHTTPResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message,omitempty"`
+}
+
+func NewUserHandler() *UserHandler {
 	validate := validator.New()
+	userManagementURL := os.Getenv("USER_MANAGEMENT_SERVICE_URL")
+	if userManagementURL == "" {
+		userManagementURL = "http://localhost:8080"
+	}
+
 	return &UserHandler{
-		UserManagementClient: client.UserManagementClient,
-		validator:            validate,
+		userManagementURL: userManagementURL,
+		httpClient:        &http.Client{},
+		validator:         validate,
 	}
 }
 
 func (h *UserHandler) Register(c *fiber.Ctx) error {
-
 	// Parse request body
 	var req RegisterRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -43,20 +65,52 @@ func (h *UserHandler) Register(c *fiber.Ctx) error {
 		})
 	}
 
-	// Call gRPC client
-	ctx := c.Context()
-
-	grpcReq := &pb.RegisterRequest{
+	// Prepare HTTP request to user-management-service
+	httpReq := RegisterHTTPRequest{
 		FirebaseToken: req.IdToken,
 		FullName:      req.FullName,
 		Role:          req.Role,
 	}
 
-	_, err := h.UserManagementClient.Register(ctx, grpcReq)
+	jsonData, err := json.Marshal(httpReq)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to marshal request",
+		})
+	}
+
+	// Make HTTP POST request
+	url := fmt.Sprintf("%s/users/register", h.userManagementURL)
+	resp, err := h.httpClient.Post(url, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "failed to register user",
 			"details": err.Error(),
+		})
+	}
+	defer resp.Body.Close()
+
+	// Read response
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to read response",
+		})
+	}
+
+	// Parse response
+	var registerResp RegisterHTTPResponse
+	if err := json.Unmarshal(body, &registerResp); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to parse response",
+		})
+	}
+
+	// Handle non-success status codes
+	if resp.StatusCode != http.StatusCreated {
+		return c.Status(resp.StatusCode).JSON(fiber.Map{
+			"error":   "failed to register user",
+			"details": registerResp.Message,
 		})
 	}
 
