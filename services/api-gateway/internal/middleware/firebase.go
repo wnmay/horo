@@ -37,7 +37,7 @@ func (a *AuthMiddleware) AddClaims(c *fiber.Ctx) error {
 	// Call gRPC to validate token and get claims
 	ctx := c.Context()
 	grpcReq := &pb.GetClaimsRequest{
-		FirebaseToken: token,
+		IdToken: token,
 	}
 
 	claimsResp, err := a.authGrpcClient.GetClaims(ctx, grpcReq)

@@ -22,7 +22,7 @@ func NewHTTPHandler(userService ports.UserManagementService) *HTTPHandler {
 }
 
 type RegisterRequest struct {
-	FirebaseToken string `json:"firebaseToken" validate:"required"`
+	IdToken string `json:"idToken" validate:"required"`
 	FullName      string `json:"fullName" validate:"required"`
 	Role          string `json:"role" validate:"required"`
 }
@@ -67,15 +67,15 @@ func (h *HTTPHandler) Register(c *fiber.Ctx) error {
 	}
 
 	// Validate required fields
-	if req.FirebaseToken == "" || req.FullName == "" || req.Role == "" {
+	if req.IdToken == "" || req.FullName == "" || req.Role == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(RegisterResponse{
 			Success: false,
-			Message: "Missing required fields: firebaseToken, fullName, and role are required",
+			Message: "Missing required fields: idToken, fullName, and role are required",
 		})
 	}
 
 	ctx := context.Background()
-	err := h.userService.Register(ctx, req.FirebaseToken, req.FullName, req.Role)
+	err := h.userService.Register(ctx, req.IdToken, req.FullName, req.Role)
 	if err != nil {
 		log.Printf("Registration failed: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(RegisterResponse{

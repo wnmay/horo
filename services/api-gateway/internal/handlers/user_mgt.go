@@ -24,12 +24,6 @@ type RegisterRequest struct {
 	Role     string `json:"role" validate:"required"`
 }
 
-type RegisterHTTPRequest struct {
-	FirebaseToken string `json:"firebaseToken"`
-	FullName      string `json:"fullName"`
-	Role          string `json:"role"`
-}
-
 type RegisterHTTPResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message,omitempty"`
@@ -65,14 +59,7 @@ func (h *UserHandler) Register(c *fiber.Ctx) error {
 		})
 	}
 
-	// Prepare HTTP request to user-management-service
-	httpReq := RegisterHTTPRequest{
-		FirebaseToken: req.IdToken,
-		FullName:      req.FullName,
-		Role:          req.Role,
-	}
-
-	jsonData, err := json.Marshal(httpReq)
+	jsonData, err := json.Marshal(req)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to marshal request",
