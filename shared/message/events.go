@@ -3,6 +3,7 @@ package message
 const (
 	CreatePaymentQueue = "create_payment_queue"
 	UpdateOrderStatusQueue = "update_order_status_queue"
+	UpdatePaymentIDQueue = "update_payment_id_queue"
 
 	DeadLetterQueue = "dead_letter_queue"
 )

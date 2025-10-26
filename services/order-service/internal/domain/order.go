@@ -1,5 +1,4 @@
-package entity
-
+package domain
 import (
 	"time"
 
@@ -7,7 +6,6 @@ import (
 )
 
 type OrderStatus string
-
 const (
 	StatusPending   OrderStatus = "PENDING"
 	StatusConfirmed OrderStatus = "CONFIRMED"

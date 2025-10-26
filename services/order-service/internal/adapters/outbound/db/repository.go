@@ -9,7 +9,7 @@ import (
 	"log"
 
 	"github.com/google/uuid"
-	"github.com/wnmay/horo/services/order-service/internal/domain/entity"
+	"github.com/wnmay/horo/services/order-service/internal/domain"
 	"gorm.io/gorm"
 )
 
@@ -47,19 +47,19 @@ func NewRepository(db *gorm.DB) *Repository {
 }
 
 // Create saves a new order to the database
-func (r *Repository) Create(ctx context.Context, order *entity.Order) error {
+func (r *Repository) Create(ctx context.Context, order *domain.Order) error {
 	orderModel := toOrderModel(order)
 	result := r.db.WithContext(ctx).Create(orderModel)
 	return result.Error
 }
 // Get all orders
-func (r *Repository) GetAll(ctx context.Context) ([]*entity.Order, error) {
+func (r *Repository) GetAll(ctx context.Context) ([]*domain.Order, error) {
 	var orderModels []Order
 	result := r.db.WithContext(ctx).Find(&orderModels)
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	orders := make([]*entity.Order, len(orderModels))
+	orders := make([]*domain.Order, len(orderModels))
 	for i, model := range orderModels {
 		orders[i] = toOrderEntity(&model)
 	
@@ -67,7 +67,7 @@ func (r *Repository) GetAll(ctx context.Context) ([]*entity.Order, error) {
 	return orders, nil
 }
 // GetByID retrieves an order by its ID
-func (r *Repository) GetByID(ctx context.Context, orderID uuid.UUID) (*entity.Order, error) {
+func (r *Repository) GetByID(ctx context.Context, orderID uuid.UUID) (*domain.Order, error) {
 	var orderModel Order
 	result := r.db.WithContext(ctx).Where("order_id = ?", orderID).First(&orderModel)
 
@@ -82,7 +82,7 @@ func (r *Repository) GetByID(ctx context.Context, orderID uuid.UUID) (*entity.Or
 }
 
 // GetByCustomerID retrieves all orders for a specific customer
-func (r *Repository) GetByCustomerID(ctx context.Context, customerID string) ([]*entity.Order, error) {
+func (r *Repository) GetByCustomerID(ctx context.Context, customerID string) ([]*domain.Order, error) {
 	var orderModels []Order
 	result := r.db.WithContext(ctx).Where("customer_id = ?", customerID).Find(&orderModels)
 
@@ -90,7 +90,7 @@ func (r *Repository) GetByCustomerID(ctx context.Context, customerID string) ([]
 		return nil, result.Error
 	}
 
-	orders := make([]*entity.Order, len(orderModels))
+	orders := make([]*domain.Order, len(orderModels))
 	for i, model := range orderModels {
 		orders[i] = toOrderEntity(&model)
 	}
@@ -99,7 +99,7 @@ func (r *Repository) GetByCustomerID(ctx context.Context, customerID string) ([]
 }
 
 // Update saves changes to an existing order
-func (r *Repository) Update(ctx context.Context, order *entity.Order) error {
+func (r *Repository) Update(ctx context.Context, order *domain.Order) error {
 	orderModel := toOrderModel(order)
 	result := r.db.WithContext(ctx).Save(orderModel)
 	return result.Error
@@ -123,7 +123,7 @@ func (r *Repository) AutoMigrate() error {
 }
 
 // Mapping functions between domain entity and database model
-func toOrderModel(order *entity.Order) *Order {
+func toOrderModel(order *domain.Order) *Order {
 	model := &Order{
 		OrderID:    order.OrderID,
 		CustomerID: order.CustomerID,
@@ -139,12 +139,12 @@ func toOrderModel(order *entity.Order) *Order {
 	return model
 }
 
-func toOrderEntity(model *Order) *entity.Order {
-	order := &entity.Order{
+func toOrderEntity(model *Order) *domain.Order {
+	order := &domain.Order{
 		OrderID:    model.OrderID,
 		CustomerID: model.CustomerID,
 		CourseID:   model.CourseID,
-		Status:     entity.OrderStatus(model.Status),
+		Status:     domain.OrderStatus(model.Status),
 		OrderDate:  model.OrderDate,
 	}
 

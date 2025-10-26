@@ -5,7 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/wnmay/horo/services/order-service/internal/domain/entity"
+	"github.com/wnmay/horo/services/order-service/internal/domain"
 	"github.com/wnmay/horo/services/order-service/internal/ports/inbound"
 )
 
@@ -158,7 +158,7 @@ func (h *Handler) UpdateOrderStatus(c *fiber.Ctx) error {
 	// Parse status
 	status := req.Status
 
-	if err := h.orderService.UpdateOrderStatus(c.Context(), orderID, entity.OrderStatus(status)); err != nil {
+	if err := h.orderService.UpdateOrderStatus(c.Context(), orderID, domain.OrderStatus(status)); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})

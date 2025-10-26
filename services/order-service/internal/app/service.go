@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/wnmay/horo/services/order-service/internal/domain/entity"
+	"github.com/wnmay/horo/services/order-service/internal/domain"
 	"github.com/wnmay/horo/services/order-service/internal/ports/inbound"
 	"github.com/wnmay/horo/services/order-service/internal/ports/outbound"
 )
@@ -28,9 +28,9 @@ func NewOrderService(
 	}
 }
 
-func (s *OrderService) CreateOrder(ctx context.Context, cmd inbound.CreateOrderCommand) (*entity.Order, error) {
+func (s *OrderService) CreateOrder(ctx context.Context, cmd inbound.CreateOrderCommand) (*domain.Order, error) {
 	// Create new order entity
-	order := entity.NewOrder(cmd.CustomerID, cmd.CourseID)
+	order := domain.NewOrder(cmd.CustomerID, cmd.CourseID)
 
 	// Save order to repository
 	if err := s.orderRepo.Create(ctx, order); err != nil {
@@ -52,7 +52,7 @@ func (s *OrderService) CreateOrder(ctx context.Context, cmd inbound.CreateOrderC
 
 	return order, nil
 }
-func (s *OrderService) GetOrders(ctx context.Context) ([]*entity.Order, error) {
+func (s *OrderService) GetOrders(ctx context.Context) ([]*domain.Order, error) {
 	orders, err := s.orderRepo.GetAll(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get orders: %w", err)
@@ -60,7 +60,7 @@ func (s *OrderService) GetOrders(ctx context.Context) ([]*entity.Order, error) {
 	return orders, nil
 }
 
-func (s *OrderService) GetOrderByID(ctx context.Context, orderID uuid.UUID) (*entity.Order, error) {
+func (s *OrderService) GetOrderByID(ctx context.Context, orderID uuid.UUID) (*domain.Order, error) {
 	order, err := s.orderRepo.GetByID(ctx, orderID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get order: %w", err)
@@ -68,7 +68,7 @@ func (s *OrderService) GetOrderByID(ctx context.Context, orderID uuid.UUID) (*en
 	return order, nil
 }
 
-func (s *OrderService) GetOrdersByCustomer(ctx context.Context, customerID string) ([]*entity.Order, error) {
+func (s *OrderService) GetOrdersByCustomer(ctx context.Context, customerID string) ([]*domain.Order, error) {
 	orders, err := s.orderRepo.GetByCustomerID(ctx, customerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get orders for customer: %w", err)
@@ -76,7 +76,7 @@ func (s *OrderService) GetOrdersByCustomer(ctx context.Context, customerID strin
 	return orders, nil
 }
 
-func (s *OrderService) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status entity.OrderStatus) error {
+func (s *OrderService) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status domain.OrderStatus) error {
 	order, err := s.orderRepo.GetByID(ctx, orderID)
 	if err != nil {
 		return fmt.Errorf("failed to get order: %w", err)
@@ -88,6 +88,30 @@ func (s *OrderService) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID,
 	// Save updated order
 	if err := s.orderRepo.Update(ctx, order); err != nil {
 		return fmt.Errorf("failed to update order: %w", err)
+	}
+
+	return nil
+}
+
+func (s *OrderService) UpdateOrderPaymentID(ctx context.Context, orderID string, paymentID string) error {
+	// Parse order ID
+	parsedOrderID, err := uuid.Parse(orderID)
+	if err != nil {
+		return fmt.Errorf("invalid order ID format: %w", err)
+	}
+
+	// Get order
+	order, err := s.orderRepo.GetByID(ctx, parsedOrderID)
+	if err != nil {
+		return fmt.Errorf("failed to get order: %w", err)
+	}
+
+	// Update payment ID
+	order.PaymentID = paymentID
+
+	// Save updated order
+	if err := s.orderRepo.Update(ctx, order); err != nil {
+		return fmt.Errorf("failed to update order with payment ID: %w", err)
 	}
 
 	return nil
