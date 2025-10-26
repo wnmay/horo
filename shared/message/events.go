@@ -14,6 +14,7 @@ type OrderData struct {
 	OrderID    string `json:"order_id"`
 	CustomerID string `json:"customer_id"`
 	Status     string `json:"status"`
+	Amount    float64   `json:"amount"`
 }
 
 type PaymentSuccessData struct {

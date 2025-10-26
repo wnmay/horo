@@ -22,11 +22,13 @@ func NewPublisher(rabbit *message.RabbitMQ) outbound.EventPublisher {
 }
 
 func (p *Publisher) PublishOrderCreated(ctx context.Context, order *entity.Order) error {
+	coursePrice := 200
 	// Create order data for the event
 	orderData := message.OrderData{
 		OrderID:    order.OrderID.String(),
 		CustomerID: order.CustomerID,
 		Status:     string(order.Status),
+		Amount: coursePrice,
 	}
 
 	// Marshal the order data

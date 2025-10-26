@@ -27,9 +27,10 @@ func (c *Consumer) StartListening() error {
 	// The queue setup should be done in the RabbitMQ setup
 	// For now, we'll directly consume from a predefined queue
 	queueName := message.CreatePaymentQueue
+	routingKey := contract.OrderCreatedEvent
 
 	// Start consuming messages
-	return c.rabbit.ConsumeMessages(queueName, c.handleOrderCreated)
+	return c.rabbit.ConsumeMessages(queueName, routingKey)
 }
 
 func (c *Consumer) handleOrderCreated(ctx context.Context, delivery amqp.Delivery) error {

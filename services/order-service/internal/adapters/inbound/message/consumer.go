@@ -10,6 +10,7 @@ import (
 	"github.com/wnmay/horo/services/order-service/internal/domain/entity"
 	"github.com/wnmay/horo/services/order-service/internal/ports/inbound"
 	"github.com/wnmay/horo/shared/message"
+	"github.com/wnmay/horo/shared/contract"
 )
 
 type Consumer struct {
@@ -27,7 +28,7 @@ func NewConsumer(orderService inbound.OrderService, rabbit *message.RabbitMQ) *C
 func (c *Consumer) StartListening() error {
 	// Listen to the UpdateOrderStatusQueue for payment success events
 	queueName := message.UpdateOrderStatusQueue
-	routingKey := "payment.completed" // Listen for payment completion events
+	routingKey := contract.PaymentSuccessEvent 
 
 	// Declare the queue first before consuming
 	if err := c.rabbit.DeclareQueue(queueName, routingKey); err != nil {

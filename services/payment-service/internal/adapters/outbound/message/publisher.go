@@ -10,17 +10,17 @@ import (
 	"github.com/wnmay/horo/shared/message"
 )
 
-type EventPublisher struct {
+type Publisher struct {
 	rabbit *message.RabbitMQ
 }
 
-func NewEventPublisher(rabbit *message.RabbitMQ) *EventPublisher {
-	return &EventPublisher{
+func NewPublisher(rabbit *message.RabbitMQ) *EventPublisher {
+	return &Publisher{
 		rabbit: rabbit,
 	}
 }
 
-func (p *EventPublisher) PublishPaymentCompleted(ctx context.Context, payment *domain.Payment) error {
+func (p *Publisher) PublishPaymentCompleted(ctx context.Context, payment *domain.Payment) error {
 	// Create payment success data
 	paymentData := message.PaymentSuccessData{
 		OrderID:       payment.OrderID,

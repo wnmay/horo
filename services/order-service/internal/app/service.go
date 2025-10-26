@@ -52,8 +52,15 @@ func (s *OrderService) CreateOrder(ctx context.Context, cmd inbound.CreateOrderC
 
 	return order, nil
 }
+func (s *OrderService) GetOrders(ctx context.Context) ([]*entity.Order, error) {
+	orders, err := s.orderRepo.GetAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get orders: %w", err)
+	}
+	return orders, nil
+}
 
-func (s *OrderService) GetOrder(ctx context.Context, orderID uuid.UUID) (*entity.Order, error) {
+func (s *OrderService) GetOrderByID(ctx context.Context, orderID uuid.UUID) (*entity.Order, error) {
 	order, err := s.orderRepo.GetByID(ctx, orderID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get order: %w", err)

@@ -9,5 +9,5 @@ type AmqpMessage struct {
 // Routing keys - using consistent event/command patterns
 const (
 	OrderCreatedEvent  = "order.created"
-	PaymentSuccessEvent = "payment.succeeded"
+	PaymentSuccessEvent = "payment.complete"
 )
