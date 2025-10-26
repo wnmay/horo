@@ -91,7 +91,7 @@ func (c *Consumer) publishPaymentCreated(ctx context.Context, orderID, paymentID
     }
 
     amqpMessage := contract.AmqpMessage{
-        OwnerId: orderID,
+        OwnerID: orderID,
         Data:    dataBytes,
     }
 	 return c.rabbit.PublishMessage(ctx, contract.PaymentCreatedEvent, amqpMessage)
