@@ -14,7 +14,7 @@ type Publisher struct {
 	rabbit *message.RabbitMQ
 }
 
-func NewPublisher(rabbit *message.RabbitMQ) *EventPublisher {
+func NewPublisher(rabbit *message.RabbitMQ) *Publisher {
 	return &Publisher{
 		rabbit: rabbit,
 	}
@@ -49,7 +49,7 @@ func (p *Publisher) PublishPaymentCompleted(ctx context.Context, payment *domain
 	return nil
 }
 
-func (p *EventPublisher) PublishPaymentFailed(ctx context.Context, payment *domain.Payment) error {
+func (p *Publisher) PublishPaymentFailed(ctx context.Context, payment *domain.Payment) error {
 	// Create payment failure data (using a simple structure for now)
 	paymentFailureData := map[string]interface{}{
 		"order_id":   payment.OrderID,
