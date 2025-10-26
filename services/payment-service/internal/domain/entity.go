@@ -18,7 +18,7 @@ type Payment struct {
 	PaymentID string    `json:"payment_id"`
 	OrderID   string    `json:"order_id"`
 	Amount    float64   `json:"amount"`
-	Status    string    `json:"status"`
+	Status    PaymentStatus    `json:"status"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -29,19 +29,19 @@ func NewPayment(orderID string, amount float64) *Payment {
 		PaymentID: uuid.New().String(),
 		OrderID:   orderID,
 		Amount:    amount,
-		Status:    string(PaymentStatusPending),
+		Status:    PaymentStatusPending,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
 }
 
 func (p *Payment) Complete() {
-	p.Status = string(PaymentStatusCompleted)
+	p.Status = PaymentStatusCompleted
 	p.UpdatedAt = time.Now()
 }
 
 func (p *Payment) Fail() {
-	p.Status = string(PaymentStatusFailed)
+	p.Status = PaymentStatusFailed
 	p.UpdatedAt = time.Now()
 }
 

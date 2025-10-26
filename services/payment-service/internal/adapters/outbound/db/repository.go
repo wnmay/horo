@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"time"
+
 	"github.com/wnmay/horo/services/payment-service/internal/domain"
 	"github.com/wnmay/horo/services/payment-service/internal/ports/outbound"
 	"gorm.io/gorm"
@@ -13,7 +14,7 @@ type paymentModel struct {
 	PaymentID string    `gorm:"primaryKey;type:uuid;column:payment_id"`
 	OrderID   string    `gorm:"not null;index;type:uuid"`
 	Amount    float64   `gorm:"not null"`
-	Status    string    `gorm:"not null;default:pending"`
+	Status    domain.PaymentStatus `gorm:"not null;default:PENDING"`
 	CreatedAt time.Time `gorm:"not null"`
 	UpdatedAt time.Time `gorm:"not null"`
 }
