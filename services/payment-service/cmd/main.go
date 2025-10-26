@@ -1,26 +1,21 @@
 package main
 
 import (
-	"context"
-	"encoding/base64"
-	"encoding/json"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
-	amqp "github.com/rabbitmq/amqp091-go"
-	"github.com/wnmay/horo/services/payment-service/internal/adapters/outbound/db"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/wnmay/horo/services/payment-service/internal/adapters/inbound/http"
 	inboundMessage "github.com/wnmay/horo/services/payment-service/internal/adapters/inbound/message"
-	"github.com/wnmay/horo/services/payment-service/internal/domain"
-	"github.com/wnmay/horo/shared/contract"
+	"github.com/wnmay/horo/services/payment-service/internal/adapters/outbound/db"
+	outboundMessage "github.com/wnmay/horo/services/payment-service/internal/adapters/outbound/message"
+	"github.com/wnmay/horo/services/payment-service/internal/app"
 	sharedDB "github.com/wnmay/horo/shared/db"
 	"github.com/wnmay/horo/shared/env"
 	sharedMessage "github.com/wnmay/horo/shared/message"
-	"github.com/wnmay/horo/shared/contract"
 )
 
 func main() {
@@ -47,9 +42,9 @@ func main() {
 	log.Println("RabbitMQ connected successfully")
 	
 	// Initialize publisher
-	eventPublisher := message.NewPublisher(rabbit)
+	eventPublisher := outboundMessage.NewPublisher(rabbit)
 	// Initialize application service
-	paymentService = app.NewPaymentService(paymentRepo, eventPublisher)
+	paymentService := app.NewPaymentService(paymentRepo, eventPublisher)
 	// Initialize consumer
 	consumer := inboundMessage.NewConsumer(paymentService, rabbit)
 	go func() {
@@ -62,10 +57,9 @@ func main() {
 	httpHandler := http.NewHandler(paymentService)
 	// Initialize fiber app
 	appFiber := fiber.New(fiber.Config{
-		AppName: "Payment Service"
+		AppName: "Payment Service",
 	})
 	// Add middleware
-	appFiber.Use(logger.New())
 	appFiber.Use(cors.New())
 	
 	// Health check
