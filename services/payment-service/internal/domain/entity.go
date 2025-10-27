@@ -11,6 +11,7 @@ type PaymentStatus string
 const (
 	PaymentStatusPending   PaymentStatus = "PENDING"
 	PaymentStatusCompleted PaymentStatus = "COMPLETED"
+	PaymentStatusSettled PaymentStatus = "SETTLED"
 	PaymentStatusFailed    PaymentStatus = "FAILED"
 )
 
@@ -37,6 +38,11 @@ func NewPayment(orderID string, amount float64) *Payment {
 
 func (p *Payment) Complete() {
 	p.Status = PaymentStatusCompleted
+	p.UpdatedAt = time.Now()
+}
+
+func (p *Payment) Settle() {
+	p.Status = PaymentStatusSettled
 	p.UpdatedAt = time.Now()
 }
 
