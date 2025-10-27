@@ -12,11 +12,12 @@ import (
 	
 	"github.com/wnmay/horo/services/order-service/internal/adapters/inbound/http"
 	inboundMessage "github.com/wnmay/horo/services/order-service/internal/adapters/inbound/message"
+	"github.com/wnmay/horo/services/order-service/internal/adapters/outbound/db"
 	"github.com/wnmay/horo/services/order-service/internal/adapters/outbound/grpc"
 	"github.com/wnmay/horo/services/order-service/internal/adapters/outbound/message"
 	"github.com/wnmay/horo/services/order-service/internal/app"
 	"github.com/wnmay/horo/services/order-service/internal/ports/outbound"
-	"github.com/wnmay/horo/shared/db"
+	sharedDB "github.com/wnmay/horo/shared/db"
 	"github.com/wnmay/horo/shared/env"
 	sharedMessage "github.com/wnmay/horo/shared/message"
 )
@@ -30,10 +31,10 @@ func main() {
 	port := env.GetString("REST_PORT", "3002")
 
 	// Initialize database
-	gormDB := db.MustOpen()
+	gormDB := sharedDB.MustOpen()
 	
 	// Initialize repository
-	repo := repository.NewRepository(gormDB)
+	repo := db.NewRepository(gormDB)
 	
 	// Run migrations
 	if err := repo.AutoMigrate(); err != nil {

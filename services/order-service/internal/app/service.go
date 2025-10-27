@@ -93,21 +93,15 @@ func (s *OrderService) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID,
 	return nil
 }
 
-func (s *OrderService) UpdateOrderPaymentID(ctx context.Context, orderID string, paymentID string) error {
-	// Parse order ID
-	parsedOrderID, err := uuid.Parse(orderID)
-	if err != nil {
-		return fmt.Errorf("invalid order ID format: %w", err)
-	}
-
+func (s *OrderService) UpdateOrderPaymentID(ctx context.Context, orderID uuid.UUID, paymentID uuid.UUID) error {
 	// Get order
-	order, err := s.orderRepo.GetByID(ctx, parsedOrderID)
+	order, err := s.orderRepo.GetByID(ctx, orderID)
 	if err != nil {
 		return fmt.Errorf("failed to get order: %w", err)
 	}
 
-	// Update payment ID
-	order.PaymentID = paymentID
+	// Update payment ID using the SetPaymentID method
+	order.SetPaymentID(paymentID)
 
 	// Save updated order
 	if err := s.orderRepo.Update(ctx, order); err != nil {

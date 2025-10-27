@@ -7,7 +7,6 @@ import (
 	"math/rand"
 	"time"
 
-	""
 	"github.com/wnmay/horo/services/payment-service/internal/domain"
 	"github.com/wnmay/horo/services/payment-service/internal/ports/inbound"
 	"github.com/wnmay/horo/services/payment-service/internal/ports/outbound"
@@ -66,7 +65,7 @@ func (s *Service) UpdatePaymentStatus(ctx context.Context, paymentID string, sta
 		return fmt.Errorf("failed to get payment: %w", err)
 	}
 
-	payment.Status = status
+	payment.Status = string(status)
 	payment.UpdatedAt = time.Now()
 
 	if err := s.paymentRepo.Update(ctx, payment); err != nil {

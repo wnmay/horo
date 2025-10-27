@@ -134,8 +134,22 @@ func (c *Consumer) handlePaymentCreated(ctx context.Context, delivery amqp.Deliv
 
     log.Printf("Updating order %s with payment ID %s", paymentData.OrderID, paymentData.PaymentID)
 
+    // Parse order ID
+    orderID, err := uuid.Parse(paymentData.OrderID)
+    if err != nil {
+        log.Printf("Invalid order ID format: %s", paymentData.OrderID)
+        return err
+    }
+
+    // Parse payment ID
+    paymentID, err := uuid.Parse(paymentData.PaymentID)
+    if err != nil {
+        log.Printf("Invalid payment ID format: %s", paymentData.PaymentID)
+        return err
+    }
+
     // Update order with payment ID
-    if err := c.orderService.UpdateOrderPaymentID(ctx, paymentData.OrderID, paymentData.PaymentID); err != nil {
+    if err := c.orderService.UpdateOrderPaymentID(ctx, orderID, paymentID); err != nil {
         log.Printf("Failed to update order with payment ID: %v", err)
         return err
     }

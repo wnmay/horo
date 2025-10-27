@@ -22,7 +22,7 @@ func NewPublisher(rabbit *message.RabbitMQ) outbound.EventPublisher {
 }
 
 func (p *Publisher) PublishOrderCreated(ctx context.Context, order *domain.Order) error {
-	coursePrice := 200
+	coursePrice := 200.0
 	// Create order data for the event
 	orderData := message.OrderData{
 		OrderID:    order.OrderID.String(),
