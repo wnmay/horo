@@ -37,7 +37,7 @@ func (r *Router) SetupRoutes() {
 }
 
 func (r *Router) setupUserRoutes(api fiber.Router) {
-	userHandler := handlers.NewUserHandler(r.grpcClients)
+	userHandler := handlers.NewUserHandler()
 
 	users := api.Group("/users")
 	users.Post("/register", userHandler.Register)

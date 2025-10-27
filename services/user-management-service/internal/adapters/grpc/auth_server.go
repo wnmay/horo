@@ -17,7 +17,7 @@ func NewAuthServer(authService ports.AuthService) *AuthServer {
 }
 
 func (s *AuthServer) GetClaims(ctx context.Context, req *proto.GetClaimsRequest) (*proto.GetClaimsResponse, error) {
-	claims, err := s.authService.GetClaims(ctx, req.FirebaseToken)
+	claims, err := s.authService.GetClaims(ctx, req.IdToken)
 	if err != nil {
 		return nil, err
 	}
