@@ -1,4 +1,4 @@
-package publisher
+package message
 
 import (
 	"context"
@@ -7,25 +7,26 @@ import (
 
 	"github.com/wnmay/horo/services/payment-service/internal/domain"
 	"github.com/wnmay/horo/shared/contract"
-	"github.com/wnmay/horo/shared/message"
+	sharedMessage "github.com/wnmay/horo/shared/message"
 )
 
 type Publisher struct {
-	rabbit *message.RabbitMQ
+	rabbit *sharedMessage.RabbitMQ
 }
 
-func NewPublisher(rabbit *message.RabbitMQ) *Publisher {
+func NewPublisher(rabbit *sharedMessage.RabbitMQ) *Publisher {
 	return &Publisher{
 		rabbit: rabbit,
 	}
 }
 
 func (p *Publisher) PublishPaymentCompleted(ctx context.Context, payment *domain.Payment) error {
-	// Create payment success data
-	paymentData := message.PaymentSuccessData{
-		OrderID:       payment.OrderID,
-		PaymentMethod: "credit_card",
-		TransactionID: payment.PaymentID, // Using PaymentID as TransactionID for now
+	// Create payment completion data
+	paymentData := map[string]interface{}{
+		"payment_id": payment.PaymentID,
+		"order_id":   payment.OrderID,
+		"status":     payment.Status,
+		"amount":     payment.Amount,
 	}
 
 	// Marshal the payment data

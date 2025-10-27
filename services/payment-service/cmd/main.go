@@ -8,10 +8,11 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+
 	"github.com/wnmay/horo/services/payment-service/internal/adapters/inbound/http"
 	inboundMessage "github.com/wnmay/horo/services/payment-service/internal/adapters/inbound/message"
 	"github.com/wnmay/horo/services/payment-service/internal/adapters/outbound/db"
-	outboundMessage "github.com/wnmay/horo/services/payment-service/internal/adapters/outbound/message"
+	"github.com/wnmay/horo/services/payment-service/internal/adapters/outbound/message"
 	"github.com/wnmay/horo/services/payment-service/internal/app"
 	sharedDB "github.com/wnmay/horo/shared/db"
 	"github.com/wnmay/horo/shared/env"
@@ -42,9 +43,11 @@ func main() {
 	log.Println("RabbitMQ connected successfully")
 	
 	// Initialize publisher
-	eventPublisher := outboundMessage.NewPublisher(rabbit)
+	eventPublisher := message.NewPublisher(rabbit)
+	
 	// Initialize application service
 	paymentService := app.NewPaymentService(paymentRepo, eventPublisher)
+	
 	// Initialize consumer
 	consumer := inboundMessage.NewConsumer(paymentService, rabbit)
 	go func() {
@@ -53,12 +56,15 @@ func main() {
 			log.Printf("Failed to start order created consumer: %v", err)
 		}
 	}()
+	
 	// Initialize HTTP server
 	httpHandler := http.NewHandler(paymentService)
+	
 	// Initialize fiber app
 	appFiber := fiber.New(fiber.Config{
 		AppName: "Payment Service",
 	})
+	
 	// Add middleware
 	appFiber.Use(cors.New())
 	
@@ -85,11 +91,10 @@ func main() {
 	waitForSignal()
 	
 	// Graceful shutdown
-	log.Println("Shutting down order service...")
+	log.Println("Shutting down payment service...")
 	if err := appFiber.Shutdown(); err != nil {
 		log.Printf("Error during shutdown: %v", err)
 	}
-	
 }
 
 func waitForSignal() {

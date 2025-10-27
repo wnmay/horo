@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sync"
 
 	firebase "github.com/wnmay/horo/services/user-management-service/internal/adapters/auth"
 	"github.com/wnmay/horo/services/user-management-service/internal/adapters/db"
 	grpcadapter "github.com/wnmay/horo/services/user-management-service/internal/adapters/grpc"
+	httpadapter "github.com/wnmay/horo/services/user-management-service/internal/adapters/http"
 	"github.com/wnmay/horo/services/user-management-service/internal/app"
 	"github.com/wnmay/horo/services/user-management-service/internal/config"
 	"github.com/wnmay/horo/shared/env"
@@ -40,24 +42,42 @@ func main() {
 	authApp := app.NewAuthService(firebaseAdapter)
 
 	// Create grpc server
-	userServer := grpcadapter.NewUserManagementServer(userApp)
 	authServer := grpcadapter.NewAuthServer(authApp)
 
 	grpcServer := grpc.NewServer()
 
-	// Register both services on the same server
-	proto.RegisterUserManagementServiceServer(grpcServer, userServer)
+	// Register auth service on gRPC (user registration is now HTTP)
 	proto.RegisterAuthServiceServer(grpcServer, authServer)
 
-	// Start listening
-	address := fmt.Sprintf(":%s", cfg.GRPCPort)
-	lis, err := net.Listen("tcp", address)
-	if err != nil {
-		log.Fatalf("failed to listen on port %s: %v", cfg.GRPCPort, err)
-	}
+	// Create HTTP handler
+	httpHandler := httpadapter.NewHTTPHandler(userApp)
 
-	log.Printf("gRPC server started on port %s", cfg.GRPCPort)
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("failed to serve gRPC: %v", err)
-	}
+	// Use WaitGroup to run both servers
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	// Start gRPC server
+	go func() {
+		defer wg.Done()
+		address := fmt.Sprintf(":%s", cfg.GRPCPort)
+		lis, err := net.Listen("tcp", address)
+		if err != nil {
+			log.Fatalf("failed to listen on gRPC port %s: %v", cfg.GRPCPort, err)
+		}
+
+		log.Printf("gRPC server started on port %s", cfg.GRPCPort)
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Fatalf("failed to serve gRPC: %v", err)
+		}
+	}()
+
+	// Start HTTP server
+	go func() {
+		defer wg.Done()
+		if err := httpadapter.StartHTTPServer(httpHandler, cfg.HTTPPort); err != nil {
+			log.Fatalf("failed to serve HTTP: %v", err)
+		}
+	}()
+
+	wg.Wait()
 }

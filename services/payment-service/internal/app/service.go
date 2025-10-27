@@ -7,7 +7,6 @@ import (
 	"math/rand"
 	"time"
 
-	""
 	"github.com/wnmay/horo/services/payment-service/internal/domain"
 	"github.com/wnmay/horo/services/payment-service/internal/ports/inbound"
 	"github.com/wnmay/horo/services/payment-service/internal/ports/outbound"
