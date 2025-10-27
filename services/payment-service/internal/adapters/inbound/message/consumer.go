@@ -69,30 +69,5 @@ func (c *Consumer) handleOrderCreated(ctx context.Context, delivery amqp.Deliver
 
 	log.Printf("Successfully created payment %s for order %s", payment.PaymentID, orderData.OrderID)
 
-	if err := c.publishPaymentCreated(ctx, orderData.OrderID, payment.PaymentID); err != nil {
-        log.Printf("Failed to publish payment created event: %v", err)
-    }
-
 	return nil
-}
-
-func (c *Consumer) publishPaymentCreated(ctx context.Context, orderID, paymentID string) error {
-    paymentData := struct {
-        OrderID   string `json:"orderId"`
-        PaymentID string `json:"paymentId"`
-    }{
-        OrderID:   orderID,
-        PaymentID: paymentID,
-    }
-
-    dataBytes, err := json.Marshal(paymentData)
-    if err != nil {
-        return err
-    }
-
-    amqpMessage := contract.AmqpMessage{
-        OwnerID: orderID,
-        Data:    dataBytes,
-    }
-	 return c.rabbit.PublishMessage(ctx, contract.PaymentCreatedEvent, amqpMessage)
 }
