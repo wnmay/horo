@@ -5,9 +5,8 @@ import (
 )
 
 type GrpcClients struct {
-	UserManagementClient pb.UserManagementServiceClient
-	AuthServiceClient    pb.AuthServiceClient
-	connManager          *ConnectionManager
+	AuthServiceClient pb.AuthServiceClient
+	connManager       *ConnectionManager
 }
 
 func NewGrpcClients(userManagementAddr string) (*GrpcClients, error) {
@@ -17,13 +16,11 @@ func NewGrpcClients(userManagementAddr string) (*GrpcClients, error) {
 	if err != nil {
 		return nil, err
 	}
-	userManagementClient := pb.NewUserManagementServiceClient(userManagementConn)
 	authClient := pb.NewAuthServiceClient(userManagementConn)
-	
+
 	return &GrpcClients{
-		UserManagementClient: userManagementClient,
-		AuthServiceClient:    authClient,
-		connManager:          cm,
+		AuthServiceClient: authClient,
+		connManager:       cm,
 	}, nil
 }
 
