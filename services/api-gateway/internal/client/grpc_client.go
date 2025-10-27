@@ -1,16 +1,17 @@
-package grpcinfra
+package client
 
 import (
 	pb "github.com/wnmay/horo/shared/proto/user-management"
+	"github.com/wnmay/horo/services/api-gateway/internal/services/grpc"
 )
 
 type GrpcClients struct {
 	AuthServiceClient pb.AuthServiceClient
-	connManager       *ConnectionManager
+	connManager       *grpc_connection.ConnectionManager
 }
 
 func NewGrpcClients(userManagementAddr string) (*GrpcClients, error) {
-	cm := NewConnectionManager()
+	cm := grpc_connection.NewConnectionManager()
 
 	userManagementConn, err := cm.GetConnection(userManagementAddr)
 	if err != nil {

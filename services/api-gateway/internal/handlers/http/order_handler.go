@@ -1,5 +1,5 @@
-// internal/handlers/order_handler.go
-package handlers
+// internal/handlers/http/order_handler.go
+package http_handler
 
 import (
 	"bytes"

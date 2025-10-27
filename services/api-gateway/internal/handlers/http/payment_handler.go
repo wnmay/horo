@@ -1,5 +1,5 @@
-// internal/handlers/payment_handler.go
-package handlers
+// internal/handlers/http/payment_handler.go
+package http_handler
 
 import (
 	"bytes"

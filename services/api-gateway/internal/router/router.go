@@ -3,17 +3,17 @@ package router
 
 import (
 	"github.com/gofiber/fiber/v2"
-	grpcinfra "github.com/wnmay/horo/services/api-gateway/internal/grpc"
-	"github.com/wnmay/horo/services/api-gateway/internal/handlers"
+	"github.com/wnmay/horo/services/api-gateway/internal/client"
+	http_handler "github.com/wnmay/horo/services/api-gateway/internal/handlers/http"
 	"github.com/wnmay/horo/services/api-gateway/internal/middleware"
 )
 
 type Router struct {
 	app         *fiber.App
-	grpcClients *grpcinfra.GrpcClients
+	grpcClients *client.GrpcClients
 }
 
-func NewRouter(app *fiber.App, grpcClients *grpcinfra.GrpcClients) *Router {
+func NewRouter(app *fiber.App, grpcClients *client.GrpcClients) *Router {
 	return &Router{
 		app:         app,
 		grpcClients: grpcClients,
@@ -37,7 +37,7 @@ func (r *Router) SetupRoutes() {
 }
 
 func (r *Router) setupUserRoutes(api fiber.Router) {
-	userHandler := handlers.NewUserHandler()
+	userHandler := http_handler.NewUserHandler()
 
 	users := api.Group("/users")
 	users.Post("/register", userHandler.Register)
@@ -45,7 +45,7 @@ func (r *Router) setupUserRoutes(api fiber.Router) {
 
 func (r *Router) setupOrderRoutes(api fiber.Router) {
 	authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
-	orderHandler := handlers.NewOrderHandler()
+	orderHandler := http_handler.NewOrderHandler()
 	orders := api.Group("/orders")
 
 	orders.Post("/", authMiddleware.AddClaims, orderHandler.CreateOrder)
@@ -57,7 +57,7 @@ func (r *Router) setupOrderRoutes(api fiber.Router) {
 
 func (r *Router) setupPaymentRoutes(api fiber.Router) {
 	authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
-	paymentHandler := handlers.NewPaymentHandler()
+	paymentHandler := http_handler.NewPaymentHandler()
 
 	payments := api.Group("/payments")
 	payments.Get("/:id", authMiddleware.AddClaims, paymentHandler.GetPayment)
