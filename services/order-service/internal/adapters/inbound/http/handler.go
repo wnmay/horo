@@ -1,11 +1,9 @@
 package http
 
 import (
-	"fmt"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/wnmay/horo/services/order-service/internal/domain/entity"
+	"github.com/wnmay/horo/services/order-service/internal/domain"
 	"github.com/wnmay/horo/services/order-service/internal/ports/inbound"
 )
 
@@ -24,7 +22,8 @@ func (h *Handler) Register(app *fiber.App) {
 	orders := api.Group("/orders")
 
 	orders.Post("/", h.CreateOrder)
-	orders.Get("/:id", h.GetOrder)
+	orders.Get("/", h.GetOrders)
+	orders.Get("/:id", h.GetOrderByID)
 	orders.Get("/customer/:customerID", h.GetOrdersByCustomer)
 	orders.Put("/:id/status", h.UpdateOrderStatus)
 }
@@ -51,10 +50,10 @@ func (h *Handler) CreateOrder(c *fiber.Ctx) error {
 	}
 
 	// Debug logging to see what we received
-	fmt.Printf("Received request: %+v\n", req)
-	fmt.Printf("Claims: %+v\n", req.Claims)
-	fmt.Printf("CustomerID: '%s'\n", req.Claims.CustomerID)
-	fmt.Printf("CourseID: '%s'\n", req.CourseID)
+	// fmt.Printf("Received request: %+v\n", req)
+	// fmt.Printf("Claims: %+v\n", req.Claims)
+	// fmt.Printf("CustomerID: '%s'\n", req.Claims.CustomerID)
+	// fmt.Printf("CourseID: '%s'\n", req.CourseID)
 
 	// Validate required fields
 	if req.Claims.CustomerID == "" {
@@ -93,8 +92,17 @@ func (h *Handler) CreateOrder(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusCreated).JSON(order)
 }
+func (h *Handler) GetOrders(c *fiber.Ctx) error {
+	orders, err := h.orderService.GetOrders(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return c.JSON(orders)
+}
 
-func (h *Handler) GetOrder(c *fiber.Ctx) error {
+func (h *Handler) GetOrderByID(c *fiber.Ctx) error {
 	orderID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -102,7 +110,7 @@ func (h *Handler) GetOrder(c *fiber.Ctx) error {
 		})
 	}
 
-	order, err := h.orderService.GetOrder(c.Context(), orderID)
+	order, err := h.orderService.GetOrderByID(c.Context(), orderID)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": err.Error(),
@@ -148,7 +156,7 @@ func (h *Handler) UpdateOrderStatus(c *fiber.Ctx) error {
 	// Parse status
 	status := req.Status
 
-	if err := h.orderService.UpdateOrderStatus(c.Context(), orderID, entity.OrderStatus(status)); err != nil {
+	if err := h.orderService.UpdateOrderStatus(c.Context(), orderID, domain.OrderStatus(status)); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})

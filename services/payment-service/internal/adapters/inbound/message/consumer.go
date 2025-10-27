@@ -24,9 +24,13 @@ func NewConsumer(paymentService inbound.PaymentService, rabbit *message.RabbitMQ
 }
 
 func (c *Consumer) StartListening() error {
-	// The queue setup should be done in the RabbitMQ setup
-	// For now, we'll directly consume from a predefined queue
 	queueName := message.CreatePaymentQueue
+	routingKey := contract.OrderCreatedEvent
+
+	// Declare the queue
+	if err := c.rabbit.DeclareQueue(queueName, routingKey); err != nil {
+		return err
+	}
 
 	// Start consuming messages
 	return c.rabbit.ConsumeMessages(queueName, c.handleOrderCreated)
@@ -64,5 +68,31 @@ func (c *Consumer) handleOrderCreated(ctx context.Context, delivery amqp.Deliver
 	}
 
 	log.Printf("Successfully created payment %s for order %s", payment.PaymentID, orderData.OrderID)
+
+	if err := c.publishPaymentCreated(ctx, orderData.OrderID, payment.PaymentID); err != nil {
+        log.Printf("Failed to publish payment created event: %v", err)
+    }
+
 	return nil
+}
+
+func (c *Consumer) publishPaymentCreated(ctx context.Context, orderID, paymentID string) error {
+    paymentData := struct {
+        OrderID   string `json:"orderId"`
+        PaymentID string `json:"paymentId"`
+    }{
+        OrderID:   orderID,
+        PaymentID: paymentID,
+    }
+
+    dataBytes, err := json.Marshal(paymentData)
+    if err != nil {
+        return err
+    }
+
+    amqpMessage := contract.AmqpMessage{
+        OwnerID: orderID,
+        Data:    dataBytes,
+    }
+	 return c.rabbit.PublishMessage(ctx, contract.PaymentCreatedEvent, amqpMessage)
 }

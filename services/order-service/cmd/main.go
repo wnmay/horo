@@ -12,12 +12,12 @@ import (
 	
 	"github.com/wnmay/horo/services/order-service/internal/adapters/inbound/http"
 	inboundMessage "github.com/wnmay/horo/services/order-service/internal/adapters/inbound/message"
+	"github.com/wnmay/horo/services/order-service/internal/adapters/outbound/db"
 	"github.com/wnmay/horo/services/order-service/internal/adapters/outbound/grpc"
 	"github.com/wnmay/horo/services/order-service/internal/adapters/outbound/message"
-	"github.com/wnmay/horo/services/order-service/internal/adapters/outbound/repository"
 	"github.com/wnmay/horo/services/order-service/internal/app"
 	"github.com/wnmay/horo/services/order-service/internal/ports/outbound"
-	"github.com/wnmay/horo/shared/db"
+	sharedDB "github.com/wnmay/horo/shared/db"
 	"github.com/wnmay/horo/shared/env"
 	sharedMessage "github.com/wnmay/horo/shared/message"
 )
@@ -31,32 +31,16 @@ func main() {
 	port := env.GetString("REST_PORT", "3002")
 
 	// Initialize database
-	gormDB := db.MustOpen()
+	gormDB := sharedDB.MustOpen()
 	
 	// Initialize repository
-	repo := repository.NewRepository(gormDB)
+	repo := db.NewRepository(gormDB)
 	
 	// Run migrations
 	if err := repo.AutoMigrate(); err != nil {
 		log.Fatal("Failed to migrate database:", err)
 	}
 	
-	// Verify table exists
-	if gormDB.Migrator().HasTable("orders") {
-		log.Println("✅ Orders table exists")
-		
-		// Count rows to verify table structure
-		var count int64
-		gormDB.Table("orders").Count(&count)
-		log.Printf("Orders table has %d rows", count)
-	} else {
-		log.Println("❌ Orders table does NOT exist")
-		
-		// List all tables in database
-		var tables []string
-		gormDB.Raw("SELECT tablename FROM pg_tables WHERE schemaname = 'public'").Scan(&tables)
-		log.Printf("Available tables: %v", tables)
-	}
 	
 	// Use the repo as orderRepo (cast to interface)
 	orderRepo := outbound.OrderRepository(repo)
@@ -85,7 +69,7 @@ func main() {
 	go func() {
 		log.Println("Starting payment success consumer...")
 		if err := consumer.StartListening(); err != nil {
-			log.Printf("Failed to start payment consumer: %v", err)
+			log.Printf("Failed to start payment success consumer: %v", err)
 		}
 	}()
 

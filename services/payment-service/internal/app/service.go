@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"time"	
+	"time"
+
 	"github.com/wnmay/horo/services/payment-service/internal/domain"
 	"github.com/wnmay/horo/services/payment-service/internal/ports/inbound"
 	"github.com/wnmay/horo/services/payment-service/internal/ports/outbound"
@@ -64,8 +65,8 @@ func (s *Service) UpdatePaymentStatus(ctx context.Context, paymentID string, sta
 		return fmt.Errorf("failed to get payment: %w", err)
 	}
 
-	payment.PaymentStatus = status
-	payment.PaymentDate = time.Now()
+	payment.Status = string(status)
+	payment.UpdatedAt = time.Now()
 
 	if err := s.paymentRepo.Update(ctx, payment); err != nil {
 		return fmt.Errorf("failed to update payment: %w", err)

@@ -1,55 +1,155 @@
 package db
 
 import (
+	"time"
+
+	"github.com/google/uuid"
 	"context"
+	"errors"
+	"log"
 
 	"github.com/wnmay/horo/services/order-service/internal/domain"
-	"github.com/wnmay/horo/services/order-service/internal/ports/outbound"
-
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"gorm.io/gorm"
 )
 
-type personDoc struct {
-	ID   string `bson:"_id"`
-	Name string `bson:"name"`
+type OrderStatus string
+
+const (
+	StatusPending    OrderStatus = "PENDING"
+	StatusCancelled  OrderStatus = "CANCELLED"
+	StatusFailed     OrderStatus = "CONFIRMED"
+)
+
+type Order struct {
+	OrderID     uuid.UUID   `gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	CustomerID  string      `gorm:"type:varchar(255);not null"`
+	CourseID    uuid.UUID   `gorm:"type:uuid;not null"`
+	PaymentID   uuid.UUID   `gorm:"type:uuid"` 
+	Status      OrderStatus `gorm:"type:varchar(20);not null"`
+	OrderDate   time.Time   `gorm:"not null"`
 }
 
-type MongoPersonRepository struct {
-	col *mongo.Collection
+func (o *Order) TableName() string {
+	return "orders"
 }
 
-var _ outbound.PersonRepository = (*MongoPersonRepository)(nil)
-
-func NewMongoPersonRepository(db *mongo.Database) *MongoPersonRepository {
-	col := db.Collection("order")
-	_, _ = col.Indexes().CreateOne(context.Background(), mongo.IndexModel{
-		Keys:    bson.D{{Key: "name", Value: 1}},
-		Options: options.Index().SetName("idx_name_asc"),
-	})
-	return &MongoPersonRepository{col: col}
+// Repository implements the OrderRepository interface
+type Repository struct {
+	db *gorm.DB
 }
 
-func (r *MongoPersonRepository) Save(p domain.Person) error {
-	_, err := r.col.InsertOne(context.Background(), personDoc{ID: p.ID, Name: p.Name})
-	return err
-}
-
-func (r *MongoPersonRepository) GetAll() ([]domain.Person, error) {
-	cur, err := r.col.Find(context.Background(), bson.D{}, options.Find().SetSort(bson.D{{Key: "name", Value: 1}}))
-	if err != nil {
-		return nil, err
+// NewRepository creates a new PostgreSQL order repository
+func NewRepository(db *gorm.DB) *Repository {
+	return &Repository{
+		db: db,
 	}
-	defer cur.Close(context.Background())
+}
 
-	var out []domain.Person
-	for cur.Next(context.Background()) {
-		var d personDoc
-		if err := cur.Decode(&d); err != nil {
-			return nil, err
+// Create saves a new order to the database
+func (r *Repository) Create(ctx context.Context, order *domain.Order) error {
+	orderModel := toOrderModel(order)
+	result := r.db.WithContext(ctx).Create(orderModel)
+	return result.Error
+}
+// Get all orders
+func (r *Repository) GetAll(ctx context.Context) ([]*domain.Order, error) {
+	var orderModels []Order
+	result := r.db.WithContext(ctx).Find(&orderModels)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	orders := make([]*domain.Order, len(orderModels))
+	for i, model := range orderModels {
+		orders[i] = toOrderEntity(&model)
+	
+	}
+	return orders, nil
+}
+// GetByID retrieves an order by its ID
+func (r *Repository) GetByID(ctx context.Context, orderID uuid.UUID) (*domain.Order, error) {
+	var orderModel Order
+	result := r.db.WithContext(ctx).Where("order_id = ?", orderID).First(&orderModel)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, errors.New("order not found")
 		}
-		out = append(out, domain.Person{ID: d.ID, Name: d.Name})
+		return nil, result.Error
 	}
-	return out, cur.Err()
+
+	return toOrderEntity(&orderModel), nil
+}
+
+// GetByCustomerID retrieves all orders for a specific customer
+func (r *Repository) GetByCustomerID(ctx context.Context, customerID string) ([]*domain.Order, error) {
+	var orderModels []Order
+	result := r.db.WithContext(ctx).Where("customer_id = ?", customerID).Find(&orderModels)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	orders := make([]*domain.Order, len(orderModels))
+	for i, model := range orderModels {
+		orders[i] = toOrderEntity(&model)
+	}
+
+	return orders, nil
+}
+
+// Update saves changes to an existing order
+func (r *Repository) Update(ctx context.Context, order *domain.Order) error {
+	orderModel := toOrderModel(order)
+	result := r.db.WithContext(ctx).Save(orderModel)
+	return result.Error
+}
+
+// Delete removes an order from the database
+func (r *Repository) Delete(ctx context.Context, orderID uuid.UUID) error {
+	result := r.db.WithContext(ctx).Delete(&Order{}, "order_id = ?", orderID)
+	return result.Error
+}
+
+// AutoMigrate runs database migrations for the Order table
+func (r *Repository) AutoMigrate() error {
+	if err := r.db.AutoMigrate(&Order{}); err != nil {
+		log.Printf("Migration failed: %v", err)
+		return err
+	}
+
+	log.Printf("Orders table migrated successfully")
+	return nil
+}
+
+// Mapping functions between domain entity and database model
+func toOrderModel(order *domain.Order) *Order {
+	model := &Order{
+		OrderID:    order.OrderID,
+		CustomerID: order.CustomerID,
+		CourseID:   order.CourseID,
+		Status:     OrderStatus(order.Status),
+		OrderDate:  order.OrderDate,
+	}
+
+	if order.PaymentID != nil {
+		model.PaymentID = *order.PaymentID
+	}
+
+	return model
+}
+
+func toOrderEntity(model *Order) *domain.Order {
+	order := &domain.Order{
+		OrderID:    model.OrderID,
+		CustomerID: model.CustomerID,
+		CourseID:   model.CourseID,
+		Status:     domain.OrderStatus(model.Status),
+		OrderDate:  model.OrderDate,
+	}
+
+	if model.PaymentID != (uuid.UUID{}) {
+		order.PaymentID = &model.PaymentID
+	}
+
+	return order
 }

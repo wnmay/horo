@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/wnmay/horo/services/order-service/internal/domain/entity"
+	"github.com/wnmay/horo/services/order-service/internal/domain"
 	"github.com/wnmay/horo/services/order-service/internal/ports/outbound"
 	"github.com/wnmay/horo/shared/contract"
 	"github.com/wnmay/horo/shared/message"
@@ -21,12 +21,14 @@ func NewPublisher(rabbit *message.RabbitMQ) outbound.EventPublisher {
 	}
 }
 
-func (p *Publisher) PublishOrderCreated(ctx context.Context, order *entity.Order) error {
+func (p *Publisher) PublishOrderCreated(ctx context.Context, order *domain.Order) error {
+	coursePrice := 200.0
 	// Create order data for the event
 	orderData := message.OrderData{
 		OrderID:    order.OrderID.String(),
 		CustomerID: order.CustomerID,
 		Status:     string(order.Status),
+		Amount: coursePrice,
 	}
 
 	// Marshal the order data

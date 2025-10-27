@@ -1,4 +1,4 @@
-package publisher
+package message
 
 import (
 	"context"
@@ -7,25 +7,26 @@ import (
 
 	"github.com/wnmay/horo/services/payment-service/internal/domain"
 	"github.com/wnmay/horo/shared/contract"
-	"github.com/wnmay/horo/shared/message"
+	sharedMessage "github.com/wnmay/horo/shared/message"
 )
 
-type EventPublisher struct {
-	rabbit *message.RabbitMQ
+type Publisher struct {
+	rabbit *sharedMessage.RabbitMQ
 }
 
-func NewEventPublisher(rabbit *message.RabbitMQ) *EventPublisher {
-	return &EventPublisher{
+func NewPublisher(rabbit *sharedMessage.RabbitMQ) *Publisher {
+	return &Publisher{
 		rabbit: rabbit,
 	}
 }
 
-func (p *EventPublisher) PublishPaymentCompleted(ctx context.Context, payment *domain.Payment) error {
-	// Create payment success data
-	paymentData := message.PaymentSuccessData{
-		OrderID:       payment.OrderID,
-		PaymentMethod: "credit_card",
-		TransactionID: payment.PaymentID, // Using PaymentID as TransactionID for now
+func (p *Publisher) PublishPaymentCompleted(ctx context.Context, payment *domain.Payment) error {
+	// Create payment completion data
+	paymentData := map[string]interface{}{
+		"payment_id": payment.PaymentID,
+		"order_id":   payment.OrderID,
+		"status":     payment.Status,
+		"amount":     payment.Amount,
 	}
 
 	// Marshal the payment data
@@ -49,7 +50,7 @@ func (p *EventPublisher) PublishPaymentCompleted(ctx context.Context, payment *d
 	return nil
 }
 
-func (p *EventPublisher) PublishPaymentFailed(ctx context.Context, payment *domain.Payment) error {
+func (p *Publisher) PublishPaymentFailed(ctx context.Context, payment *domain.Payment) error {
 	// Create payment failure data (using a simple structure for now)
 	paymentFailureData := map[string]interface{}{
 		"order_id":   payment.OrderID,
