@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,6 +25,10 @@ type Payment struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+var (
+	ErrInvalidTransition = errors.New("invalid payment status transition")
+)
+
 func NewPayment(orderID string, amount float64) *Payment {
 	now := time.Now()
 	return &Payment{
@@ -36,14 +41,28 @@ func NewPayment(orderID string, amount float64) *Payment {
 	}
 }
 
-func (p *Payment) Complete() {
+func (p *Payment) Complete() error {
+	if p.Status == PaymentStatusCompleted {
+		return nil
+	}
+	if p.Status != PaymentStatusPending {
+		return ErrInvalidTransition
+	}
 	p.Status = PaymentStatusCompleted
 	p.UpdatedAt = time.Now()
+	return nil
 }
 
-func (p *Payment) Settle() {
+func (p *Payment) Settle() error {
+	if p.Status == PaymentStatusSettled {
+		return nil
+	}
+	if p.Status != PaymentStatusCompleted {
+		return ErrInvalidTransition
+	}
 	p.Status = PaymentStatusSettled
 	p.UpdatedAt = time.Now()
+	return nil
 }
 
 func (p *Payment) Fail() {
