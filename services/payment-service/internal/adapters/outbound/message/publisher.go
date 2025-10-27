@@ -78,3 +78,29 @@ func (p *Publisher) PublishPaymentFailed(ctx context.Context, payment *domain.Pa
 	fmt.Printf("Published payment failed event for order: %s, payment: %s\n", payment.OrderID, payment.PaymentID)
 	return nil
 }
+
+func (p *Publisher) PublishPaymentCreated(ctx context.Context, payment *domain.Payment) error {
+	paymentData := map[string]interface{}{
+		"payment_id": payment.PaymentID,
+		"order_id":   payment.OrderID,
+		"status":     payment.Status,
+		"amount":     payment.Amount,
+		"created_at": payment.CreatedAt,
+	}
+
+	data, err := json.Marshal(paymentData)
+	if err != nil {
+		return fmt.Errorf("failed to marshal payment data: %w", err)
+	}
+
+	amqpMessage := contract.AmqpMessage{
+		OwnerID: payment.OrderID,
+		Data:    data,
+	}
+
+	if err := p.rabbit.PublishMessage(ctx, contract.PaymentCreatedEvent, amqpMessage); err != nil {
+		return fmt.Errorf("failed to publish payment created event: %w", err)
+	}
+	
+	return nil
+}

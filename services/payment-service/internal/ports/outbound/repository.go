@@ -17,4 +17,5 @@ type PaymentRepository interface {
 type PaymentEventPublisher interface {
 	PublishPaymentCompleted(ctx context.Context, payment *domain.Payment) error
 	PublishPaymentFailed(ctx context.Context, payment *domain.Payment) error
+	PublishPaymentCreated(ctx context.Context, payment *domain.Payment) error
 }
