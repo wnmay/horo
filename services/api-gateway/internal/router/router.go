@@ -4,7 +4,7 @@ package router
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/wnmay/horo/services/api-gateway/internal/client"
-	http_handler "github.com/wnmay/horo/services/api-gateway/internal/handlers/http"
+	http_handler "github.com/wnmay/horo/services/api-gateway/internal/http_handler/http"
 	"github.com/wnmay/horo/services/api-gateway/internal/middleware"
 )
 

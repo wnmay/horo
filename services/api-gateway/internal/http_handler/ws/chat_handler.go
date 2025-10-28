@@ -1,2 +1,2 @@
 package ws_handler
-// For update http to ws connection
+// For update http to ws connection only

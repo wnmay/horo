@@ -40,16 +40,16 @@ func NewRabbitMQ(uri string) (*RabbitMQ, error) {
 		Channel: ch,
 	}
 
-	// Setup exchanges
+	// Setup exchanges only
 	if err := rmq.setupExchanges(); err != nil {
 		rmq.Close()
 		return nil, fmt.Errorf("failed to setup exchanges: %v", err)
 	}
 
-	if err := rmq.setupExchangesAndQueues(); err != nil {
-		// Clean up if setup fails
+	// Setup dead letter infrastructure
+	if err := rmq.setupDeadLetterExchange(); err != nil {
 		rmq.Close()
-		return nil, fmt.Errorf("failed to setup exchanges and queues: %v", err)
+		return nil, fmt.Errorf("failed to setup dead letter exchange: %v", err)
 	}
 
 	return rmq, nil
@@ -68,6 +68,20 @@ func (r *RabbitMQ) setupExchanges() error {
 	)
 	if err != nil {
 		return fmt.Errorf("failed to declare app exchange: %v", err)
+	}
+
+	// Declare chat exchange
+	err = r.Channel.ExchangeDeclare(
+		ChatExchange,
+		"topic",
+		true,  // durable
+		false, // auto-deleted
+		false, // internal
+		false, // no-wait
+		nil,   // arguments
+	)
+	if err != nil {
+		return fmt.Errorf("failed to declare chat exchange: %v", err)
 	}
 
 	// Declare dead letter exchange
@@ -224,54 +238,6 @@ func (r *RabbitMQ) setupDeadLetterExchange() error {
 	)
 	if err != nil {
 		return fmt.Errorf("failed to bind dead letter queue: %v", err)
-	}
-
-	return nil
-}
-
-// func (r *RabbitMQ) setupExchangesAndQueues() error {
-// 	if err := r.setupDeadLetterExchange(); err != nil {
-// 		return err
-// 	}
-
-// 	err := r.Channel.ExchangeDeclare(
-// 		AppExchange, // name
-// 		"topic",      // type
-// 		true,         // durable
-// 		false,        // auto-deleted
-// 		false,        // internal
-// 		false,        // no-wait
-// 		nil,          // arguments
-// 	)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
-
-func (r *RabbitMQ) setupExchangesAndQueues() error {
-	err := r.Channel.ExchangeDeclare(
-		ChatExchange, // name
-		"topic",      // type
-		true,         // durable
-		false,        // auto-deleted
-		false,        // internal
-		false,        // no-wait
-		nil,          // arguments
-	)
-	if err != nil {
-		return fmt.Errorf("failed to declare exchange: %s: %v", ChatExchange, err)
-	}
-	if err := r.declareAndBindQueue(ChatMessageIncomingQueue, []string{
-		contract.ChatMessageIncomingEvent,
-	}, ChatExchange); err != nil {
-		return err
-	}
-
-	if err := r.declareAndBindQueue(ChatMessageOutgoingQueue, []string{
-		contract.ChatMessageOutgoingEvent,
-	}, ChatExchange); err != nil {
-		return err
 	}
 
 	return nil
