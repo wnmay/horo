@@ -11,7 +11,6 @@ type MessageHandler struct {
 
 type CreateRoomRequest struct {
 	CourseID   string `json:"courseID"`
-	CustomerID string `json:"customerID"`
 }
 
 func NewMessageHandler(chatService inbound_port.ChatService) *MessageHandler {
@@ -33,6 +32,7 @@ func (h *MessageHandler) GetMessagesByRoomID(c *fiber.Ctx) error {
 
 func (h *MessageHandler) CreateRoom(c *fiber.Ctx) error {
 	var req CreateRoomRequest
+	customerID := c.Get("X-User-Uid")
 
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -40,7 +40,7 @@ func (h *MessageHandler) CreateRoom(c *fiber.Ctx) error {
 		})
 	}
 
-	roomID, err := h.chatService.InitiateChatRoom(c.Context(), req.CourseID, req.CustomerID)
+	roomID, err := h.chatService.InitiateChatRoom(c.Context(), req.CourseID, customerID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -49,4 +49,26 @@ func (h *MessageHandler) CreateRoom(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"roomID": roomID,
 	})
+}
+
+func (h *MessageHandler) GetChatRoomsByCustomerID(c *fiber.Ctx) error {
+	customerID := c.Get("X-User-Uid")
+	rooms, err := h.chatService.GetChatRoomsByCustomerID(c.Context(), customerID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return c.JSON(rooms)
+}
+
+func (h *MessageHandler) GetChatRoomsByProphetID(c *fiber.Ctx) error {
+	prophetID := c.Get("X-User-Uid")
+	rooms, err := h.chatService.GetChatRoomsByProphetID(c.Context(), prophetID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return c.JSON(rooms)
 }

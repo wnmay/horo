@@ -10,4 +10,6 @@ func SetupHTTPRoutes(app *fiber.App, messageHandler *http_handler.MessageHandler
 
 	api.Get("/:roomID/messages", messageHandler.GetMessagesByRoomID)
 	api.Post("/rooms", messageHandler.CreateRoom)
+	api.Get("/customer/rooms", messageHandler.GetChatRoomsByCustomerID)
+	api.Get("/prophet/rooms", messageHandler.GetChatRoomsByProphetID)
 }
