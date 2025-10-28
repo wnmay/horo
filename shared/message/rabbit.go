@@ -15,7 +15,6 @@ import (
 const (
 	AppExchange        = "app"
 	DeadLetterExchange = "dlx"
-	ChatExchange       = "chat"
 )
 
 type RabbitMQ struct {
@@ -68,20 +67,6 @@ func (r *RabbitMQ) setupExchanges() error {
 	)
 	if err != nil {
 		return fmt.Errorf("failed to declare app exchange: %v", err)
-	}
-
-	// Declare chat exchange
-	err = r.Channel.ExchangeDeclare(
-		ChatExchange,
-		"topic",
-		true,  // durable
-		false, // auto-deleted
-		false, // internal
-		false, // no-wait
-		nil,   // arguments
-	)
-	if err != nil {
-		return fmt.Errorf("failed to declare chat exchange: %v", err)
 	}
 
 	// Declare dead letter exchange
@@ -243,7 +228,7 @@ func (r *RabbitMQ) setupDeadLetterExchange() error {
 	return nil
 }
 
-func (r *RabbitMQ) declareAndBindQueue(queueName string, messageTypes []string, exchange string) error {
+func (r *RabbitMQ) DeclareAndBindQueue(queueName string, messageTypes []string, exchange string) error {
 	// Add dead letter configuration
 	args := amqp.Table{
 		"x-dead-letter-exchange": DeadLetterExchange,

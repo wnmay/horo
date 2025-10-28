@@ -32,8 +32,9 @@ func (s *chatService) InitiateChatRoom(ctx context.Context, courseID string, cus
 	mockProphetID := "prophet-1234"
 	room := domain.CreateRoom(mockProphetID, courseID, customerID)
 	
-	if err := s.roomRepo.CreateRoom(context.Background(), room); err != nil {
+	roomID, err := s.roomRepo.CreateRoom(context.Background(), room)
+	if err != nil {
 		return "", err
 	}
-	return room.ID.Hex(), nil
+	return roomID, nil
 }
