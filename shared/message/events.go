@@ -1,21 +1,21 @@
 package message
 
 const (
-	CreatePaymentQueue = "create_payment_queue"
+	CreatePaymentQueue     = "create_payment_queue"
 	UpdateOrderStatusQueue = "update_order_status_queue"
-	UpdatePaymentIDQueue = "update_payment_id_queue"
+	UpdatePaymentIDQueue   = "update_payment_id_queue"
+	SettlePaymentQueue     = "settle_payment_queue"
 
 	DeadLetterQueue = "dead_letter_queue"
 )
 
-
 // ---- DATA STRUCTURES ----
 
 type OrderData struct {
-	OrderID    string `json:"order_id"`
-	CustomerID string `json:"customer_id"`
-	Status     string `json:"status"`
-	Amount    float64   `json:"amount"`
+	OrderID    string  `json:"order_id"`
+	CustomerID string  `json:"customer_id"`
+	Status     string  `json:"status"`
+	Amount     float64 `json:"amount"`
 }
 
 type PaymentSuccessData struct {

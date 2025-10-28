@@ -24,16 +24,29 @@ func NewConsumer(paymentService inbound.PaymentService, rabbit *message.RabbitMQ
 }
 
 func (c *Consumer) StartListening() error {
-	queueName := message.CreatePaymentQueue
-	routingKey := contract.OrderCreatedEvent
+	createPaymentQueue := message.CreatePaymentQueue
+	OrderCreateRoutingKey := contract.OrderCreatedEvent
 
 	// Declare the queue
-	if err := c.rabbit.DeclareQueue(queueName, routingKey); err != nil {
+	if err := c.rabbit.DeclareQueue(createPaymentQueue, OrderCreateRoutingKey); err != nil {
 		return err
 	}
+    if err := c.rabbit.ConsumeMessages(createPaymentQueue, c.handleOrderCreated); err != nil {
+        return err
+    }
 
-	// Start consuming messages
-	return c.rabbit.ConsumeMessages(queueName, c.handleOrderCreated)
+	settlePaymentQueue := message.SettlePaymentQueue
+	OrderCompleteRoutingKey := contract.OrderCompletedEvent
+
+	if err := c.rabbit.DeclareQueue(settlePaymentQueue, OrderCompleteRoutingKey); err != nil {
+		return err
+	}
+    if err := c.rabbit.ConsumeMessages(settlePaymentQueue, c.handleOrderCompleted); err != nil {
+        return err
+    }
+ 
+	return nil
+
 }
 
 func (c *Consumer) handleOrderCreated(ctx context.Context, delivery amqp.Delivery) error {
@@ -69,30 +82,32 @@ func (c *Consumer) handleOrderCreated(ctx context.Context, delivery amqp.Deliver
 
 	log.Printf("Successfully created payment %s for order %s", payment.PaymentID, orderData.OrderID)
 
-	if err := c.publishPaymentCreated(ctx, orderData.OrderID, payment.PaymentID); err != nil {
-        log.Printf("Failed to publish payment created event: %v", err)
-    }
-
 	return nil
 }
 
-func (c *Consumer) publishPaymentCreated(ctx context.Context, orderID, paymentID string) error {
-    paymentData := struct {
-        OrderID   string `json:"orderId"`
-        PaymentID string `json:"paymentId"`
-    }{
-        OrderID:   orderID,
-        PaymentID: paymentID,
-    }
+func (c *Consumer) handleOrderCompleted(ctx context.Context, delivery amqp.Delivery) error {
+    log.Printf("Received order completed event: %s", delivery.Body)
 
-    dataBytes, err := json.Marshal(paymentData)
-    if err != nil {
+    var amqpMessage contract.AmqpMessage
+    if err := json.Unmarshal(delivery.Body, &amqpMessage); err != nil {
+        log.Printf("Failed to unmarshal AMQP message: %v", err)
         return err
     }
 
-    amqpMessage := contract.AmqpMessage{
-        OwnerID: orderID,
-        Data:    dataBytes,
+    var orderData message.OrderData
+    if err := json.Unmarshal(amqpMessage.Data, &orderData); err != nil {
+        log.Printf("Failed to unmarshal order data: %v", err)
+        return err
     }
-	 return c.rabbit.PublishMessage(ctx, contract.PaymentCreatedEvent, amqpMessage)
+
+    log.Printf("Processing order completed event for order: %s",orderData.OrderID)
+
+    if err := c.paymentService.SettlePayment(ctx, orderData.OrderID); err != nil {
+        log.Printf("Failed to complete payment %s for order %s: %v",
+            orderData.OrderID, orderData.OrderID, err)
+        return err
+    }
+
+    log.Printf("Successfully completed payment for order %s", orderData.OrderID)
+    return nil
 }

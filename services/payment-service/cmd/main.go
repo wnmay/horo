@@ -8,8 +8,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/logger"
-	
+
 	"github.com/wnmay/horo/services/payment-service/internal/adapters/inbound/http"
 	inboundMessage "github.com/wnmay/horo/services/payment-service/internal/adapters/inbound/message"
 	"github.com/wnmay/horo/services/payment-service/internal/adapters/outbound/db"
@@ -67,7 +66,6 @@ func main() {
 	})
 	
 	// Add middleware
-	appFiber.Use(logger.New())
 	appFiber.Use(cors.New())
 	
 	// Health check

@@ -13,8 +13,3 @@ type PaymentRepository interface {
 	Update(ctx context.Context, payment *domain.Payment) error
 	Delete(ctx context.Context, paymentID string) error
 }
-
-type PaymentEventPublisher interface {
-	PublishPaymentCompleted(ctx context.Context, payment *domain.Payment) error
-	PublishPaymentFailed(ctx context.Context, payment *domain.Payment) error
-}
