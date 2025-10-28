@@ -3,17 +3,17 @@ package router
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/wnmay/horo/services/api-gateway/internal/client"
+	"github.com/wnmay/horo/services/api-gateway/internal/clients"
 	http_handler "github.com/wnmay/horo/services/api-gateway/internal/handlers/http"
 	"github.com/wnmay/horo/services/api-gateway/internal/middleware"
 )
 
 type Router struct {
 	app         *fiber.App
-	grpcClients *client.GrpcClients
+	grpcClients *clients.GrpcClients
 }
 
-func NewRouter(app *fiber.App, grpcClients *client.GrpcClients) *Router {
+func NewRouter(app *fiber.App, grpcClients *clients.GrpcClients) *Router {
 	return &Router{
 		app:         app,
 		grpcClients: grpcClients,
