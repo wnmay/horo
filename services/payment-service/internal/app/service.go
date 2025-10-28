@@ -98,3 +98,28 @@ func (s *Service) CompletePayment(ctx context.Context, paymentID string) error {
 	log.Printf("Payment %s completed successfully", payment.PaymentID)
 	return nil
 }
+
+func (s *Service) SettlePayment(ctx context.Context, orderID string) error {
+	payment, err := s.paymentRepo.GetByOrderID(ctx, orderID)
+	if err != nil {
+		return fmt.Errorf("failed to get payment: %w", err)
+	}
+
+	prev := payment.Status
+	if err := payment.Settle(); err != nil {
+		return fmt.Errorf("failed to settle payment: %w", err)
+	}
+
+	if err := s.paymentRepo.Update(ctx, payment); err != nil {
+		return fmt.Errorf("failed to update payment: %w", err)
+	}
+
+	if prev != domain.PaymentStatusSettled && payment.Status == domain.PaymentStatusSettled {
+		if err := s.eventPublisher.PublishPaymentSettled(ctx, payment); err != nil {
+			log.Printf("Payment settled but failed to publish event: %v", err)
+		}
+	}
+
+	log.Printf("Payment %s settled successfully", payment.PaymentID)
+	return nil
+}
