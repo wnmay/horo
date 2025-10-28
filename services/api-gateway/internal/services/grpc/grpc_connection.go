@@ -1,4 +1,4 @@
-package grpcinfra
+package grpc_connection
 
 import (
 	"sync"

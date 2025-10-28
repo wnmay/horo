@@ -9,14 +9,14 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/wnmay/horo/services/api-gateway/internal/config"
-	grpcinfra "github.com/wnmay/horo/services/api-gateway/internal/grpc"
+	client "github.com/wnmay/horo/services/api-gateway/internal/client"
 	gw_router "github.com/wnmay/horo/services/api-gateway/internal/router"
 	"github.com/wnmay/horo/shared/env"
 )
 
 type APIGateway struct {
 	app         *fiber.App
-	grpcClients *grpcinfra.GrpcClients
+	grpcClients *client.GrpcClients
 	router      *gw_router.Router
 	port        string
 }
@@ -27,7 +27,7 @@ const (
 
 func NewAPIGateway(cfg *config.Config) (*APIGateway, error) {
 	// Initialize gRPC clients with all service addresses
-	grpcClients, err := grpcinfra.NewGrpcClients(
+	grpcClients, err := client.NewGrpcClients(
 		cfg.UserManagementAddr,
 	)
 	if err != nil {
