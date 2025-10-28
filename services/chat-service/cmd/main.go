@@ -1,15 +1,18 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
-	chatRabbit "github.com/wnmay/horo/services/chat-service/internal/adapters/inbound/rabbitmq"
+	consumerRabbit "github.com/wnmay/horo/services/chat-service/internal/adapters/inbound/rabbitmq"
 	repository "github.com/wnmay/horo/services/chat-service/internal/adapters/outbound/db"
+	publisherRabbit "github.com/wnmay/horo/services/chat-service/internal/adapters/outbound/rabbitmq"
 	service "github.com/wnmay/horo/services/chat-service/internal/app"
 	"github.com/wnmay/horo/services/chat-service/internal/config"
+	"github.com/wnmay/horo/services/chat-service/internal/infrastructure"
 	"github.com/wnmay/horo/shared/env"
 	"github.com/wnmay/horo/shared/message"
 )
@@ -28,8 +31,7 @@ func main() {
 	}
 	defer rmq.Close()
 
-	// Setup chat service specific queues
-	if err := chatRabbit.SetupChatQueues(rmq); err != nil {
+	if err := infrastructure.SetupChatQueues(rmq); err != nil {
 		log.Fatalf("Failed to setup chat queues: %v", err)
 	}
 
@@ -38,25 +40,45 @@ func main() {
 	roomCollectionName := config.MongoConfig.RoomCollectionName
 	messageCollectionName := config.MongoConfig.MessageCollectionName
 
-	// Initialize MongoDB repositories
-	messageRepo, err := repository.NewMongoMessageRepository(mongoURI, mongoDBName, messageCollectionName)
+	// Initialize MongoDB (single connection pool for all repositories)
+	mongoDB, mongoClient, err := infrastructure.SetupMongoDB(mongoURI, mongoDBName)
 	if err != nil {
-		log.Fatalf("Failed to initialize message repository: %v", err)
+		log.Fatalf("Failed to setup MongoDB: %v", err)
 	}
-	roomRepo, err := repository.NewMongoRoomRepository(mongoURI, mongoDBName, roomCollectionName)
-	if err != nil {
-		log.Fatalf("Failed to initialize room repository: %v", err)
-	}
+	defer func() {
+		if err := mongoClient.Disconnect(context.Background()); err != nil {
+			log.Printf("Error disconnecting MongoDB: %v", err)
+		}
+	}()
 
-	// Initialize chat service
-	chatService := service.NewChatService(messageRepo, roomRepo)
+	// Initialize MongoDB repositories (sharing the same client)
+	messageRepo := repository.NewMongoMessageRepository(mongoDB, messageCollectionName)
+	roomRepo := repository.NewMongoRoomRepository(mongoDB, roomCollectionName)
+
+	messagePublisher := publisherRabbit.NewChatPublisher(rmq)
+
+	chatService := service.NewChatService(messageRepo, roomRepo, messagePublisher)
 
 	// Initialize consumer
-	messageIncomingConsumer := chatRabbit.NewMessageIncomingConsumer(chatService, rmq)
-	log.Println("Msg Incoming Consumer initialized successfully")
+	messageIncomingConsumer := consumerRabbit.NewMessageIncomingConsumer(chatService, rmq)
+	paymentConsumer := consumerRabbit.NewPaymentConsumer(chatService, rmq)
+	log.Println("Consumers initialized successfully")
 
-	// Start listening for messages
-	go messageIncomingConsumer.StartListening()
+	// Start listening for messages from both consumers
+	go func() {
+		if err := messageIncomingConsumer.StartListening(); err != nil {
+			log.Printf("Message incoming consumer error: %v", err)
+		}
+	}()
+
+	go func() {
+		if err := paymentConsumer.StartListening(); err != nil {
+			log.Printf("Payment consumer error: %v", err)
+		}
+	}()
+
+	log.Println("All consumers are listening...")
+
 	// Wait for interrupt signal to gracefully shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)

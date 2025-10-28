@@ -23,6 +23,7 @@ func NewPublisher(rabbit *sharedMessage.RabbitMQ) *Publisher {
 func (p *Publisher) PublishPaymentCompleted(ctx context.Context, payment *domain.Payment) error {
 	// Create payment completion data
 	paymentData := map[string]interface{}{
+		//TO DO: Add course_id, prophet_id, customer_id for this payment
 		"payment_id": payment.PaymentID,
 		"order_id":   payment.OrderID,
 		"status":     payment.Status,

@@ -9,29 +9,18 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type mongoRoomRepository struct {
-	client     *mongo.Client
 	collection *mongo.Collection
 }
 
-func NewMongoRoomRepository(uri, dbName, collectionName string) (outbound_port.RoomRepositoryPort, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
-	if err != nil {
-		return nil, err
-	}
-
-	collection := client.Database(dbName).Collection(collectionName)
+func NewMongoRoomRepository(db *mongo.Database, collectionName string) outbound_port.RoomRepositoryPort {
+	collection := db.Collection(collectionName)
 
 	return &mongoRoomRepository{
-		client:     client,
 		collection: collection,
-	}, nil
+	}
 }
 
 func (r *mongoRoomRepository) FindRoomByID(ctx context.Context, roomID string) (*domain.Room, error) {

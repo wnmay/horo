@@ -12,25 +12,15 @@ import (
 )
 
 type mongoMessageRepository struct {
-	client     *mongo.Client
 	collection *mongo.Collection
 }
 
-func NewMongoMessageRepository(uri, dbName, collectionName string) (repository_port.MessageRepository, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
-	if err != nil {
-		return nil, err
-	}
-
-	collection := client.Database(dbName).Collection(collectionName)
+func NewMongoMessageRepository(db *mongo.Database, collectionName string) repository_port.MessageRepository {
+	collection := db.Collection(collectionName)
 
 	return &mongoMessageRepository{
-		client:     client,
 		collection: collection,
-	}, nil
+	}
 }
 
 func (r *mongoMessageRepository) SaveMessage(ctx context.Context, message *domain.Message) error {
