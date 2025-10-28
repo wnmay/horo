@@ -38,12 +38,13 @@ func NewMongoUserRepository(uri, dbName, collectionName string) (*MongoUserRepos
 // in your repository layer
 func (r *MongoUserRepository) Save(ctx context.Context, user domain.User) error {
 	model := UserModel{
-		ID:       user.ID,
+		UserID:   user.ID,
 		Email:    user.Email,
 		FullName: user.FullName,
+		Role:     user.Role,
 	}
 
-	filter := bson.M{"id": model.ID}
+	filter := bson.M{"user_id": model.UserID}
 	update := bson.M{"$set": model}
 	opts := options.Update().SetUpsert(true)
 

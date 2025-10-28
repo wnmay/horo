@@ -77,8 +77,8 @@ PROTO_SRC := $(wildcard $(PROTO_DIR)/*.proto)
 GO_OUT := .
 
 run:
-	@powershell -Command "Start-Process -NoNewWindow go -ArgumentList 'run', './services/api-gateway/cmd/main.go'"
-	@powershell -Command "Start-Process -NoNewWindow go -ArgumentList 'run', './services/user-management-service/cmd/main.go'"
-	@powershell -Command "Start-Process -NoNewWindow go -ArgumentList 'run', './services/order-service/cmd/main.go'"
-	@powershell -Command "Start-Process -NoNewWindow go -ArgumentList 'run', './services/payment-service/cmd/main.go'"
-	@echo "All services started"
+	@powershell -Command "Start-Process powershell -ArgumentList '-NoExit', '-Command', 'go run ./services/api-gateway/cmd/main.go'"
+	@powershell -Command "Start-Process powershell -ArgumentList '-NoExit', '-Command', 'go run ./services/user-management-service/cmd/main.go'"
+	@powershell -Command "Start-Process powershell -ArgumentList '-NoExit', '-Command', 'go run ./services/order-service/cmd/main.go'"
+	@powershell -Command "Start-Process powershell -ArgumentList '-NoExit', '-Command', 'go run ./services/payment-service/cmd/main.go'"
+	@echo "All services started in separate windows"

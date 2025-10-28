@@ -33,7 +33,7 @@ func NewUserHandler() *UserHandler {
 	validate := validator.New()
 	userManagementURL := os.Getenv("USER_MANAGEMENT_SERVICE_URL")
 	if userManagementURL == "" {
-		userManagementURL = "http://localhost:8080"
+		userManagementURL = "http://localhost:3003"
 	}
 
 	return &UserHandler{
