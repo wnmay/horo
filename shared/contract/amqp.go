@@ -11,4 +11,6 @@ const (
 	OrderCreatedEvent  = "order.created"
 	PaymentSuccessEvent = "payment.complete"
 	PaymentCreatedEvent = "payment.created"
+	ChatMessageIncomingEvent = "chat.message.incoming"
+	ChatMessageOutgoingEvent = "chat.message.outgoing"
 )
