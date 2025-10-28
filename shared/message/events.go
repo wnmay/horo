@@ -1,12 +1,13 @@
 package message
 
 const (
-	CreatePaymentQueue     = "create_payment_queue"
-	UpdateOrderStatusQueue = "update_order_status_queue"
-	UpdatePaymentIDQueue   = "update_payment_id_queue"
+	CreatePaymentQueue       = "create_payment_queue"
+	UpdateOrderStatusQueue   = "update_order_status_queue"
+	UpdatePaymentIDQueue     = "update_payment_id_queue"
+	ChatMessageIncomingQueue = "chat_message_incoming_queue"
+	ChatMessageOutgoingQueue = "chat_message_outgoing_queue"
+	DeadLetterQueue          = "dead_letter_queue"
 	SettlePaymentQueue     = "settle_payment_queue"
-
-	DeadLetterQueue = "dead_letter_queue"
 )
 
 // ---- DATA STRUCTURES ----
