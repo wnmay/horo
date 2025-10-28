@@ -51,3 +51,31 @@ func (r *mongoRoomRepository) CreateRoom(ctx context.Context, room *domain.Room)
 
 	return roomIDStr, err
 }
+
+func (r *mongoRoomRepository) GetChatRoomsByCustomerID(ctx context.Context, customerID string) ([]*domain.Room, error) {
+	filter := bson.M{"customer_id": customerID}
+	cursor, err := r.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+	var rooms []*domain.Room
+	if err := cursor.All(ctx, &rooms); err != nil {
+		return nil, err
+	}
+	return rooms, nil
+}
+
+func (r *mongoRoomRepository) GetChatRoomsByProphetID(ctx context.Context, prophetID string) ([]*domain.Room, error) {
+	filter := bson.M{"prophet_id": prophetID}
+	cursor, err := r.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+	var rooms []*domain.Room
+	if err := cursor.All(ctx, &rooms); err != nil {
+		return nil, err
+	}
+	return rooms, nil
+}

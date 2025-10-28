@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	http_handler "github.com/wnmay/horo/services/chat-service/internal/adapters/inbound/http"
 	consumerRabbit "github.com/wnmay/horo/services/chat-service/internal/adapters/inbound/rabbitmq"
 	repository "github.com/wnmay/horo/services/chat-service/internal/adapters/outbound/db"
 	publisherRabbit "github.com/wnmay/horo/services/chat-service/internal/adapters/outbound/rabbitmq"
@@ -59,10 +60,21 @@ func main() {
 
 	chatService := service.NewChatService(messageRepo, roomRepo, messagePublisher)
 
+	// Initialize Fiber HTTP server
+	messageHandler := http_handler.NewMessageHandler(chatService)
+	app := infrastructure.SetupFiberApp(messageHandler)
+
 	// Initialize consumer
 	messageIncomingConsumer := consumerRabbit.NewMessageIncomingConsumer(chatService, rmq)
 	paymentConsumer := consumerRabbit.NewPaymentConsumer(chatService, rmq)
 	log.Println("Consumers initialized successfully")
+
+	// Start Fiber HTTP server in a goroutine
+	go func() {
+		if err := infrastructure.StartFiberServer(app, config.HTTPPort); err != nil {
+			log.Printf("Fiber server error: %v", err)
+		}
+	}()
 
 	// Start listening for messages from both consumers
 	go func() {
@@ -77,7 +89,7 @@ func main() {
 		}
 	}()
 
-	log.Println("All consumers are listening...")
+	log.Println("All consumers are listening and HTTP server is running...")
 
 	// Wait for interrupt signal to gracefully shutdown
 	quit := make(chan os.Signal, 1)
@@ -85,4 +97,9 @@ func main() {
 	<-quit
 
 	log.Println("Shutting down chat service...")
+
+	// Gracefully shutdown Fiber server
+	if err := app.Shutdown(); err != nil {
+		log.Printf("Error shutting down Fiber server: %v", err)
+	}
 }

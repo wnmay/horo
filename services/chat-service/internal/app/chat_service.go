@@ -17,13 +17,13 @@ type chatService struct {
 }
 
 type paymentCreatedChatMessage struct {
-	RoomID    string  `json:"roomId"`
-	SenderID  string  `json:"senderId"`
-	Content   string  `json:"content"`
-	PaymentID string  `json:"paymentId"`
-	OrderID   string  `json:"orderId"`
-	Amount    float64 `json:"amount"`
-	MessageType string `json:"messageType"`
+	RoomID      string  `json:"roomId"`
+	SenderID    string  `json:"senderId"`
+	Content     string  `json:"content"`
+	PaymentID   string  `json:"paymentId"`
+	OrderID     string  `json:"orderId"`
+	Amount      float64 `json:"amount"`
+	MessageType string  `json:"messageType"`
 }
 
 func NewChatService(messageRepo outbound_port.MessageRepository, roomRepo outbound_port.RoomRepositoryPort, messagePublisher outbound_port.MessagePublisher) inbound_port.ChatService {
@@ -66,13 +66,13 @@ func (s *chatService) PublishPaymentCreatedMessage(ctx context.Context, paymentI
 	}
 
 	data, err := json.Marshal(paymentCreatedChatMessage{
-		RoomID:    message.RoomID,
-		SenderID:  message.SenderID,
-		Content:   message.Content,
-		PaymentID: paymentID,
-		OrderID:   orderID,
+		RoomID:      message.RoomID,
+		SenderID:    message.SenderID,
+		Content:     message.Content,
+		PaymentID:   paymentID,
+		OrderID:     orderID,
 		MessageType: string(message.Type),
-		Amount:    amount,
+		Amount:      amount,
 	})
 	if err != nil {
 		return err
@@ -82,4 +82,16 @@ func (s *chatService) PublishPaymentCreatedMessage(ctx context.Context, paymentI
 		OwnerID: orderID,
 		Data:    data,
 	})
+}
+
+func (s *chatService) GetMessagesByRoomID(ctx context.Context, roomID string) ([]*domain.Message, error) {
+	return s.messageRepo.FindMessagesByRoomID(ctx, roomID)
+}
+
+func (s *chatService) GetChatRoomsByCustomerID(ctx context.Context, customerID string) ([]*domain.Room, error) {
+	return s.roomRepo.GetChatRoomsByCustomerID(ctx, customerID)
+}
+
+func (s *chatService) GetChatRoomsByProphetID(ctx context.Context, prophetID string) ([]*domain.Room, error) {
+	return s.roomRepo.GetChatRoomsByProphetID(ctx, prophetID)
 }
