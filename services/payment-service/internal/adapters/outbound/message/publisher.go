@@ -101,6 +101,34 @@ func (p *Publisher) PublishPaymentCreated(ctx context.Context, payment *domain.P
 	if err := p.rabbit.PublishMessage(ctx, contract.PaymentCreatedEvent, amqpMessage); err != nil {
 		return fmt.Errorf("failed to publish payment created event: %w", err)
 	}
-	
+
+	return nil
+}
+
+func (p *Publisher) PublishPaymentSettled(ctx context.Context, payment *domain.Payment) error {
+	payload := map[string]interface{}{
+		"payment_id": payment.PaymentID,
+		"order_id":   payment.OrderID,
+		"status":     payment.Status,
+		"amount":     payment.Amount,
+		"settled_at": payment.UpdatedAt,
+	}
+
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal payment settled payload: %w", err)
+	}
+
+	msg := contract.AmqpMessage{
+		OwnerID: payment.OrderID,
+		Data:    data,
+	}
+
+	if err := p.rabbit.PublishMessage(ctx, contract.PaymentSettledEvent, msg); err != nil {
+		return fmt.Errorf("failed to publish payment settled event: %w", err)
+	}
+
+	fmt.Printf("Published payment settled event for order: %s, payment: %s\n",
+		payment.OrderID, payment.PaymentID)
 	return nil
 }
