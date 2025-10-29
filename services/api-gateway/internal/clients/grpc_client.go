@@ -1,8 +1,8 @@
-package client
+package clients
 
 import (
+	grpc_connection "github.com/wnmay/horo/services/api-gateway/internal/services/grpc"
 	pb "github.com/wnmay/horo/shared/proto/user-management"
-	"github.com/wnmay/horo/services/api-gateway/internal/services/grpc"
 )
 
 type GrpcClients struct {

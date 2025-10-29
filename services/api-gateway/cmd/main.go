@@ -8,17 +8,21 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	client "github.com/wnmay/horo/services/api-gateway/internal/clients"
 	"github.com/wnmay/horo/services/api-gateway/internal/config"
-	client "github.com/wnmay/horo/services/api-gateway/internal/client"
+	"github.com/wnmay/horo/services/api-gateway/internal/messaging/consumers"
 	gw_router "github.com/wnmay/horo/services/api-gateway/internal/router"
 	"github.com/wnmay/horo/shared/env"
+	shared_message "github.com/wnmay/horo/shared/message"
 )
 
 type APIGateway struct {
-	app         *fiber.App
-	grpcClients *client.GrpcClients
-	router      *gw_router.Router
-	port        string
+	app            *fiber.App
+	grpcClients    *client.GrpcClients
+	rabbitmqClient *shared_message.RabbitMQ
+	chatConsumer   *consumers.ChatMessageConsumer
+	router         *gw_router.Router
+	port           string
 }
 
 const (
@@ -34,6 +38,16 @@ func NewAPIGateway(cfg *config.Config) (*APIGateway, error) {
 		return nil, err
 	}
 
+	// Initialize RabbitMQ client
+	rabbitmqClient, err := shared_message.NewRabbitMQ(cfg.RabbitMQURI)
+	if err != nil {
+		grpcClients.Close()
+		return nil, err
+	}
+
+	// Initialize chat message consumer
+	chatConsumer := consumers.NewChatMessageConsumer(rabbitmqClient)
+
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
 		ErrorHandler: customErrorHandler,
@@ -46,16 +60,23 @@ func NewAPIGateway(cfg *config.Config) (*APIGateway, error) {
 	router := gw_router.NewRouter(app, grpcClients)
 
 	return &APIGateway{
-		app:         app,
-		grpcClients: grpcClients,
-		router:      router,
-		port:        cfg.Port,
+		app:            app,
+		grpcClients:    grpcClients,
+		rabbitmqClient: rabbitmqClient,
+		chatConsumer:   chatConsumer,
+		router:         router,
+		port:           cfg.Port,
 	}, nil
 }
 
 func (gw *APIGateway) Start() error {
 	// Setup all routes
 	gw.router.SetupRoutes()
+
+	// Start consuming chat messages
+	if err := gw.chatConsumer.StartListening(); err != nil {
+		return err
+	}
 
 	log.Printf("Starting API Gateway on port %s", gw.port)
 	return gw.app.Listen(":" + gw.port)
@@ -65,6 +86,7 @@ func (gw *APIGateway) Shutdown() error {
 	log.Println("Shutting down API Gateway...")
 
 	gw.grpcClients.Close()
+	gw.rabbitmqClient.Close()
 
 	return gw.app.Shutdown()
 }

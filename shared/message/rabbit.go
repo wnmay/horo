@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/wnmay/horo/shared/contract"
 	"github.com/wnmay/horo/shared/retry"
@@ -12,8 +13,9 @@ import (
 )
 
 const (
-	AppExchange       = "app"
+	AppExchange        = "app"
 	DeadLetterExchange = "dlx"
+	ChatExchange       = "chat"
 )
 
 type RabbitMQ struct {
@@ -42,6 +44,12 @@ func NewRabbitMQ(uri string) (*RabbitMQ, error) {
 	if err := rmq.setupExchanges(); err != nil {
 		rmq.Close()
 		return nil, fmt.Errorf("failed to setup exchanges: %v", err)
+	}
+
+	if err := rmq.setupExchangesAndQueues(); err != nil {
+		// Clean up if setup fails
+		rmq.Close()
+		return nil, fmt.Errorf("failed to setup exchanges and queues: %v", err)
 	}
 
 	return rmq, nil
@@ -221,13 +229,29 @@ func (r *RabbitMQ) setupDeadLetterExchange() error {
 	return nil
 }
 
-func (r *RabbitMQ) setupExchangesAndQueues() error {
-	if err := r.setupDeadLetterExchange(); err != nil {
-		return err
-	}
+// func (r *RabbitMQ) setupExchangesAndQueues() error {
+// 	if err := r.setupDeadLetterExchange(); err != nil {
+// 		return err
+// 	}
 
+// 	err := r.Channel.ExchangeDeclare(
+// 		AppExchange, // name
+// 		"topic",      // type
+// 		true,         // durable
+// 		false,        // auto-deleted
+// 		false,        // internal
+// 		false,        // no-wait
+// 		nil,          // arguments
+// 	)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
+
+func (r *RabbitMQ) setupExchangesAndQueues() error {
 	err := r.Channel.ExchangeDeclare(
-		AppExchange, // name
+		ChatExchange, // name
 		"topic",      // type
 		true,         // durable
 		false,        // auto-deleted
@@ -236,11 +260,19 @@ func (r *RabbitMQ) setupExchangesAndQueues() error {
 		nil,          // arguments
 	)
 	if err != nil {
+		return fmt.Errorf("failed to declare exchange: %s: %v", ChatExchange, err)
+	}
+	if err := r.declareAndBindQueue(ChatMessageIncomingQueue, []string{
+		contract.ChatMessageIncomingEvent,
+	}, ChatExchange); err != nil {
 		return err
 	}
 
-
-	
+	if err := r.declareAndBindQueue(ChatMessageOutgoingQueue, []string{
+		contract.ChatMessageOutgoingEvent,
+	}, ChatExchange); err != nil {
+		return err
+	}
 
 	return nil
 }
