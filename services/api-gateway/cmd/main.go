@@ -10,16 +10,16 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	client "github.com/wnmay/horo/services/api-gateway/internal/clients"
 	"github.com/wnmay/horo/services/api-gateway/internal/config"
-	"github.com/wnmay/horo/services/api-gateway/internal/messaging"
 	"github.com/wnmay/horo/services/api-gateway/internal/messaging/consumers"
 	gw_router "github.com/wnmay/horo/services/api-gateway/internal/router"
 	"github.com/wnmay/horo/shared/env"
+	shared_message "github.com/wnmay/horo/shared/message"
 )
 
 type APIGateway struct {
 	app            *fiber.App
 	grpcClients    *client.GrpcClients
-	rabbitmqClient *messaging.RabbitMQClient
+	rabbitmqClient *shared_message.RabbitMQ
 	chatConsumer   *consumers.ChatMessageConsumer
 	router         *gw_router.Router
 	port           string
@@ -39,14 +39,14 @@ func NewAPIGateway(cfg *config.Config) (*APIGateway, error) {
 	}
 
 	// Initialize RabbitMQ client
-	rabbitmqClient, err := messaging.NewRabbitMQClient(cfg.RabbitMQURI)
+	rabbitmqClient, err := shared_message.NewRabbitMQ(cfg.RabbitMQURI)
 	if err != nil {
 		grpcClients.Close()
 		return nil, err
 	}
 
 	// Initialize chat message consumer
-	chatConsumer := consumers.NewChatMessageConsumer(rabbitmqClient.GetRabbitMQ())
+	chatConsumer := consumers.NewChatMessageConsumer(rabbitmqClient)
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
