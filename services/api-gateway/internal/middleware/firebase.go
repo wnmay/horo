@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/wnmay/horo/services/api-gateway/internal/client"
+	"github.com/wnmay/horo/services/api-gateway/internal/clients"
 	pb "github.com/wnmay/horo/shared/proto/user-management"
 )
 
@@ -12,7 +12,7 @@ type AuthMiddleware struct {
 	authGrpcClient pb.AuthServiceClient
 }
 
-func NewAuthMiddleware(clients *client.GrpcClients) *AuthMiddleware {
+func NewAuthMiddleware(clients *clients.GrpcClients) *AuthMiddleware {
 	return &AuthMiddleware{
 		authGrpcClient: clients.AuthServiceClient,
 	}

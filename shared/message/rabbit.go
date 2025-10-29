@@ -15,6 +15,7 @@ import (
 const (
 	AppExchange        = "app"
 	DeadLetterExchange = "dlx"
+	ChatExchange       = "chat"
 )
 
 type RabbitMQ struct {
@@ -39,16 +40,16 @@ func NewRabbitMQ(uri string) (*RabbitMQ, error) {
 		Channel: ch,
 	}
 
-	// Setup exchanges only
+	// Setup exchanges
 	if err := rmq.setupExchanges(); err != nil {
 		rmq.Close()
 		return nil, fmt.Errorf("failed to setup exchanges: %v", err)
 	}
 
-	// Setup dead letter infrastructure
-	if err := rmq.setupDeadLetterExchange(); err != nil {
+	if err := rmq.setupExchangesAndQueues(); err != nil {
+		// Clean up if setup fails
 		rmq.Close()
-		return nil, fmt.Errorf("failed to setup dead letter exchange: %v", err)
+		return nil, fmt.Errorf("failed to setup exchanges and queues: %v", err)
 	}
 
 	return rmq, nil
@@ -228,7 +229,55 @@ func (r *RabbitMQ) setupDeadLetterExchange() error {
 	return nil
 }
 
-func (r *RabbitMQ) DeclareAndBindQueue(queueName string, messageTypes []string, exchange string) error {
+// func (r *RabbitMQ) setupExchangesAndQueues() error {
+// 	if err := r.setupDeadLetterExchange(); err != nil {
+// 		return err
+// 	}
+
+// 	err := r.Channel.ExchangeDeclare(
+// 		AppExchange, // name
+// 		"topic",      // type
+// 		true,         // durable
+// 		false,        // auto-deleted
+// 		false,        // internal
+// 		false,        // no-wait
+// 		nil,          // arguments
+// 	)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
+
+func (r *RabbitMQ) setupExchangesAndQueues() error {
+	err := r.Channel.ExchangeDeclare(
+		ChatExchange, // name
+		"topic",      // type
+		true,         // durable
+		false,        // auto-deleted
+		false,        // internal
+		false,        // no-wait
+		nil,          // arguments
+	)
+	if err != nil {
+		return fmt.Errorf("failed to declare exchange: %s: %v", ChatExchange, err)
+	}
+	if err := r.declareAndBindQueue(ChatMessageIncomingQueue, []string{
+		contract.ChatMessageIncomingEvent,
+	}, ChatExchange); err != nil {
+		return err
+	}
+
+	if err := r.declareAndBindQueue(ChatMessageOutgoingQueue, []string{
+		contract.ChatMessageOutgoingEvent,
+	}, ChatExchange); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *RabbitMQ) declareAndBindQueue(queueName string, messageTypes []string, exchange string) error {
 	// Add dead letter configuration
 	args := amqp.Table{
 		"x-dead-letter-exchange": DeadLetterExchange,
