@@ -16,13 +16,6 @@ type Consumer struct {
 	rmq         *message.RabbitMQ
 }
 
-type messageIncomingData struct {
-	RoomID   string `json:"roomId"`
-	SenderID string `json:"senderId"`
-	Content  string `json:"content"`
-	Type     string `json:"type"` // text | notification
-}
-
 func NewMessageIncomingConsumer(chatService inbound_port.ChatService, rmq *message.RabbitMQ) inbound_port.MessageConsumer {
 	return &Consumer{
 		chatService: chatService,
@@ -37,7 +30,7 @@ func (c *Consumer) StartListening() error {
 func (c *Consumer) handleMessageIncoming(ctx context.Context, delivery amqp.Delivery) error {
 	log.Printf("Received message incoming: %s", delivery.Body)
 	var amqpMessage contract.AmqpMessage
-	var messageIncoming messageIncomingData
+	var messageIncoming message.ChatMessageIncomingData
 
 	// Parse the AMQP message
 	if err := json.Unmarshal(delivery.Body, &amqpMessage); err != nil {

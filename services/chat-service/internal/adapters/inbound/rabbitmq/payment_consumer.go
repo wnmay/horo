@@ -16,16 +16,6 @@ type paymentConsumer struct {
 	rmq         *message.RabbitMQ
 }
 
-type paymentData struct {
-	PaymentID  string  `json:"paymentId"`
-	OrderID    string  `json:"orderId"`
-	ProphetID  string  `json:"prophetId"`
-	CourseID   string  `json:"courseId"`
-	CustomerID string  `json:"customerId"`
-	Status     string  `json:"status"`
-	Amount     float64 `json:"amount"`
-}
-
 func NewPaymentConsumer(chatService inbound_port.ChatService, rmq *message.RabbitMQ) inbound_port.MessageConsumer {
 	return &paymentConsumer{
 		chatService: chatService,
@@ -39,7 +29,7 @@ func (c *paymentConsumer) StartListening() error {
 
 func (c *paymentConsumer) handlePaymentCreated(ctx context.Context, delivery amqp.Delivery) error {
 	var amqpMessage contract.AmqpMessage
-	var paymentData paymentData
+	var paymentData message.PaymentCreatedData
 
 	// Parse the AMQP message
 	if err := json.Unmarshal(delivery.Body, &amqpMessage); err != nil {
