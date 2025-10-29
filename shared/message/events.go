@@ -24,3 +24,30 @@ type PaymentSuccessData struct {
 	PaymentMethod string `json:"payment_method"`
 	TransactionID string `json:"transaction_id"`
 }
+
+type ChatMessageData struct {
+	RoomID      string `json:"roomId"`
+	MessageID   string `json:"messageId"`
+	SenderID    string `json:"senderId"`
+	Content     string `json:"content"`
+	Type        string `json:"type"` // text | notification
+	CreatedAt   string `json:"createdAt"`
+	RecipientID string `json:"recipientId,omitempty"`
+}
+
+type ChatMessageIncomingData struct {
+	RoomID   string `json:"roomId"`
+	SenderID string `json:"senderId"`
+	Content  string `json:"content"`
+	Type     string `json:"type"` // text | notification
+}
+
+type PaymentCreatedData struct {
+	PaymentID  string  `json:"paymentId"`
+	OrderID    string  `json:"orderId"`
+	ProphetID  string  `json:"prophetId"`
+	CourseID   string  `json:"courseId"`
+	CustomerID string  `json:"customerId"`
+	Status     string  `json:"status"`
+	Amount     float64 `json:"amount"`
+}
