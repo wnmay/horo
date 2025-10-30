@@ -10,19 +10,17 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	client "github.com/wnmay/horo/services/api-gateway/internal/clients"
 	"github.com/wnmay/horo/services/api-gateway/internal/config"
-	"github.com/wnmay/horo/services/api-gateway/internal/messaging/consumers"
+	"github.com/wnmay/horo/services/api-gateway/internal/messaging"
 	gw_router "github.com/wnmay/horo/services/api-gateway/internal/router"
 	"github.com/wnmay/horo/shared/env"
-	shared_message "github.com/wnmay/horo/shared/message"
 )
 
 type APIGateway struct {
-	app            *fiber.App
-	grpcClients    *client.GrpcClients
-	rabbitmqClient *shared_message.RabbitMQ
-	chatConsumer   *consumers.ChatMessageConsumer
-	router         *gw_router.Router
-	port           string
+	app              *fiber.App
+	grpcClients      *client.GrpcClients
+	messagingManager *messaging.MessagingManager
+	router           *gw_router.Router
+	port             string
 }
 
 const (
@@ -38,15 +36,12 @@ func NewAPIGateway(cfg *config.Config) (*APIGateway, error) {
 		return nil, err
 	}
 
-	// Initialize RabbitMQ client
-	rabbitmqClient, err := shared_message.NewRabbitMQ(cfg.RabbitMQURI)
+	// Initialize messaging manager (handles RabbitMQ client, consumers, and publishers)
+	messagingManager, err := messaging.NewMessagingManager(cfg.RabbitMQURI)
 	if err != nil {
 		grpcClients.Close()
 		return nil, err
 	}
-
-	// Initialize chat message consumer
-	chatConsumer := consumers.NewChatMessageConsumer(rabbitmqClient)
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
@@ -60,12 +55,11 @@ func NewAPIGateway(cfg *config.Config) (*APIGateway, error) {
 	router := gw_router.NewRouter(app, grpcClients)
 
 	return &APIGateway{
-		app:            app,
-		grpcClients:    grpcClients,
-		rabbitmqClient: rabbitmqClient,
-		chatConsumer:   chatConsumer,
-		router:         router,
-		port:           cfg.Port,
+		app:              app,
+		grpcClients:      grpcClients,
+		messagingManager: messagingManager,
+		router:           router,
+		port:             cfg.Port,
 	}, nil
 }
 
@@ -73,8 +67,8 @@ func (gw *APIGateway) Start() error {
 	// Setup all routes
 	gw.router.SetupRoutes()
 
-	// Start consuming chat messages
-	if err := gw.chatConsumer.StartListening(); err != nil {
+	// Start all message consumers
+	if err := gw.messagingManager.StartConsumers(); err != nil {
 		return err
 	}
 
@@ -86,7 +80,7 @@ func (gw *APIGateway) Shutdown() error {
 	log.Println("Shutting down API Gateway...")
 
 	gw.grpcClients.Close()
-	gw.rabbitmqClient.Close()
+	gw.messagingManager.Close()
 
 	return gw.app.Shutdown()
 }

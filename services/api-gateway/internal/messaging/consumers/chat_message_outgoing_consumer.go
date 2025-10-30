@@ -17,7 +17,7 @@ type ChatMessageConsumer struct {
 	// wsManager *ws_connection.ConnectionManager
 }
 
-func NewChatMessageConsumer(rmq *message.RabbitMQ) *ChatMessageConsumer {
+func NewChatMessageOutgoingConsumer(rmq *message.RabbitMQ) *ChatMessageConsumer {
 	return &ChatMessageConsumer{
 		rmq: rmq,
 	}
@@ -25,16 +25,15 @@ func NewChatMessageConsumer(rmq *message.RabbitMQ) *ChatMessageConsumer {
 
 // StartListening begins consuming messages from the chat message outgoing queue
 func (c *ChatMessageConsumer) StartListening() error {
-	log.Println("Starting to listen for chat messages from chat service...")
 	return c.rmq.ConsumeMessages(message.ChatMessageOutgoingQueue, c.handleChatMessage)
 }
 
-// handleChatMessage processes incoming chat messages and sends them to connected clients via WebSocket
+// handleChatMessage processes outgoing chat messages and sends them to connected clients via WebSocket
 func (c *ChatMessageConsumer) handleChatMessage(ctx context.Context, delivery amqp.Delivery) error {
 	log.Printf("Received chat message: %s", delivery.Body)
 
 	var amqpMessage contract.AmqpMessage
-	var messageData message.ChatMessageData
+	var messageData message.ChatMessageOutgoingData
 
 	// Parse the AMQP message envelope
 	if err := json.Unmarshal(delivery.Body, &amqpMessage); err != nil {

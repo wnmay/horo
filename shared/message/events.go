@@ -7,7 +7,7 @@ const (
 	ChatMessageIncomingQueue = "chat_message_incoming_queue"
 	ChatMessageOutgoingQueue = "chat_message_outgoing_queue"
 	DeadLetterQueue          = "dead_letter_queue"
-	SettlePaymentQueue     = "settle_payment_queue"
+	SettlePaymentQueue       = "settle_payment_queue"
 )
 
 // ---- DATA STRUCTURES ----
@@ -25,16 +25,6 @@ type PaymentSuccessData struct {
 	TransactionID string `json:"transaction_id"`
 }
 
-type ChatMessageData struct {
-	RoomID      string `json:"roomId"`
-	MessageID   string `json:"messageId"`
-	SenderID    string `json:"senderId"`
-	Content     string `json:"content"`
-	Type        string `json:"type"` // text | notification
-	CreatedAt   string `json:"createdAt"`
-	RecipientID string `json:"recipientId,omitempty"`
-}
-
 type ChatMessageIncomingData struct {
 	RoomID   string `json:"roomId"`
 	SenderID string `json:"senderId"`
@@ -50,4 +40,13 @@ type PaymentCreatedData struct {
 	CustomerID string  `json:"customerId"`
 	Status     string  `json:"status"`
 	Amount     float64 `json:"amount"`
+}
+
+type ChatMessageOutgoingData struct {
+	MessageID   string `json:"messageId"`
+	RoomID      string `json:"roomId"`
+	SenderID    string `json:"senderId"`
+	Content     string `json:"content"`
+	Type        string `json:"type"` // text | notification
+	CreatedAt   string `json:"createdAt"`
 }
