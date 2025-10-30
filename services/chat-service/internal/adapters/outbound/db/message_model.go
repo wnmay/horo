@@ -3,6 +3,7 @@ package repository
 import (
 	"time"
 
+	"github.com/wnmay/horo/services/chat-service/internal/domain"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -16,4 +17,28 @@ type MessageModel struct {
 	CreatedAt time.Time          `bson:"creat_at" json:"createdAt"`
 
 	Room RoomModel `gorm:"foreignKey:RoomID;constraint:OnDelete:CASCADE" json:"-"`
+}
+
+func ToMessageEntity(model MessageModel) *domain.Message {
+	return &domain.Message{
+		ID:        model.ID.Hex(),
+		RoomID:    model.RoomID,
+		SenderID:  model.SenderID,
+		Content:   model.Content,
+		Type:      domain.MessageType(model.Type),
+		Status:    domain.MessageStatus(model.Status),
+		CreatedAt: model.CreatedAt,
+	}
+}
+
+func ToMessageModel(entity *domain.Message) MessageModel {
+	return MessageModel{
+		ID:        primitive.NewObjectID(),
+		RoomID:    entity.RoomID,
+		SenderID:  entity.SenderID,
+		Content:   entity.Content,
+		Type:      string(entity.Type),
+		Status:    string(entity.Status),
+		CreatedAt: entity.CreatedAt,
+	}
 }

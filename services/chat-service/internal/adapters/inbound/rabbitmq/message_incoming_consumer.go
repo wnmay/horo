@@ -6,6 +6,7 @@ import (
 	"log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/wnmay/horo/services/chat-service/internal/domain"
 	inbound_port "github.com/wnmay/horo/services/chat-service/internal/ports/inbound"
 	"github.com/wnmay/horo/shared/contract"
 	"github.com/wnmay/horo/shared/message"
@@ -47,9 +48,22 @@ func (c *Consumer) handleMessageIncoming(ctx context.Context, delivery amqp.Deli
 	senderID := messageIncoming.SenderID
 	content := messageIncoming.Content
 
-	// Update order status to confirmed
+	// Save to db
 	if err := c.chatService.SaveMessage(ctx, roomID, senderID, content); err != nil {
 		log.Printf("Failed to save message %s: %v", content, err)
+		return err
+	}
+
+	// Publish to chat room
+	err := c.chatService.PublishOutgoingMessage(ctx, domain.CreateMessage(
+		roomID,
+		senderID,
+		content,
+		domain.MessageTypeText,
+		domain.MessageStatusSent,
+	))
+	if err != nil {
+		log.Printf("Failed to publish outgoing message: %v", err)
 		return err
 	}
 

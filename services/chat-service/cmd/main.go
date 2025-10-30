@@ -8,14 +8,12 @@ import (
 	"syscall"
 
 	http_handler "github.com/wnmay/horo/services/chat-service/internal/adapters/inbound/http"
-	consumerRabbit "github.com/wnmay/horo/services/chat-service/internal/adapters/inbound/rabbitmq"
 	repository "github.com/wnmay/horo/services/chat-service/internal/adapters/outbound/db"
-	publisherRabbit "github.com/wnmay/horo/services/chat-service/internal/adapters/outbound/rabbitmq"
-	service "github.com/wnmay/horo/services/chat-service/internal/app"
+	"github.com/wnmay/horo/services/chat-service/internal/app"
 	"github.com/wnmay/horo/services/chat-service/internal/config"
 	"github.com/wnmay/horo/services/chat-service/internal/infrastructure"
+	"github.com/wnmay/horo/services/chat-service/internal/messaging"
 	"github.com/wnmay/horo/shared/env"
-	"github.com/wnmay/horo/shared/message"
 )
 
 func main() {
@@ -24,17 +22,6 @@ func main() {
 		log.Fatalf("Failed to load environment variables: %v", err)
 	}
 	config := config.LoadConfig()
-
-	// Initialize RabbitMQ connection (sets up centralized infrastructure)
-	rmq, err := message.NewRabbitMQ(config.RabbitURI)
-	if err != nil {
-		log.Fatalf("Failed to initialize RabbitMQ: %v", err)
-	}
-	defer rmq.Close()
-
-	if err := infrastructure.SetupChatQueues(rmq); err != nil {
-		log.Fatalf("Failed to setup chat queues: %v", err)
-	}
 
 	mongoURI := config.MongoConfig.MongoCommonConfig.URI
 	mongoDBName := config.MongoConfig.MongoCommonConfig.Database
@@ -56,18 +43,22 @@ func main() {
 	messageRepo := repository.NewMongoMessageRepository(mongoDB, messageCollectionName)
 	roomRepo := repository.NewMongoRoomRepository(mongoDB, roomCollectionName)
 
-	messagePublisher := publisherRabbit.NewChatPublisher(rmq)
+	// Initialize messaging manager (handles RabbitMQ client, queues, consumers, and publishers)
+	messagingManager, messagePublisher, err := messaging.NewMessagingManager(config.RabbitURI)
+	if err != nil {
+		log.Fatalf("Failed to initialize messaging manager: %v", err)
+	}
+	defer messagingManager.Close()
 
+	// Create chat service with repositories and publisher
 	chatService := service.NewChatService(messageRepo, roomRepo, messagePublisher)
+
+	// Initialize consumers now that chat service is ready
+	messagingManager.InitializeConsumers(chatService)
 
 	// Initialize Fiber HTTP server
 	messageHandler := http_handler.NewMessageHandler(chatService)
 	app := infrastructure.SetupFiberApp(messageHandler)
-
-	// Initialize consumer
-	messageIncomingConsumer := consumerRabbit.NewMessageIncomingConsumer(chatService, rmq)
-	paymentConsumer := consumerRabbit.NewPaymentConsumer(chatService, rmq)
-	log.Println("Consumers initialized successfully")
 
 	// Start Fiber HTTP server in a goroutine
 	go func() {
@@ -76,18 +67,10 @@ func main() {
 		}
 	}()
 
-	// Start listening for messages from both consumers
-	go func() {
-		if err := messageIncomingConsumer.StartListening(); err != nil {
-			log.Printf("Message incoming consumer error: %v", err)
-		}
-	}()
-
-	go func() {
-		if err := paymentConsumer.StartListening(); err != nil {
-			log.Printf("Payment consumer error: %v", err)
-		}
-	}()
+	// Start all message consumers
+	if err := messagingManager.StartConsumers(); err != nil {
+		log.Fatalf("Failed to start consumers: %v", err)
+	}
 
 	log.Println("All consumers are listening and HTTP server is running...")
 

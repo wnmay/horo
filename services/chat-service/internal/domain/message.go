@@ -5,7 +5,7 @@ import (
 )
 
 type Message struct {
-	ID        uint
+	ID        string
 	RoomID    string
 	SenderID  string
 	Content   string
