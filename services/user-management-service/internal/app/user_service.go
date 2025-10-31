@@ -13,7 +13,7 @@ import (
 
 type UserManagementService struct {
 	authClient ports.AuthPort
-	repo ports.UserRepositoryPort
+	repo       ports.UserRepositoryPort
 }
 
 func NewUserManagementService(authCleint ports.AuthPort, repo ports.UserRepositoryPort) *UserManagementService {

@@ -22,9 +22,9 @@ func NewHTTPHandler(userService ports.UserManagementService) *HTTPHandler {
 }
 
 type RegisterRequest struct {
-	IdToken string `json:"idToken" validate:"required"`
-	FullName      string `json:"fullName" validate:"required"`
-	Role          string `json:"role" validate:"required"`
+	IdToken  string `json:"idToken" validate:"required"`
+	FullName string `json:"fullName" validate:"required"`
+	Role     string `json:"role" validate:"required"`
 }
 
 type RegisterResponse struct {

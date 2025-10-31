@@ -17,9 +17,16 @@ const Register = () => {
 
     const onSubmit = async (e) => {
         e.preventDefault()
-        if(!isRegistering) {
+        if (!isRegistering) {
             setIsRegistering(true)
-            await doCreateUserWithEmailAndPassword(email, password)
+            setErrorMessage('') // clear previous error
+            try {
+                await doCreateUserWithEmailAndPassword(email, password)
+                navigate('/home') // redirect after successful signup
+            } catch (error) {
+                setErrorMessage(error.message || 'Registration failed')
+                setIsRegistering(false) // reset so user can retry
+            }
         }
     }
 
