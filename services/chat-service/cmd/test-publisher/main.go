@@ -35,7 +35,7 @@ func main() {
 
 	// Create test message data
 	testMessage := MessageIncomingData{
-		RoomID:   "room-123",
+		RoomID:   "69041cc0f18ba67b3f92717a",
 		SenderID: "user-456",
 		Content:  "Hello from test publisher!",
 		Type:     "text",
