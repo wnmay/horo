@@ -83,3 +83,11 @@ run:
 	@powershell -Command "Start-Process powershell -ArgumentList '-NoExit', '-Command', 'go run ./services/payment-service/cmd/main.go'"
 	@powershell -Command "Start-Process powershell -ArgumentList '-NoExit', '-Command', 'go run ./services/chat-service/cmd/main.go'"
 	@echo "All services started in separate windows"
+run-chat:
+	@powershell -Command "Start-Process powershell -NoNewWindow -ArgumentList '-NoExit', '-Command', 'go run ./services/chat-service/cmd/main.go'"
+
+run-gateway:
+	@powershell -Command "Start-Process powershell -NoNewWindow -ArgumentList '-NoExit', '-Command', 'go run ./services/api-gateway/cmd/main.go'"
+
+run-user-management:
+	@powershell -Command "Start-Process powershell -NoNewWindow -ArgumentList '-NoExit', '-Command', 'go run ./services/user-management-service/cmd/main.go'"
