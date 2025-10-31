@@ -47,9 +47,12 @@ func (r *mongoRoomRepository) CreateRoom(ctx context.Context, room *domain.Room)
 		CreatedAt:  time.Now(),
 	}
 	res, err := r.collection.InsertOne(ctx, model)
-	roomIDStr := res.InsertedID.(primitive.ObjectID).Hex()
+	if err != nil {
+		return "", err
+	}
 
-	return roomIDStr, err
+	roomIDStr := res.InsertedID.(primitive.ObjectID).Hex()
+	return roomIDStr, nil
 }
 
 func (r *mongoRoomRepository) GetChatRoomsByCustomerID(ctx context.Context, customerID string) ([]*domain.Room, error) {
