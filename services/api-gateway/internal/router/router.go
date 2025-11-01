@@ -52,7 +52,9 @@ func (r *Router) setupOrderRoutes(api fiber.Router) {
 	orders.Get("/:id", authMiddleware.AddClaims, orderHandler.GetOrder)
 	// TO DO: don't use cust id here, use from claims
 	orders.Get("/customer/:customerID", authMiddleware.AddClaims, orderHandler.GetOrdersByCustomer)
-	orders.Put("/:id/status", authMiddleware.AddClaims, orderHandler.UpdateOrderStatus)
+	orders.Patch("/:id/status", authMiddleware.AddClaims, orderHandler.UpdateOrderStatus)
+	orders.Patch("/customer/:id", authMiddleware.AddClaims, orderHandler.MarkCustomerCompleted)
+	orders.Patch("/prophet/:id", authMiddleware.AddClaims, orderHandler.MarkProphetCompleted)
 }
 
 func (r *Router) setupPaymentRoutes(api fiber.Router) {
