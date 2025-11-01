@@ -1,0 +1,38 @@
+package config
+
+import (
+	"github.com/wnmay/horo/shared/db"
+	"github.com/wnmay/horo/shared/env"
+)
+
+type ChatMongoConfig struct {
+	MongoCommonConfig     *db.MongoConfig
+	MessageCollectionName string
+	RoomCollectionName    string
+}
+
+type Config struct {
+	HTTPPort    string
+	MongoConfig *ChatMongoConfig
+	RabbitURI   string
+}
+
+const (
+	MessageCollectionName = "messages"
+	RoomCollectionName    = "rooms"
+	dbName                = "chatdb"
+)
+
+func LoadConfig() *Config {
+	mongoCommonConfig := db.NewMongoDefaultConfig(dbName)
+	chatMongoConfig := &ChatMongoConfig{
+		MongoCommonConfig:     mongoCommonConfig,
+		MessageCollectionName: MessageCollectionName,
+		RoomCollectionName:    RoomCollectionName,
+	}
+	return &Config{
+		HTTPPort:    env.GetString("HTTP_PORT", "3005"),
+		MongoConfig: chatMongoConfig,
+		RabbitURI:   env.GetString("RABBITMQ_URI", "amqp://guest:guest@localhost:5672/"),
+	}
+}

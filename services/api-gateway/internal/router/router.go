@@ -3,17 +3,17 @@ package router
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/wnmay/horo/services/api-gateway/internal/client"
+	"github.com/wnmay/horo/services/api-gateway/internal/clients"
 	http_handler "github.com/wnmay/horo/services/api-gateway/internal/handlers/http"
 	"github.com/wnmay/horo/services/api-gateway/internal/middleware"
 )
 
 type Router struct {
 	app         *fiber.App
-	grpcClients *client.GrpcClients
+	grpcClients *clients.GrpcClients
 }
 
-func NewRouter(app *fiber.App, grpcClients *client.GrpcClients) *Router {
+func NewRouter(app *fiber.App, grpcClients *clients.GrpcClients) *Router {
 	return &Router{
 		app:         app,
 		grpcClients: grpcClients,
@@ -63,6 +63,16 @@ func (r *Router) setupPaymentRoutes(api fiber.Router) {
 	payments.Get("/:id", authMiddleware.AddClaims, paymentHandler.GetPayment)
 	payments.Get("/order/:orderID", authMiddleware.AddClaims, paymentHandler.GetPaymentByOrder)
 	payments.Put("/:id/complete", authMiddleware.AddClaims, paymentHandler.CompletePayment)
+}
+
+func (r *Router) setupChatRoutes(api fiber.Router) {
+	authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
+	chatHandler := http_handler.NewChatHandler()
+	chats := api.Group("/chats")
+	chats.Get("/:roomID/messages", authMiddleware.AddClaims, chatHandler.GetMessagesByRoomID)
+	chats.Post("/rooms", authMiddleware.AddClaims, chatHandler.CreateRoom)
+	chats.Get("/customer/rooms", authMiddleware.AddClaims, chatHandler.GetChatRoomsByCustomerID)
+	chats.Get("/prophet/rooms", authMiddleware.AddClaims, chatHandler.GetChatRoomsByProphetID)
 }
 
 func (r *Router) setupTestRouter(api fiber.Router) {
