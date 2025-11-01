@@ -48,14 +48,6 @@ func (h *Handler) CreateOrder(c *fiber.Ctx) error {
 			"error": "Invalid request body",
 		})
 	}
-
-	// Debug logging to see what we received
-	// fmt.Printf("Received request: %+v\n", req)
-	// fmt.Printf("Claims: %+v\n", req.Claims)
-	// fmt.Printf("CustomerID: '%s'\n", req.Claims.CustomerID)
-	// fmt.Printf("CourseID: '%s'\n", req.CourseID)
-
-	// Validate required fields
 	if req.Claims.CustomerID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Customer ID is required in claims",
