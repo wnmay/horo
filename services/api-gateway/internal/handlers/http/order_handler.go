@@ -45,3 +45,13 @@ func (h *OrderHandler) UpdateOrderStatus(c *fiber.Ctx) error {
 	id := c.Params("id")
 	return ProxyRequest(c, h.client, "PUT", h.orderServiceURL, fmt.Sprintf("/api/orders/%s/status", id))
 }
+
+func (h *OrderHandler) MarkCustomerCompleted(c *fiber.Ctx) error {
+	id := c.Params("id")
+	return ProxyRequest(c, h.client, "PATCH", h.orderServiceURL, fmt.Sprintf("/api/orders/customer/%s", id))
+}
+
+func (h *OrderHandler) MarkProphetCompleted(c *fiber.Ctx) error {
+	id := c.Params("id")
+	return ProxyRequest(c, h.client, "PATCH", h.orderServiceURL, fmt.Sprintf("/api/orders/prophet/%s", id))
+}

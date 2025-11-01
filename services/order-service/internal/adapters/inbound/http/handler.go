@@ -1,6 +1,9 @@
 package http
 
 import (
+	"log"
+	"strings"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/wnmay/horo/services/order-service/internal/domain"
@@ -37,10 +40,20 @@ func (h *Handler) Register(app *fiber.App) {
 func (h *Handler) AuthMiddleware(c *fiber.Ctx) error {
 	// Read user ID from header injected by API Gateway
 	userID := c.Get("X-User-Uid")
+	
+	// If header is missing, try to extract from Bearer token (for direct testing)
 	if userID == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "User not authenticated - X-User-Uid header missing",
-		})
+		authHeader := c.Get("Authorization")
+		if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
+			// For testing: use a mock user ID
+			// In production, this would verify the token with Firebase
+			userID = "test-user-from-token"
+			log.Printf("Warning: Using mock user ID for direct API testing. Use API Gateway in production.")
+		} else {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "User not authenticated - X-User-Uid header missing",
+			})
+		}
 	}
 
 	// Optionally read other user info

@@ -10,7 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func ProxyRequest(c *fiber.Ctx, client *http.Client, method, path, serviceURL string) error {
+func ProxyRequest(c *fiber.Ctx, client *http.Client, method, serviceURL, path string) error {
 	// Build target URL
 	targetURL := serviceURL + path
 
@@ -22,7 +22,7 @@ func ProxyRequest(c *fiber.Ctx, client *http.Client, method, path, serviceURL st
 
 	// Create request body
 	var body io.Reader
-	if method == "POST" || method == "PUT" {
+	if method == "POST" || method == "PUT" || method == "PATCH" {
 		body = bytes.NewReader(c.Body())
 	}
 
