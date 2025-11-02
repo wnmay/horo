@@ -64,3 +64,6 @@ build/
 # Secrets
 secrets.yaml
 firebase-key.json
+
+infra/development/k8s/**/secrets.yml
+infra/development/k8s/**/secret.yml

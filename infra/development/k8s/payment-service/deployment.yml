@@ -1,0 +1,147 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-sql
+  namespace: payment
+data:
+  init.sql: |
+    CREATE USER payment_user WITH ENCRYPTED PASSWORD 'payment_pass';
+    CREATE DATABASE paymentdb OWNER payment_user;
+    GRANT ALL PRIVILEGES ON DATABASE paymentdb TO payment_user;
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: payment
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
+            - name: POSTGRES_DB
+              value: "postgres"
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+            - name: init-sql
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: postgres-data
+          emptyDir: {}
+        - name: init-sql
+          configMap:
+            name: postgres-init-sql
+            items:
+              - key: init.sql
+                path: init.sql
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: payment
+spec:
+  selector:
+    app: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: payment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+        - name: payment-service
+          image: horo/payment-service
+          ports:
+            - containerPort: 3001
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+          env:
+            - name: RABBIT_URL
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: uri
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: DB_PORT
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: DB_NAME
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: DB_USER
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: DB_PASS
+            - name: DB_SSLMODE
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: DB_SSLMODE
+            - name: REST_PORT
+              value: "3001"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+  namespace: payment
+spec:
+  selector:
+    app: payment-service
+  ports:
+    - port: 3001
+      name: http
+      targetPort: 3001
+  type: ClusterIP
