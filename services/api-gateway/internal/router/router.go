@@ -3,9 +3,12 @@ package router
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/websocket/v2"
 	"github.com/wnmay/horo/services/api-gateway/internal/clients"
 	http_handler "github.com/wnmay/horo/services/api-gateway/internal/handlers/http"
+	ws_handler "github.com/wnmay/horo/services/api-gateway/internal/handlers/ws"
 	"github.com/wnmay/horo/services/api-gateway/internal/middleware"
+	gwWS "github.com/wnmay/horo/services/api-gateway/internal/websocket"
 )
 
 type Router struct {
@@ -26,6 +29,8 @@ func (r *Router) SetupRoutes() {
 		return c.JSON(fiber.Map{"status": "healthy"})
 	})
 
+	r.setupWebsocketRoutes()
+
 	// API v1 group
 	api := r.app.Group("/api")
 
@@ -34,6 +39,7 @@ func (r *Router) SetupRoutes() {
 	r.setupOrderRoutes(api)
 	r.setupPaymentRoutes(api)
 	r.setupTestRouter(api)
+	r.setupChatRoutes(api)
 }
 
 func (r *Router) setupUserRoutes(api fiber.Router) {
@@ -91,3 +97,22 @@ func (r *Router) setupTestRouter(api fiber.Router) {
 	})
 
 }
+
+func (r *Router) setupWebsocketRoutes() {
+    authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
+
+    hub := gwWS.NewHub()
+
+    chatWsHandler := ws_handler.NewChatWSHandler(hub)
+
+    r.app.Use("/ws/chat", authMiddleware.AddClaims, func(c *fiber.Ctx) error {
+        if websocket.IsWebSocketUpgrade(c) {
+            return c.Next()
+        }
+        return fiber.ErrUpgradeRequired
+    })
+
+    chatWsHandler.RegisterRoutes(r.app)
+}
+
+
