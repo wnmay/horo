@@ -3,6 +3,7 @@ load('ext://restart_process', 'docker_build_with_restart')
 ### API Gateway ###
 # load config
 k8s_yaml('./infra/development/k8s/api-gateway/config.yaml')
+k8s_yaml('./infra/development/k8s/api-gateway/secrets.yaml')
 
 chat_compile_cmd = 'CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/api-gateway ./services/api-gateway/cmd/main.go'
 

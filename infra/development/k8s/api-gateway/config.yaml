@@ -2,8 +2,8 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: api-gateway-config
+  namespace: api-gateway
 data:
-  ENVIRONMENT: "development"
   PORT: "8080"
   USER_MANAGEMENT_ADDR: "user-management-service:50051"
   PAYMENT_SERVICE_URL: "http://payment-service:3001"
