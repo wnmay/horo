@@ -32,6 +32,7 @@ k8s_resource('api-gateway', port_forwards=8080, resource_deps=['api-gateway-comp
 ### End of API Gateway ###
 
 ### Payment Service ###
+k8s_yaml('./infra/development/k8s/payment-service/secrets.yaml')
 payment_compile_cmd = 'CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/payment-service ./services/payment-service/cmd/main.go'
 
 local_resource(

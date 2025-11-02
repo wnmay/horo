@@ -21,6 +21,7 @@ type APIGateway struct {
 	messagingManager *messaging.MessagingManager
 	router           *gw_router.Router
 	port             string
+	cfg              *config.Config
 }
 
 const (
@@ -38,6 +39,7 @@ func NewAPIGateway(cfg *config.Config) (*APIGateway, error) {
 
 	// Initialize messaging manager (handles RabbitMQ client, consumers, and publishers)
 	messagingManager, err := messaging.NewMessagingManager(cfg.RabbitMQURI)
+	log.Println("RabbitMQ URI:", cfg.RabbitMQURI)
 	if err != nil {
 		grpcClients.Close()
 		return nil, err
@@ -60,6 +62,7 @@ func NewAPIGateway(cfg *config.Config) (*APIGateway, error) {
 		messagingManager: messagingManager,
 		router:           router,
 		port:             cfg.Port,
+		cfg:              cfg,
 	}, nil
 }
 
