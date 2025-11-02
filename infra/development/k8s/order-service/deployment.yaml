@@ -57,14 +57,14 @@ spec:
             # Database configuration
             - name: DB_HOST
               valueFrom:
-                configMapKeyRef:
-                  name: app-config
-                  key: DB_HOST
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: host
             - name: DB_PORT
               valueFrom:
-                configMapKeyRef:
-                  name: app-config
-                  key: DB_PORT
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: port
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
@@ -77,9 +77,9 @@ spec:
                   key: password
             - name: DB_NAME
               valueFrom:
-                configMapKeyRef:
-                  name: app-config
-                  key: DB_NAME
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: database
             - name: DB_SSLMODE
               value: "disable"
             
