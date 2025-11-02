@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/wnmay/horo/services/course-service/internal/domain"
 
@@ -72,11 +73,17 @@ func (r *MongoCourseRepo) FindByFilter(filter map[string]interface{}) ([]*domain
 		case "prophetname":
 			query["prophetname"] = bson.M{"$regex": val, "$options": "i"}
 		case "duration":
-			query["duration"] = val
+			if valStr, ok := val.(string); ok {
+				if i, err := strconv.Atoi(valStr); err == nil {
+					query["duration"] = i
+				}
+			} else {
+				query["duration"] = val
+			}
 		}
 	}
 
-	cursor, err := r.col.Find(context.TODO(), filter)
+	cursor, err := r.col.Find(context.TODO(), query)
 	if err != nil {
 		return nil, err
 	}
