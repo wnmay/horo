@@ -67,3 +67,5 @@ firebase-key.json
 
 infra/development/k8s/**/secrets.yml
 infra/development/k8s/**/secret.yml
+infra/development/k8s/**/secrets.yaml
+infra/development/k8s/**/secret.yaml
