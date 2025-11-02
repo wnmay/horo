@@ -100,3 +100,49 @@ k8s_yaml('./infra/development/k8s/order-service/deployment.yaml')
 k8s_resource('order-service', resource_deps=['order-service-compile'], labels="services")
 
 ### End of Order Service ###
+
+### User Management Service ###
+
+# Load secrets
+k8s_yaml('./infra/development/k8s/user-management-service/secrets.yaml')
+
+# Create firebase-key secret from local file
+local_resource(
+  'firebase-key-secret',
+  'kubectl create secret generic firebase-key-secret --from-file=firebase-key.json=./firebase-key.json --dry-run=client -o yaml | kubectl apply -f -',
+  labels=["secrets"]
+)
+
+user_management_compile_cmd = 'CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/user-management-service ./services/user-management-service/cmd/main.go'
+
+local_resource(
+  'user-management-service-compile',
+  user_management_compile_cmd,
+  deps=['./services/user-management-service', './shared'], 
+  labels=["compiles"]
+)
+
+docker_build_with_restart(
+  'horo/user-management-service',
+  '.',
+  entrypoint=['/app/build/user-management-service'],
+  dockerfile='./infra/development/docker/user-management-service.Dockerfile',
+  only=[
+    './build/user-management-service',
+    './shared',
+  ],
+  live_update=[
+    sync('./build', '/app/build'),
+    sync('./shared', '/app/shared'),
+  ],
+)
+
+k8s_yaml('./infra/development/k8s/user-management-service/deployment.yaml')
+
+k8s_resource(
+  'user-management-service', 
+  resource_deps=['user-management-service-compile', 'firebase-key-secret'], 
+  labels=["services"]
+)
+
+### End of User Management Service ###

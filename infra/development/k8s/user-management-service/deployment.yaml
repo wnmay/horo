@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-management-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-management-service
+  template:
+    metadata:
+      labels:
+        app: user-management-service
+    spec:
+      containers:
+        - name: user-management-service
+          image: horo/user-management-service
+          ports:
+            - containerPort: 3003
+              name: http
+            - containerPort: 50051
+              name: grpc
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+          env:
+            - name: GRPC_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: user-management-secrets
+                  key: grpc-port
+            - name: HTTP_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: user-management-secrets
+                  key: http-port
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: user-management-secrets
+                  key: db-name
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: user-management-secrets
+                  key: mongo-uri
+            - name: USER_COLLECTION_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: user-management-secrets
+                  key: user-collection-name
+            - name: FIREBASE_KEY_PATH
+              value: "/etc/firebase/firebase-key.json"
+          volumeMounts:
+            - name: firebase-key
+              mountPath: /etc/firebase
+              readOnly: true
+      volumes:
+        - name: firebase-key
+          secret:
+            secretName: firebase-key-secret
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-management-service
+spec:
+  selector:
+    app: user-management-service
+  ports:
+    - port: 3003
+      name: http
+      targetPort: 3003
+      protocol: TCP
+    - port: 50051
+      name: grpc
+      targetPort: 50051
+      protocol: TCP
+  type: ClusterIP
