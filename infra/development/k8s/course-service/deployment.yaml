@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: course-service
+  labels:
+    app: course-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: course-service
+  template:
+    metadata:
+      labels:
+        app: course-service
+    spec:
+      containers:
+        - name: course-service
+          image: horo/course-service
+          ports:
+            - containerPort: 3003 # REST API port (http)
+              name: http
+            - containerPort: 50051 # gRPC port
+              name: grpc
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+          env:
+            - name: REST_PORT
+              value: "3003"
+            - name: GRPC_PORT
+              value: "50052"
+
+            # Database configuration
+            - name: DB_NAME
+              value: "coursedb"
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb
+                  key: uri
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: course-service
+spec:
+  selector:
+    app: course-service
+  ports:
+    - port: 3003
+      name: http
+      targetPort: 3003
+    - port: 50051
+      name: grpc
+      targetPort: 50051
+  type: ClusterIP
