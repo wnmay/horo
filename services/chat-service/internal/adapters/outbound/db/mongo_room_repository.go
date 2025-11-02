@@ -47,9 +47,12 @@ func (r *mongoRoomRepository) CreateRoom(ctx context.Context, room *domain.Room)
 		CreatedAt:  time.Now(),
 	}
 	res, err := r.collection.InsertOne(ctx, model)
-	roomIDStr := res.InsertedID.(primitive.ObjectID).Hex()
+	if err != nil {
+		return "", err
+	}
 
-	return roomIDStr, err
+	roomIDStr := res.InsertedID.(primitive.ObjectID).Hex()
+	return roomIDStr, nil
 }
 
 func (r *mongoRoomRepository) GetChatRoomsByCustomerID(ctx context.Context, customerID string) ([]*domain.Room, error) {
@@ -59,11 +62,15 @@ func (r *mongoRoomRepository) GetChatRoomsByCustomerID(ctx context.Context, cust
 		return nil, err
 	}
 	defer cursor.Close(ctx)
-	var rooms []*domain.Room
+	var rooms []*RoomModel
 	if err := cursor.All(ctx, &rooms); err != nil {
 		return nil, err
 	}
-	return rooms, nil
+	var domainRooms []*domain.Room
+	for _, rm := range rooms {
+		domainRooms = append(domainRooms, rm.ToDomain())
+	}
+	return domainRooms, nil
 }
 
 func (r *mongoRoomRepository) GetChatRoomsByProphetID(ctx context.Context, prophetID string) ([]*domain.Room, error) {
@@ -73,9 +80,14 @@ func (r *mongoRoomRepository) GetChatRoomsByProphetID(ctx context.Context, proph
 		return nil, err
 	}
 	defer cursor.Close(ctx)
-	var rooms []*domain.Room
+	var rooms []*RoomModel
+
 	if err := cursor.All(ctx, &rooms); err != nil {
 		return nil, err
 	}
-	return rooms, nil
+	var domainRooms []*domain.Room
+	for _, rm := range rooms {
+		domainRooms = append(domainRooms, rm.ToDomain())
+	}
+	return domainRooms, nil
 }
