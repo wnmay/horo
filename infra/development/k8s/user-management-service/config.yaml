@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-management-service-config
+data:
+  grpc-port: "50051"
+  http-port: "3003"
+  db-name: "userdb"
+  user-collection-name: "users"
+  firebase-key-path: "/etc/firebase/firebase-key.json"

@@ -1,9 +1,11 @@
 load('ext://restart_process', 'docker_build_with_restart')
 
+# Load centralized secrets (shared by all services)
+k8s_yaml('./infra/development/k8s/secrets.yaml')
+
 ### API Gateway ###
 # load config
 k8s_yaml('./infra/development/k8s/api-gateway/config.yaml')
-k8s_yaml('./infra/development/k8s/api-gateway/secrets.yaml')
 
 chat_compile_cmd = 'CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/api-gateway ./services/api-gateway/cmd/main.go'
 
@@ -33,7 +35,7 @@ k8s_resource('api-gateway', port_forwards=8080, resource_deps=['api-gateway-comp
 ### End of API Gateway ###
 
 ### Payment Service ###
-k8s_yaml('./infra/development/k8s/payment-service/secrets.yaml')
+k8s_yaml('./infra/development/k8s/payment-service/config.yaml')
 payment_compile_cmd = 'CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/payment-service ./services/payment-service/cmd/main.go'
 
 local_resource(
@@ -72,8 +74,8 @@ k8s_resource(
 
 
 ### Chat Service ###
-# load secrets
-k8s_yaml('./infra/development/k8s/chat-service/secrets.yaml')
+# load config
+k8s_yaml('./infra/development/k8s/chat-service/config.yaml')
 
 chat_compile_cmd = 'CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/chat-service ./services/chat-service/cmd/main.go'
 
@@ -103,8 +105,8 @@ k8s_resource('chat-service', resource_deps=['chat-service-compile'], labels="ser
 ### End of Chat Service ###
 
 ### Order Service ###
-# Load secrets
-k8s_yaml('./infra/development/k8s/order-service/secrets.yaml')
+# Load config
+k8s_yaml('./infra/development/k8s/order-service/config.yaml')
 
 order_compile_cmd = 'CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/order-service ./services/order-service/cmd/main.go'
 
@@ -135,8 +137,8 @@ k8s_resource('order-service', resource_deps=['order-service-compile'], labels="s
 
 ### User Management Service ###
 
-# Load secrets
-k8s_yaml('./infra/development/k8s/user-management-service/secrets.yaml')
+# Load config
+k8s_yaml('./infra/development/k8s/user-management-service/config.yaml')
 
 # Create firebase-key secret from local file
 local_resource(
