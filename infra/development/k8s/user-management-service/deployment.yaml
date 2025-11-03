@@ -28,33 +28,38 @@ spec:
               memory: "128Mi"
               cpu: "200m"
           env:
+            # Service configuration
             - name: GRPC_PORT
               valueFrom:
-                secretKeyRef:
-                  name: user-management-secrets
+                configMapKeyRef:
+                  name: user-management-service-config
                   key: grpc-port
             - name: HTTP_PORT
               valueFrom:
-                secretKeyRef:
-                  name: user-management-secrets
+                configMapKeyRef:
+                  name: user-management-service-config
                   key: http-port
             - name: DB_NAME
               valueFrom:
-                secretKeyRef:
-                  name: user-management-secrets
+                configMapKeyRef:
+                  name: user-management-service-config
                   key: db-name
+            - name: USER_COLLECTION_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: user-management-service-config
+                  key: user-collection-name
+            - name: FIREBASE_KEY_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: user-management-service-config
+                  key: firebase-key-path
+            # Secrets
             - name: MONGO_URI
               valueFrom:
                 secretKeyRef:
-                  name: user-management-secrets
-                  key: mongo-uri
-            - name: USER_COLLECTION_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: user-management-secrets
-                  key: user-collection-name
-            - name: FIREBASE_KEY_PATH
-              value: "/etc/firebase/firebase-key.json"
+                  name: mongodb
+                  key: uri
           volumeMounts:
             - name: firebase-key
               mountPath: /etc/firebase

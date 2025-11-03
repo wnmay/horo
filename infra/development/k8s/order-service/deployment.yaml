@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: order-service
-  namespace: order
   labels:
     app: order-service
 spec:
@@ -53,38 +52,41 @@ spec:
             
             # Service port
             - name: REST_PORT
-              value: "3002"
-            
-            # Database configuration
+              valueFrom:
+                configMapKeyRef:
+                  name: order-service-config
+                  key: rest-port
             - name: DB_HOST
               valueFrom:
-                secretKeyRef:
-                  name: postgres-credentials
-                  key: host
+                configMapKeyRef:
+                  name: order-service-config
+                  key: db-host
             - name: DB_PORT
               valueFrom:
-                secretKeyRef:
-                  name: postgres-credentials
-                  key: port
+                configMapKeyRef:
+                  name: order-service-config
+                  key: db-port
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: order-service-config
+                  key: db-name
+            - name: DB_SSLMODE
+              valueFrom:
+                configMapKeyRef:
+                  name: order-service-config
+                  key: db-sslmode
+            # Secrets
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: postgres-credentials
+                  name: order-postgres-credentials
                   key: username
             - name: DB_PASS
               valueFrom:
                 secretKeyRef:
-                  name: postgres-credentials
+                  name: order-postgres-credentials
                   key: password
-            - name: DB_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-credentials
-                  key: database
-            - name: DB_SSLMODE
-              value: "disable"
-            
-            # RabbitMQ configuration
             - name: RABBIT_URL
               valueFrom:
                 secretKeyRef:
@@ -95,7 +97,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: order-service
-  namespace: order
   labels:
     app: order-service
 spec:

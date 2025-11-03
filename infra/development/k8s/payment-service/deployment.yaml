@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: payment-service
-  namespace: payment
 spec:
   replicas: 1
   selector:
@@ -26,49 +25,53 @@ spec:
               memory: "128Mi"
               cpu: "200m"
           env:
+            # Service configuration
+            - name: REST_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: payment-service-config
+                  key: rest-port
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: payment-service-config
+                  key: db-host
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: payment-service-config
+                  key: db-port
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: payment-service-config
+                  key: db-name
+            - name: DB_SSLMODE
+              valueFrom:
+                configMapKeyRef:
+                  name: payment-service-config
+                  key: db-sslmode
+            # Secrets
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: payment-postgres-credentials
+                  key: username
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: payment-postgres-credentials
+                  key: password
             - name: RABBIT_URL
               valueFrom:
                 secretKeyRef:
                   name: rabbitmq-credentials
                   key: uri
-            - name: DB_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-credentials
-                  key: DB_HOST
-            - name: DB_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-credentials
-                  key: DB_PORT
-            - name: DB_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-credentials
-                  key: DB_NAME
-            - name: DB_USER
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-credentials
-                  key: DB_USER
-            - name: DB_PASS
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-credentials
-                  key: DB_PASS
-            - name: DB_SSLMODE
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-credentials
-                  key: DB_SSLMODE
-            - name: REST_PORT
-              value: "3001"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: payment-service
-  namespace: payment
 spec:
   selector:
     app: payment-service

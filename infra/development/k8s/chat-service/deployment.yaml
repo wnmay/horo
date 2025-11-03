@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: chat-service
-  namespace: chat
 spec:
   replicas: 1
   selector:
@@ -26,6 +25,13 @@ spec:
               memory: "128Mi"
               cpu: "200m"
           env:
+            # Service configuration
+            - name: HTTP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: chat-service-config
+                  key: http-port
+            # Secrets
             - name: MONGO_URI
               valueFrom:
                 secretKeyRef:
@@ -36,14 +42,11 @@ spec:
                 secretKeyRef:
                   name: rabbitmq-credentials
                   key: uri
-            - name: HTTP_PORT
-              value: "3004"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: chat-service
-  namespace: chat
 spec:
   selector:
     app: chat-service
