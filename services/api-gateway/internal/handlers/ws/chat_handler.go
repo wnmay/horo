@@ -125,7 +125,7 @@ func (h *ChatWSHandler) validateAndJoinRoom(roomID, userID string, conn *gwWS.Co
 
 func (h *ChatWSHandler) sendAck(conn *gwWS.Connection, roomID string) {
 	ack := map[string]any{
-		"type":   "joined",
+		"type":   "join_room",
 		"roomId": roomID,
 	}
 	if ackBytes, err := json.Marshal(ack); err == nil {
