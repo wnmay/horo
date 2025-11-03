@@ -9,15 +9,17 @@ import (
 	"github.com/gofiber/websocket/v2"
 	"github.com/wnmay/horo/services/api-gateway/internal/messaging/publishers"
 	gwWS "github.com/wnmay/horo/services/api-gateway/internal/websocket"
+	chatpb "github.com/wnmay/horo/shared/proto/chat"
 )
 
 type ChatWSHandler struct {
 	hub       *gwWS.Hub
 	publisher *publishers.ChatMessagePublisher
+	chatClient chatpb.ChatServiceClient 
 }
 
-func NewChatWSHandler(hub *gwWS.Hub, pub *publishers.ChatMessagePublisher) *ChatWSHandler {
-	return &ChatWSHandler{hub: hub, publisher: pub}
+func NewChatWSHandler(hub *gwWS.Hub, pub *publishers.ChatMessagePublisher,chatClient chatpb.ChatServiceClient) *ChatWSHandler {
+	return &ChatWSHandler{hub: hub, publisher: pub,chatClient: chatClient}
 }
 
 func (h *ChatWSHandler) RegisterRoutes(app *fiber.App) {
@@ -42,20 +44,20 @@ func (h *ChatWSHandler) handle(c *websocket.Conn) {
 		return
 	}
 
-	initialRoomID := c.Query("roomId")
 	conn := gwWS.NewConnection(c)
 	h.hub.AddUser(userID, conn)
-
-	if initialRoomID != "" {
-		h.hub.AddToRoom(initialRoomID, conn)
-		log.Printf("[ws] user=%s joined initial room=%s", userID, initialRoomID)
-	}
-
 	defer func() {
 		h.hub.Remove(conn)
 		conn.Close()
 		log.Printf("[ws] disconnected user=%s", userID)
 	}()
+
+	initialRoomID := c.Query("roomId")
+	if initialRoomID != "" {
+		if h.validateAndJoinRoom(initialRoomID, userID, conn) {
+			log.Printf("[ws] user=%s joined initial room=%s", userID, initialRoomID)
+		}
+	}
 
 	for {
 		raw, err := conn.Read()
@@ -75,26 +77,19 @@ func (h *ChatWSHandler) handle(c *websocket.Conn) {
 				log.Println("[ws] missing roomId in join_room")
 				continue
 			}
-			h.hub.AddToRoom(msg.RoomID, conn)
-			log.Printf("[ws] user=%s joined room=%s", userID, msg.RoomID)
-
-			ack := map[string]any{
-				"type":   "joined",
-				"roomId": msg.RoomID,
-			}
-			if ackBytes, err := json.Marshal(ack); err == nil {
-				_ = conn.Send(ackBytes)
+			if h.validateAndJoinRoom(msg.RoomID, userID, conn) {
+				log.Printf("[ws] user=%s joined room=%s", userID, msg.RoomID)
+				h.sendAck(conn, msg.RoomID)
 			}
 
 		case "message":
-			roomID := msg.RoomID
-			if roomID == "" {
+			if msg.RoomID == "" {
 				log.Println("[ws] missing roomId in message")
 				continue
 			}
 			if err := h.publisher.PublishMessageIncoming(
 				context.Background(),
-				roomID,
+				msg.RoomID,
 				userID,
 				msg.Content,
 				msg.Type,
@@ -105,5 +100,35 @@ func (h *ChatWSHandler) handle(c *websocket.Conn) {
 		default:
 			log.Printf("[ws] unknown action: %s", msg.Action)
 		}
+	}
+}
+
+func (h *ChatWSHandler) validateAndJoinRoom(roomID, userID string, conn *gwWS.Connection) bool {
+	resp, err := h.chatClient.ValidateRoomAccess(context.Background(), &chatpb.ValidateRoomRequest{
+		UserId: userID,
+		RoomId: roomID,
+	})
+	if err != nil {
+		log.Printf("[ws] gRPC validation error for user=%s room=%s: %v", userID, roomID, err)
+		_ = conn.Send([]byte(`{"error":"validation failed"}`))
+		return false
+	}
+	if !resp.Allowed {
+		log.Printf("[ws] user=%s denied joining room=%s: %s", userID, roomID, resp.Reason)
+		_ = conn.Send([]byte(`{"error":"` + resp.Reason + `"}`))
+		return false
+	}
+
+	h.hub.AddToRoom(roomID, conn)
+	return true
+}
+
+func (h *ChatWSHandler) sendAck(conn *gwWS.Connection, roomID string) {
+	ack := map[string]any{
+		"type":   "joined",
+		"roomId": roomID,
+	}
+	if ackBytes, err := json.Marshal(ack); err == nil {
+		_ = conn.Send(ackBytes)
 	}
 }
