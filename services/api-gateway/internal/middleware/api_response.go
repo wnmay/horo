@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"bytes"
 	"encoding/json"
 	"net/http"
 
@@ -10,10 +9,7 @@ import (
 
 func ResponseWrapper() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// Capture the response body
-		var resBody bytes.Buffer
-		c.Response().SetBodyStream(&resBody, len(c.Response().Body()))
-
+		// Call the next handler first
 		err := c.Next()
 		if err != nil {
 			c.Status(fiber.StatusInternalServerError)
@@ -23,16 +19,25 @@ func ResponseWrapper() fiber.Handler {
 			})
 		}
 
+		// Get the response after handler execution
 		status := c.Response().StatusCode()
-		body := resBody.Bytes()
+		body := c.Response().Body()
+
+		// If no body, return as is
+		if len(body) == 0 {
+			return nil
+		}
 
 		// Try to parse JSON
 		var jsonBody interface{}
-		_ = json.Unmarshal(body, &jsonBody)
+		if err := json.Unmarshal(body, &jsonBody); err != nil {
+			// Not JSON, return as is
+			return nil
+		}
 
 		// Avoid double wrapping
 		if isAlreadyWrapped(jsonBody) {
-			return c.Status(status).Send(body)
+			return nil
 		}
 
 		if status >= 400 {
@@ -53,7 +58,7 @@ func ResponseWrapper() fiber.Handler {
 			return c.Status(status).JSON(resp)
 		}
 
-		// Success response
+		// Success response - wrap the data
 		var dataValue interface{}
 		switch v := jsonBody.(type) {
 		case nil:

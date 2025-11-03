@@ -2,8 +2,6 @@
 package router
 
 import (
-	"log"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
 	"github.com/wnmay/horo/services/api-gateway/internal/clients"
@@ -32,13 +30,8 @@ func NewRouter(app *fiber.App, grpcClients *clients.GrpcClients, rmq *message.Ra
 }
 
 func (r *Router) SetupRoutes() {
-	// Add global logging middleware
-	r.app.Use(func(c *fiber.Ctx) error {
-		log.Printf("[API-GW] Incoming request: %s %s", c.Method(), c.Path())
-		return c.Next()
-	})
-
 	r.app.Use(middleware.ResponseWrapper())
+
 	// Health check
 	r.app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "healthy"})
@@ -70,9 +63,9 @@ func (r *Router) setupOrderRoutes(api fiber.Router) {
 	orderHandler := http_handler.NewOrderHandler()
 	orders := api.Group("/orders")
 
+	orders.Get("/", authMiddleware.AddClaims, orderHandler.GetOrders)
 	orders.Post("/", authMiddleware.AddClaims, orderHandler.CreateOrder)
-	orders.Get("/:id", authMiddleware.AddClaims, orderHandler.GetOrder)
-	// TO DO: don't use cust id here, use from claims
+	orders.Get("/:id", authMiddleware.AddClaims, orderHandler.GetOrderByID)
 	orders.Get("/customer/:customerID", authMiddleware.AddClaims, orderHandler.GetOrdersByCustomer)
 	orders.Patch("/:id/status", authMiddleware.AddClaims, orderHandler.UpdateOrderStatus)
 	orders.Patch("/customer/:id", authMiddleware.AddClaims, orderHandler.MarkCustomerCompleted)
@@ -92,7 +85,7 @@ func (r *Router) setupPaymentRoutes(api fiber.Router) {
 func (r *Router) setupChatRoutes(api fiber.Router) {
 	authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
 	chatHandler := http_handler.NewChatHandler()
-	chats := api.Group("/chat")
+	chats := api.Group("/chats")
 	chats.Get("/:roomID/messages", authMiddleware.AddClaims, chatHandler.GetMessagesByRoomID)
 	chats.Post("/rooms", authMiddleware.AddClaims, chatHandler.CreateRoom)
 	chats.Get("/customer/rooms", authMiddleware.AddClaims, chatHandler.GetChatRoomsByCustomerID)
