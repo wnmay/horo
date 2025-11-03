@@ -29,7 +29,7 @@ func (c *ChatMessageConsumer) StartListening() error {
 
 // handleChatMessage processes outgoing chat messages and sends them to connected clients via WebSocket
 func (c *ChatMessageConsumer) handleChatMessage(ctx context.Context, delivery amqp.Delivery) error {
-	log.Printf("[chat-consumer] got messageeeee: %s", delivery.Body)
+	log.Printf("[chat-consumer] got message: %s", delivery.Body)
 
 	var amqpMsg contract.AmqpMessage
 	if err := json.Unmarshal(delivery.Body, &amqpMsg); err != nil {
@@ -43,10 +43,7 @@ func (c *ChatMessageConsumer) handleChatMessage(ctx context.Context, delivery am
 		return err
 	}
 
-	// send to WS
 	payload, _ := json.Marshal(data)
-
-	log.Printf(data.RoomID)
 
 	if data.RoomID != "" {
 		c.hub.BroadcastToRoom(data.RoomID, payload)
