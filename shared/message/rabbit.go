@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/wnmay/horo/shared/contract"
@@ -15,7 +16,7 @@ import (
 const (
 	AppExchange        = "app"
 	DeadLetterExchange = "dlx"
-	ChatExchange       = "chat"
+ChatExchange       = "chat"
 )
 
 type RabbitMQ struct {
@@ -167,13 +168,18 @@ func (r *RabbitMQ) PublishMessage(ctx context.Context, routingKey string, messag
 		return fmt.Errorf("failed to marshal message: %v", err)
 	}
 
+	exchange := AppExchange
+    if strings.HasPrefix(routingKey, "chat.") {
+        exchange = ChatExchange
+    }
+
 	msg := amqp.Publishing{
 		DeliveryMode: amqp.Persistent,
 		ContentType:  "application/json",
 		Body:         jsonMsg,
 	}
 
-	return tracing.TracedPublisher(ctx, AppExchange, routingKey, msg, r.publish)
+	return tracing.TracedPublisher(ctx, exchange, routingKey, msg, r.publish)
 }
 
 func (r *RabbitMQ) publish(ctx context.Context, exchange, routingKey string, msg amqp.Publishing) error {
