@@ -120,3 +120,22 @@ func (s *chatService) GetChatRoomsByCustomerID(ctx context.Context, customerID s
 func (s *chatService) GetChatRoomsByProphetID(ctx context.Context, prophetID string) ([]*domain.Room, error) {
 	return s.roomRepo.GetChatRoomsByProphetID(ctx, prophetID)
 }
+
+func (s *chatService) ValidateRoomAccess(ctx context.Context, userID string, roomID string) (bool, string, error) {
+    exists, err := s.roomRepo.RoomExists(ctx, roomID)
+    if err != nil {
+        return false, "internal error", err
+    }
+    if !exists {
+        return false, "room not found", nil
+    }
+    joinable, err := s.roomRepo.IsUserInRoom(ctx,userID,roomID)
+    if err != nil {
+        return false, "internal error", err
+    }
+    if !joinable {
+        return false, "user cannot chat in this room", nil
+    }
+
+    return true, "", nil
+}

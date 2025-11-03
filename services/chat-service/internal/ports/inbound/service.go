@@ -14,4 +14,6 @@ type ChatService interface {
 	GetChatRoomsByCustomerID(ctx context.Context, customerID string) ([]*domain.Room, error)
 	GetChatRoomsByProphetID(ctx context.Context, prophetID string) ([]*domain.Room, error)
 	PublishOutgoingMessage(ctx context.Context, message *domain.Message) error
+	ValidateRoomAccess(ctx context.Context, userID, roomID string) (allowed bool, reason string, err error)
+
 }
