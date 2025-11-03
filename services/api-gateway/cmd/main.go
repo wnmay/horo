@@ -52,7 +52,7 @@ func NewAPIGateway(cfg *config.Config) (*APIGateway, error) {
 	app.Use(cors.New())
 
 	// Initialize router
-	router := gw_router.NewRouter(app, grpcClients)
+	router := gw_router.NewRouter(app, grpcClients,messagingManager.RabbitMQ())
 
 	return &APIGateway{
 		app:              app,
@@ -66,11 +66,9 @@ func NewAPIGateway(cfg *config.Config) (*APIGateway, error) {
 func (gw *APIGateway) Start() error {
 	// Setup all routes
 	gw.router.SetupRoutes()
+	hub := gw.router.GetHub()
 
-	// Start all message consumers
-	if err := gw.messagingManager.StartConsumers(); err != nil {
-		return err
-	}
+	gw.messagingManager.StartChatConsumer(hub)
 
 	log.Printf("Starting API Gateway on port %s", gw.port)
 	return gw.app.Listen(":" + gw.port)
