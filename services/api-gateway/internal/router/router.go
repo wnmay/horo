@@ -17,15 +17,15 @@ type Router struct {
 	app         *fiber.App
 	grpcClients *clients.GrpcClients
 	rmq         *message.RabbitMQ
-	hub         *gwWS.Hub 
+	hub         *gwWS.Hub
 }
 
 func NewRouter(app *fiber.App, grpcClients *clients.GrpcClients, rmq *message.RabbitMQ) *Router {
 	return &Router{
 		app:         app,
 		grpcClients: grpcClients,
-		rmq: rmq,
-		hub: gwWS.NewHub(), 
+		rmq:         rmq,
+		hub:         gwWS.NewHub(),
 	}
 }
 
@@ -47,6 +47,7 @@ func (r *Router) SetupRoutes() {
 	r.setupOrderRoutes(api)
 	r.setupPaymentRoutes(api)
 	r.setupChatRoutes(api)
+	r.setupCourseRoutes(api)
 	r.setupTestRouter(api)
 	r.setupChatRoutes(api)
 }
@@ -92,6 +93,20 @@ func (r *Router) setupChatRoutes(api fiber.Router) {
 	chats.Get("/prophet/rooms", authMiddleware.AddClaims, chatHandler.GetChatRoomsByProphetID)
 }
 
+func (r *Router) setupCourseRoutes(api fiber.Router) {
+	authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
+	courseHandler := http_handler.NewCourseHandler()
+
+	courses := api.Group("/courses")
+
+	courses.Post("/", authMiddleware.AddClaims, courseHandler.CreateCourse)
+	courses.Get("/:id", authMiddleware.AddClaims, courseHandler.GetCourseByID)
+	courses.Get("/prophet/:prophet_id", authMiddleware.AddClaims, courseHandler.ListCoursesByProphet)
+	courses.Patch("/:id", authMiddleware.AddClaims, courseHandler.UpdateCourse)
+	courses.Patch("/delete/:id", authMiddleware.AddClaims, courseHandler.DeleteCourse)
+	courses.Get("/", authMiddleware.AddClaims, courseHandler.FindCoursesByFilter)
+}
+
 func (r *Router) setupTestRouter(api fiber.Router) {
 	authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
 	api.Post("/test-auth", authMiddleware.AddClaims, func(c *fiber.Ctx) error {
@@ -110,20 +125,19 @@ func (r *Router) setupTestRouter(api fiber.Router) {
 }
 
 func (r *Router) setupWebsocketRoutes() {
-    authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
-    chatPublisher := publishers.NewChatMessagePublisher(r.rmq)
-    chatWsHandler := ws_handler.NewChatWSHandler(r.hub, chatPublisher,r.grpcClients.ChatServiceClient)
+	authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
+	chatPublisher := publishers.NewChatMessagePublisher(r.rmq)
+	chatWsHandler := ws_handler.NewChatWSHandler(r.hub, chatPublisher, r.grpcClients.ChatServiceClient)
 
-    r.app.Use("/ws/chat", authMiddleware.AddClaims, func(c *fiber.Ctx) error {
-        if websocket.IsWebSocketUpgrade(c) {
-            return c.Next()
-        }
-        return fiber.ErrUpgradeRequired
-    })
-    chatWsHandler.RegisterRoutes(r.app)
+	r.app.Use("/ws/chat", authMiddleware.AddClaims, func(c *fiber.Ctx) error {
+		if websocket.IsWebSocketUpgrade(c) {
+			return c.Next()
+		}
+		return fiber.ErrUpgradeRequired
+	})
+	chatWsHandler.RegisterRoutes(r.app)
 }
 
 func (r *Router) GetHub() *gwWS.Hub {
-    return r.hub
+	return r.hub
 }
-
