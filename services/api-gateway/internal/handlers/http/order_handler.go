@@ -30,9 +30,13 @@ func (h *OrderHandler) CreateOrder(c *fiber.Ctx) error {
 	return ProxyRequest(c, h.client, "POST", h.orderServiceURL, "/api/orders/")
 }
 
-func (h *OrderHandler) GetOrder(c *fiber.Ctx) error {
+func (h *OrderHandler) GetOrderByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 	return ProxyRequest(c, h.client, "GET", h.orderServiceURL, fmt.Sprintf("/api/orders/%s", id))
+}
+
+func (h *OrderHandler) GetOrders(c *fiber.Ctx) error {
+	return ProxyRequest(c, h.client, "GET", h.orderServiceURL, "/api/orders/")
 }
 
 // TO DO: change cust id to user id
