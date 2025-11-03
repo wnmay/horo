@@ -69,9 +69,10 @@ func (h *ChatHandler) CreateRoom(c *fiber.Ctx) error {
 		})
 	}
 	log.Println("Chat room created successfully with ID:", roomID)
-	return c.JSON(fiber.Map{
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"roomID": roomID,
 	})
+
 }
 
 func (h *ChatHandler) GetChatRoomsByCustomerID(c *fiber.Ctx) error {
