@@ -105,7 +105,7 @@ func (r *mongoRoomRepository) RoomExists(ctx context.Context, roomID string) (bo
 	return count > 0, nil
 }
 
-func (r *mongoRoomRepository) IsUserInRoom(ctx context.Context, roomID string, userID string) (bool, error) {
+func (r *mongoRoomRepository) IsUserInRoom(ctx context.Context, userID string,roomID string) (bool, error) {
 	objID, err := primitive.ObjectIDFromHex(roomID)
 	if err != nil {
 		return false, err
