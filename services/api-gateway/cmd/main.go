@@ -32,6 +32,7 @@ func NewAPIGateway(cfg *config.Config) (*APIGateway, error) {
 	// Initialize gRPC clients with all service addresses
 	grpcClients, err := client.NewGrpcClients(
 		cfg.UserManagementAddr,
+		cfg.ChatAddr,
 	)
 	if err != nil {
 		return nil, err
