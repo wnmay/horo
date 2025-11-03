@@ -24,7 +24,7 @@ import (
 func main() {
 	// === 1. Load configuration ===
 	_ = env.LoadEnv("course-service")
-	restPort := env.GetString("REST_PORT", "3003")
+	restPort := env.GetString("REST_PORT", "3005")
 	grpcPort := env.GetString("GRPC_PORT", "50052")
 
 	dbName := env.GetString("DB_NAME", "coursedb")

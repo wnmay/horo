@@ -18,7 +18,7 @@ spec:
         - name: course-service
           image: horo/course-service
           ports:
-            - containerPort: 3003 # REST API port (http)
+            - containerPort: 3005 # REST API port (http)
               name: http
             - containerPort: 50051 # gRPC port
               name: grpc
@@ -31,7 +31,7 @@ spec:
               cpu: "200m"
           env:
             - name: REST_PORT
-              value: "3003"
+              value: "3005"
             - name: GRPC_PORT
               value: "50052"
 
@@ -52,9 +52,9 @@ spec:
   selector:
     app: course-service
   ports:
-    - port: 3003
+    - port: 3005
       name: http
-      targetPort: 3003
+      targetPort: 3005
     - port: 50051
       name: grpc
       targetPort: 50051
