@@ -29,6 +29,7 @@ func (r *Router) SetupRoutes() {
 		return c.Next()
 	})
 
+	r.app.Use(middleware.ResponseWrapper())
 	// Health check
 	r.app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "healthy"})
