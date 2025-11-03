@@ -6,19 +6,20 @@ import (
 	"log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/wnmay/horo/services/api-gateway/internal/websocket"
 	"github.com/wnmay/horo/shared/contract"
 	"github.com/wnmay/horo/shared/message"
 )
 
 type ChatMessageConsumer struct {
 	rmq *message.RabbitMQ
-	// TODO: Add websocket connection manager here when implemented
-	// wsManager *ws_connection.ConnectionManager
+	hub *websocket.Hub
 }
 
-func NewChatMessageOutgoingConsumer(rmq *message.RabbitMQ) *ChatMessageConsumer {
+func NewChatMessageOutgoingConsumer(rmq *message.RabbitMQ, hub *websocket.Hub) *ChatMessageConsumer {
 	return &ChatMessageConsumer{
 		rmq: rmq,
+		hub: hub,
 	}
 }
 
@@ -28,27 +29,28 @@ func (c *ChatMessageConsumer) StartListening() error {
 
 // handleChatMessage processes outgoing chat messages and sends them to connected clients via WebSocket
 func (c *ChatMessageConsumer) handleChatMessage(ctx context.Context, delivery amqp.Delivery) error {
-	log.Printf("[DEBUG] Received chat message: %s", delivery.Body)
+	log.Printf("[chat-consumer] got messageeeee: %s", delivery.Body)
 
-	var amqpMessage contract.AmqpMessage
-	var messageData message.ChatMessageOutgoingData
-
-	if err := json.Unmarshal(delivery.Body, &amqpMessage); err != nil {
-		log.Printf("Failed to unmarshal AMQP message: %v", err)
+	var amqpMsg contract.AmqpMessage
+	if err := json.Unmarshal(delivery.Body, &amqpMsg); err != nil {
+		log.Printf("unmarshal amqp msg err: %v", err)
 		return err
 	}
 
-	if err := json.Unmarshal(amqpMessage.Data, &messageData); err != nil {
-		log.Printf("Failed to unmarshal message data: %v", err)
+	var data message.ChatMessageOutgoingData
+	if err := json.Unmarshal(amqpMsg.Data, &data); err != nil {
+		log.Printf("unmarshal payload err: %v", err)
 		return err
 	}
-	// TODO: Send message to connected WebSocket clients
-	// This is where you would use the WebSocket connection manager to send
-	// the message to the appropriate client(s)
-	// Example:
-	// if c.wsManager != nil {
-	//     c.wsManager.SendToUser(messageData.RecipientID, messageData)
-	// }
+
+	// send to WS
+	payload, _ := json.Marshal(data)
+
+	log.Printf(data.RoomID)
+
+	if data.RoomID != "" {
+		c.hub.BroadcastToRoom(data.RoomID, payload)
+	}
 
 	return nil
 }

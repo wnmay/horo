@@ -1,47 +1,96 @@
 package websocket
 
-import "sync"
+import (
+	"log"
+	"sync"
+)
 
 type Hub struct {
-	mu      sync.RWMutex
-	clients map[string]map[*Connection]bool
+	mu    sync.RWMutex
+	users map[string]map[*Connection]struct{}
+	rooms map[string]map[*Connection]struct{}
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		clients: make(map[string]map[*Connection]bool),
+		users: make(map[string]map[*Connection]struct{}),
+		rooms: make(map[string]map[*Connection]struct{}),
 	}
 }
 
-func (h *Hub) Add(key string, c *Connection) {
+func (h *Hub) AddUser(userID string, conn *Connection) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	if h.clients[key] == nil {
-		h.clients[key] = make(map[*Connection]bool)
+	if _, ok := h.users[userID]; !ok {
+		h.users[userID] = make(map[*Connection]struct{})
 	}
-	h.clients[key][c] = true
+	h.users[userID][conn] = struct{}{}
 }
 
-func (h *Hub) Remove(key string, c *Connection) {
+func (h *Hub) AddToRoom(roomID string, conn *Connection) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	if conns, ok := h.clients[key]; ok {
-		delete(conns, c)
-		if len(conns) == 0 {
-			delete(h.clients, key)
+	if _, ok := h.rooms[roomID]; !ok {
+		h.rooms[roomID] = make(map[*Connection]struct{})
+	}
+	h.rooms[roomID][conn] = struct{}{}
+}
+
+func (h *Hub) Remove(conn *Connection) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	for uid, conns := range h.users {
+		if _, ok := conns[conn]; ok {
+			delete(conns, conn)
+			if len(conns) == 0 {
+				delete(h.users, uid)
+			}
+		}
+	}
+	for rid, conns := range h.rooms {
+		if _, ok := conns[conn]; ok {
+			delete(conns, conn)
+			if len(conns) == 0 {
+				delete(h.rooms, rid)
+			}
 		}
 	}
 }
 
-func (h *Hub) SendTo(key string, data []byte) {
+func (h *Hub) SendToUser(userID string, payload []byte) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
-	if conns, ok := h.clients[key]; ok {
-		for c := range conns {
-			_ = c.Send(data)
+	conns, ok := h.users[userID]
+	if !ok {
+		return
+	}
+
+	for c := range conns {
+		_ = c.Send(payload)
+	}
+}
+
+func (h *Hub) BroadcastToRoom(roomID string, payload []byte) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	conns, ok := h.rooms[roomID]
+	if !ok || len(conns) == 0 {
+		log.Printf("[hub] no active connections in room %s", roomID)
+		return
+	}
+
+	log.Printf("[hub] broadcasting to room %s (%d connections)", roomID, len(conns))
+
+	for c := range conns {
+		if err := c.Send(payload); err != nil {
+			log.Printf("[hub] failed to send to connection in room %s: %v", roomID, err)
+		} else {
+			log.Printf("[hub] sent to connection %p in room %s: %s", c, roomID, string(payload))
 		}
 	}
 }
