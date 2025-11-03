@@ -12,7 +12,7 @@ import (
 )
 
 // SetupFiberApp initializes and configures the Fiber application
-func SetupFiberApp(messageHandler *http_handler.MessageHandler) *fiber.App {
+func SetupFiberApp(ChatHandler *http_handler.ChatHandler) *fiber.App {
 
 	app := fiber.New(fiber.Config{
 		AppName:      "Chat Service",
@@ -42,7 +42,7 @@ func SetupFiberApp(messageHandler *http_handler.MessageHandler) *fiber.App {
 	})
 
 	// Setup HTTP routes
-	SetupHTTPRoutes(app, messageHandler)
+	SetupHTTPRoutes(app, ChatHandler)
 
 	return app
 }

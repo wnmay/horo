@@ -12,8 +12,6 @@ type Message struct {
 	Type      MessageType   // text | notification
 	Status    MessageStatus // sent | delivered | read
 	CreatedAt time.Time
-
-	Room Room
 }
 
 type MessageStatus string

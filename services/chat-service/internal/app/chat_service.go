@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"time"
 
 	"github.com/wnmay/horo/services/chat-service/internal/domain"
@@ -46,10 +47,11 @@ func (s *chatService) SaveMessage(ctx context.Context, roomID string, senderID s
 
 func (s *chatService) InitiateChatRoom(ctx context.Context, courseID string, customerID string) (string, error) {
 	mockProphetID := "prophet-1234" // TO DO: Use real prophet ID from course service
-	room := domain.CreateRoom(mockProphetID, courseID, customerID)
+	room := domain.CreateRoom(mockProphetID, customerID, courseID)
 
 	roomID, err := s.roomRepo.CreateRoom(context.Background(), room)
 	if err != nil {
+		log.Println("Error creating chat room:", err)
 		return "", err
 	}
 

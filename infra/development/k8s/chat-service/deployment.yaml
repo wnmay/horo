@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-service
+  namespace: chat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chat-service
+  template:
+    metadata:
+      labels:
+        app: chat-service
+    spec:
+      containers:
+        - name: chat-service
+          image: horo/chat-service
+          ports:
+            - containerPort: 3004
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+          env:
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb
+                  key: uri
+            - name: RABBITMQ_URI
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: uri
+            - name: HTTP_PORT
+              value: "3004"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-service
+  namespace: chat
+spec:
+  selector:
+    app: chat-service
+  ports:
+    - port: 3004
+      name: http
+      targetPort: 3004
+  type: ClusterIP

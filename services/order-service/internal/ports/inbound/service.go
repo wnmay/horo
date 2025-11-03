@@ -15,6 +15,8 @@ type OrderService interface {
 	GetOrdersByCustomer(ctx context.Context, customerID string) ([]*domain.Order, error)
 	UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status domain.OrderStatus) error
 	UpdateOrderPaymentID(ctx context.Context, orderID uuid.UUID, paymentID uuid.UUID) error
+	MarkCustomerCompleted(ctx context.Context, orderID uuid.UUID) error
+	MarkProphetCompleted(ctx context.Context, orderID uuid.UUID) error
 }
 
 // CreateOrderCommand represents the command to create an order

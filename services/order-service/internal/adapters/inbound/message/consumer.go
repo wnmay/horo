@@ -124,8 +124,8 @@ func (c *Consumer) handlePaymentCreated(ctx context.Context, delivery amqp.Deliv
     }
 
     var paymentData struct {
-        OrderID   string `json:"orderId"`
-        PaymentID string `json:"paymentId"`
+        OrderID   string `json:"order_id"`
+        PaymentID string `json:"payment_id"`
     }
     if err := json.Unmarshal(amqpMessage.Data, &paymentData); err != nil {
         log.Printf("Failed to unmarshal payment data: %v", err)
