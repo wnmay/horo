@@ -21,16 +21,25 @@ func NewAuthMiddleware(clients *clients.GrpcClients) *AuthMiddleware {
 func (a *AuthMiddleware) AddClaims(c *fiber.Ctx) error {
 	// Extract Bearer token
 	authHeader := c.Get("Authorization")
-	if authHeader == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "missing authorization header",
-		})
+	var token string
+
+	if authHeader != "" {
+		token = strings.TrimPrefix(authHeader, "Bearer ")
+		if token == authHeader {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "invalid authorization header format",
+			})
+		}
 	}
 
-	token := strings.TrimPrefix(authHeader, "Bearer ")
-	if token == authHeader {
+	// extract from query param for connecting ws
+	if token == "" {
+		token = c.Query("token")
+	}
+
+	if token == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "invalid authorization header format",
+			"error": "missing authorization header or token query param",
 		})
 	}
 
@@ -57,6 +66,10 @@ func (a *AuthMiddleware) AddClaims(c *fiber.Ctx) error {
 	c.Request().Header.Set("X-User-Id", claimsResp.UserId)
 	c.Request().Header.Set("X-User-Email", claimsResp.Email)
 	c.Request().Header.Set("X-User-Role", claimsResp.Role)
+
+	c.Locals("userId", claimsResp.UserId)
+	c.Locals("userEmail", claimsResp.Email)
+	c.Locals("userRole", claimsResp.Role)
 
 	// Continue to next handler (proxy to upstream service)
 	return c.Next()

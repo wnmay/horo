@@ -91,3 +91,38 @@ func (r *mongoRoomRepository) GetChatRoomsByProphetID(ctx context.Context, proph
 	}
 	return domainRooms, nil
 }
+
+func (r *mongoRoomRepository) RoomExists(ctx context.Context, roomID string) (bool, error) {
+	objID, err := primitive.ObjectIDFromHex(roomID)
+	if err != nil {
+		return false, err
+	}
+
+	count, err := r.collection.CountDocuments(ctx, bson.M{"_id": objID})
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func (r *mongoRoomRepository) IsUserInRoom(ctx context.Context, userID string,roomID string) (bool, error) {
+	objID, err := primitive.ObjectIDFromHex(roomID)
+	if err != nil {
+		return false, err
+	}
+
+	filter := bson.M{
+		"_id": objID,
+		"$or": []bson.M{
+			{"prophet_id": userID},
+			{"customer_id": userID},
+		},
+	}
+
+	count, err := r.collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}

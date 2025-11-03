@@ -3,20 +3,29 @@ package router
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/websocket/v2"
 	"github.com/wnmay/horo/services/api-gateway/internal/clients"
 	http_handler "github.com/wnmay/horo/services/api-gateway/internal/handlers/http"
+	ws_handler "github.com/wnmay/horo/services/api-gateway/internal/handlers/ws"
+	"github.com/wnmay/horo/services/api-gateway/internal/messaging/publishers"
 	"github.com/wnmay/horo/services/api-gateway/internal/middleware"
+	gwWS "github.com/wnmay/horo/services/api-gateway/internal/websocket"
+	"github.com/wnmay/horo/shared/message"
 )
 
 type Router struct {
 	app         *fiber.App
 	grpcClients *clients.GrpcClients
+	rmq         *message.RabbitMQ
+	hub         *gwWS.Hub 
 }
 
-func NewRouter(app *fiber.App, grpcClients *clients.GrpcClients) *Router {
+func NewRouter(app *fiber.App, grpcClients *clients.GrpcClients, rmq *message.RabbitMQ) *Router {
 	return &Router{
 		app:         app,
 		grpcClients: grpcClients,
+		rmq: rmq,
+		hub: gwWS.NewHub(), 
 	}
 }
 
@@ -28,6 +37,8 @@ func (r *Router) SetupRoutes() {
 		return c.JSON(fiber.Map{"status": "healthy"})
 	})
 
+	r.setupWebsocketRoutes()
+
 	// API v1 group
 	api := r.app.Group("/api")
 
@@ -37,6 +48,7 @@ func (r *Router) SetupRoutes() {
 	r.setupPaymentRoutes(api)
 	r.setupChatRoutes(api)
 	r.setupTestRouter(api)
+	r.setupChatRoutes(api)
 }
 
 func (r *Router) setupUserRoutes(api fiber.Router) {
@@ -96,3 +108,22 @@ func (r *Router) setupTestRouter(api fiber.Router) {
 	})
 
 }
+
+func (r *Router) setupWebsocketRoutes() {
+    authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
+    chatPublisher := publishers.NewChatMessagePublisher(r.rmq)
+    chatWsHandler := ws_handler.NewChatWSHandler(r.hub, chatPublisher,r.grpcClients.ChatServiceClient)
+
+    r.app.Use("/ws/chat", authMiddleware.AddClaims, func(c *fiber.Ctx) error {
+        if websocket.IsWebSocketUpgrade(c) {
+            return c.Next()
+        }
+        return fiber.ErrUpgradeRequired
+    })
+    chatWsHandler.RegisterRoutes(r.app)
+}
+
+func (r *Router) GetHub() *gwWS.Hub {
+    return r.hub
+}
+
