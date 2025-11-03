@@ -18,8 +18,14 @@ func MustOpen() *gorm.DB {
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s TimeZone=UTC",
 		host, port, user, pass, name, ssl)
+	
+	fmt.Printf("Connecting to database: %s on %s:%s as user %s\n", name, host, port, user)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil { panic(err) }
+	if err != nil { 
+		fmt.Printf("Database connection failed: %v\n", err)
+		panic(err) 
+	}
+	fmt.Printf("Successfully connected to database: %s\n", name)
 	return db
 }
 

@@ -1,32 +1,158 @@
 package app
 
 import (
-	"errors"
+	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/wnmay/horo/services/order-service/internal/domain"
+	"github.com/wnmay/horo/services/order-service/internal/ports/inbound"
 	"github.com/wnmay/horo/services/order-service/internal/ports/outbound"
 )
 
-type Service struct {
-	repo outbound.PersonRepository
+type OrderService struct {
+	orderRepo      outbound.OrderRepository
+	eventPublisher outbound.EventPublisher
+	paymentService outbound.PaymentService
 }
 
-func NewService(r outbound.PersonRepository) *Service {
-	return &Service{repo: r}
-}
-
-func (s *Service) Create(name string) (domain.Person, error) {
-	if name == "" {
-		return domain.Person{}, errors.New("name is required")
+func NewOrderService(
+	orderRepo outbound.OrderRepository,
+	eventPublisher outbound.EventPublisher,
+	paymentService outbound.PaymentService,
+) inbound.OrderService {
+	return &OrderService{
+		orderRepo:      orderRepo,
+		eventPublisher: eventPublisher,
+		paymentService: paymentService,
 	}
-	person := domain.Person{ID: uuid.NewString(), Name: name}
-	if err := s.repo.Save(person); err != nil {
-		return domain.Person{}, err
-	}
-	return person, nil
 }
 
-func (s *Service) GetAll() ([]domain.Person, error) {
-	return s.repo.GetAll()
+func (s *OrderService) CreateOrder(ctx context.Context, cmd inbound.CreateOrderCommand) (*domain.Order, error) {
+	// Create new order entity
+	order := domain.NewOrder(cmd.CustomerID, cmd.CourseID)
+
+	// Save order to repository
+	if err := s.orderRepo.Create(ctx, order); err != nil {
+		return nil, fmt.Errorf("failed to create order: %w", err)
+	}
+
+	// Publish order created event
+	if err := s.eventPublisher.PublishOrderCreated(ctx, order); err != nil {
+		return nil, fmt.Errorf("failed to publish order created event: %w", err)
+	}
+
+	// Create payment asynchronously (could be done via event as well)
+	// Note: Payment amount will be determined by the payment service based on course pricing
+	if err := s.paymentService.CreatePayment(ctx, order.OrderID, 0.0); err != nil {
+		// Log error but don't fail the order creation
+		// Payment creation will be retried via message queue
+		fmt.Printf("Failed to create payment for order %s: %v\n", order.OrderID, err)
+	}
+
+	return order, nil
+}
+func (s *OrderService) GetOrders(ctx context.Context) ([]*domain.Order, error) {
+	orders, err := s.orderRepo.GetAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get orders: %w", err)
+	}
+	return orders, nil
+}
+
+func (s *OrderService) GetOrderByID(ctx context.Context, orderID uuid.UUID) (*domain.Order, error) {
+	order, err := s.orderRepo.GetByID(ctx, orderID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get order: %w", err)
+	}
+	return order, nil
+}
+
+func (s *OrderService) GetOrdersByCustomer(ctx context.Context, customerID string) ([]*domain.Order, error) {
+	orders, err := s.orderRepo.GetByCustomerID(ctx, customerID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get orders for customer: %w", err)
+	}
+	return orders, nil
+}
+
+func (s *OrderService) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status domain.OrderStatus) error {
+	order, err := s.orderRepo.GetByID(ctx, orderID)
+	if err != nil {
+		return fmt.Errorf("failed to get order: %w", err)
+	}
+
+	// Update order status
+	order.Status = status
+
+	// Save updated order
+	if err := s.orderRepo.Update(ctx, order); err != nil {
+		return fmt.Errorf("failed to update order: %w", err)
+	}
+
+	return nil
+}
+
+func (s *OrderService) UpdateOrderPaymentID(ctx context.Context, orderID uuid.UUID, paymentID uuid.UUID) error {
+	// Get order
+	order, err := s.orderRepo.GetByID(ctx, orderID)
+	if err != nil {
+		return fmt.Errorf("failed to get order: %w", err)
+	}
+
+	// Update payment ID using the SetPaymentID method
+	order.SetPaymentID(paymentID)
+
+	// Save updated order
+	if err := s.orderRepo.Update(ctx, order); err != nil {
+		return fmt.Errorf("failed to update order with payment ID: %w", err)
+	}
+
+	return nil
+}
+
+func (s *OrderService) MarkCustomerCompleted(ctx context.Context, orderID uuid.UUID) error {
+	// Get order
+	order, err := s.orderRepo.GetByID(ctx, orderID)
+	if err != nil {
+		return fmt.Errorf("failed to get order: %w", err)
+	}
+
+	// Check if order is confirmed (payment completed)
+	if order.Status != domain.StatusConfirmed && order.Status != domain.StatusCompleted {
+		return fmt.Errorf("order must be confirmed before marking as completed")
+	}
+
+	// Mark as completed by customer
+	order.MarkCustomerCompleted()
+
+	// Save updated order
+	if err := s.orderRepo.Update(ctx, order); err != nil {
+		return fmt.Errorf("failed to mark order as completed by customer: %w", err)
+	}
+
+	return nil
+}
+
+func (s *OrderService) MarkProphetCompleted(ctx context.Context, orderID uuid.UUID) error {
+	// Get order
+	order, err := s.orderRepo.GetByID(ctx, orderID)
+	if err != nil {
+		return fmt.Errorf("failed to get order: %w", err)
+	}
+
+	// Check if order is confirmed (payment completed)
+	if order.Status != domain.StatusConfirmed && order.Status != domain.StatusCompleted {
+		return fmt.Errorf("order must be confirmed before marking as completed")
+	}
+
+	// Mark as completed by prophet
+	order.MarkProphetCompleted()
+
+	// Save updated order
+	if err := s.orderRepo.Update(ctx, order); err != nil {
+		return fmt.Errorf("failed to mark order as completed by prophet: %w", err)
+	}
+
+	return nil
 }

@@ -1,2 +1,0 @@
-// message publisher
-package messagebroker

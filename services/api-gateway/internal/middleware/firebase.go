@@ -1,11 +1,10 @@
 package middleware
 
 import (
-	"encoding/json"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	grpcinfra "github.com/wnmay/horo/services/api-gateway/internal/grpc"
+	"github.com/wnmay/horo/services/api-gateway/internal/clients"
 	pb "github.com/wnmay/horo/shared/proto/user-management"
 )
 
@@ -13,7 +12,7 @@ type AuthMiddleware struct {
 	authGrpcClient pb.AuthServiceClient
 }
 
-func NewAuthMiddleware(clients *grpcinfra.GrpcClients) *AuthMiddleware {
+func NewAuthMiddleware(clients *clients.GrpcClients) *AuthMiddleware {
 	return &AuthMiddleware{
 		authGrpcClient: clients.AuthServiceClient,
 	}
@@ -22,23 +21,32 @@ func NewAuthMiddleware(clients *grpcinfra.GrpcClients) *AuthMiddleware {
 func (a *AuthMiddleware) AddClaims(c *fiber.Ctx) error {
 	// Extract Bearer token
 	authHeader := c.Get("Authorization")
-	if authHeader == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "missing authorization header",
-		})
+	var token string
+
+	if authHeader != "" {
+		token = strings.TrimPrefix(authHeader, "Bearer ")
+		if token == authHeader {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "invalid authorization header format",
+			})
+		}
 	}
 
-	token := strings.TrimPrefix(authHeader, "Bearer ")
-	if token == authHeader {
+	// extract from query param for connecting ws
+	if token == "" {
+		token = c.Query("token")
+	}
+
+	if token == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "invalid authorization header format",
+			"error": "missing authorization header or token query param",
 		})
 	}
 
 	// Call gRPC to validate token and get claims
 	ctx := c.Context()
 	grpcReq := &pb.GetClaimsRequest{
-		FirebaseToken: token,
+		IdToken: token,
 	}
 
 	claimsResp, err := a.authGrpcClient.GetClaims(ctx, grpcReq)
@@ -49,29 +57,20 @@ func (a *AuthMiddleware) AddClaims(c *fiber.Ctx) error {
 		})
 	}
 
-	// Parse existing body
-	var body map[string]interface{}
-	if err := c.BodyParser(&body); err != nil {
-		// If body is empty or invalid, create new map
-		body = make(map[string]interface{})
-	}
+	// Strip any existing X-User-* headers from incoming request to prevent header injection
+	c.Request().Header.Del("X-User-Id")
+	c.Request().Header.Del("X-User-Email")
+	c.Request().Header.Del("X-User-Role")
 
-	// Add claims to body
-	body["claims"] = map[string]string{
-		"user_id": claimsResp.UserId,
-		"email":   claimsResp.Email,
-		"role":    claimsResp.Role,
-	}
+	// Add claims as headers for upstream services
+	c.Request().Header.Set("X-User-Id", claimsResp.UserId)
+	c.Request().Header.Set("X-User-Email", claimsResp.Email)
+	c.Request().Header.Set("X-User-Role", claimsResp.Role)
 
-	// Update request body with claims
-	c.Request().SetBody([]byte(mustMarshal(body)))
-	c.Request().Header.SetContentType("application/json")
+	c.Locals("userId", claimsResp.UserId)
+	c.Locals("userEmail", claimsResp.Email)
+	c.Locals("userRole", claimsResp.Role)
 
-	// Continue to next handler
+	// Continue to next handler (proxy to upstream service)
 	return c.Next()
-}
-
-func mustMarshal(v interface{}) string {
-	b, _ := json.Marshal(v)
-	return string(b)
 }
