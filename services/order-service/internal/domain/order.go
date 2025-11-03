@@ -16,7 +16,7 @@ const (
 type Order struct {
 	OrderID              uuid.UUID   `json:"order_id"`
 	CustomerID           string      `json:"customer_id"`
-	CourseID             uuid.UUID   `json:"course_id"`
+	CourseID             string      `json:"course_id"`
 	PaymentID            *uuid.UUID  `json:"payment_id,omitempty"`
 	Status               OrderStatus `json:"status"`
 	IsCustomerCompleted  bool        `json:"is_customer_completed"`
@@ -26,7 +26,7 @@ type Order struct {
 	OrderDate            time.Time   `json:"order_date"`
 }
 
-func NewOrder(customerID string, courseID uuid.UUID) *Order {
+func NewOrder(customerID string, courseID string) *Order {
 	return &Order{
 		OrderID:             uuid.New(),
 		CustomerID:          customerID,

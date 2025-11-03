@@ -98,18 +98,10 @@ func (h *Handler) CreateOrder(c *fiber.Ctx) error {
 		})
 	}
 
-	// Parse course UUID
-	courseID, err := uuid.Parse(req.CourseID)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid course ID format",
-		})
-	}
-
 	// Create command with authenticated user ID
 	cmd := inbound.CreateOrderCommand{
 		CustomerID: userID, // From JWT token
-		CourseID:   courseID,
+		CourseID:   req.CourseID,
 	}
 
 	// Call service
