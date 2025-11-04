@@ -33,7 +33,7 @@ type ChatMessageIncomingData struct {
 	Type     string `json:"type"` // text | notification
 }
 
-type PaymentCreatedData struct {
+type PaymentPublishedData struct {
 	PaymentID  string  `json:"paymentId"`
 	OrderID    string  `json:"orderId"`
 	ProphetID  string  `json:"prophetId"`
@@ -44,10 +44,10 @@ type PaymentCreatedData struct {
 }
 
 type ChatMessageOutgoingData struct {
-	MessageID   string `json:"messageId"`
-	RoomID      string `json:"roomId"`
-	SenderID    string `json:"senderId"`
-	Content     string `json:"content"`
-	Type        string `json:"type"` // text | notification
-	CreatedAt   string `json:"createdAt"`
+	MessageID string `json:"messageId"`
+	RoomID    string `json:"roomId"`
+	SenderID  string `json:"senderId"`
+	Content   string `json:"content"`
+	Type      string `json:"type"` // text | notification
+	CreatedAt string `json:"createdAt"`
 }
