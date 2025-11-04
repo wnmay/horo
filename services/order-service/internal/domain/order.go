@@ -1,4 +1,5 @@
 package domain
+
 import (
 	"time"
 
@@ -16,7 +17,7 @@ const (
 type Order struct {
 	OrderID              uuid.UUID   `json:"order_id"`
 	CustomerID           string      `json:"customer_id"`
-	CourseID             string      `json:"course_id"`
+	CourseID             string       `json:"course_id"`
 	PaymentID            *uuid.UUID  `json:"payment_id,omitempty"`
 	Status               OrderStatus `json:"status"`
 	IsCustomerCompleted  bool        `json:"is_customer_completed"`

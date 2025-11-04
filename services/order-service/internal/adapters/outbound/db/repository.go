@@ -3,10 +3,11 @@ package db
 import (
 	"time"
 
-	"github.com/google/uuid"
 	"context"
 	"errors"
 	"log"
+
+	"github.com/google/uuid"
 
 	"github.com/wnmay/horo/services/order-service/internal/domain"
 	"gorm.io/gorm"

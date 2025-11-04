@@ -17,13 +17,14 @@ const (
 )
 
 type Payment struct {
-	PaymentID string    `json:"payment_id"`
-	OrderID   string    `json:"order_id"`
-	Amount    float64   `json:"amount"`
-	Status    PaymentStatus    `json:"status"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	PaymentID  string        `json:"payment_id"`
+	OrderID    string        `json:"order_id"`
+	Amount     float64       `json:"amount"`
+	Status     PaymentStatus `json:"status"`
+	CreatedAt  time.Time     `json:"created_at"`
+	UpdatedAt  time.Time     `json:"updated_at"`
 }
+
 
 var (
 	ErrInvalidTransition = errors.New("invalid payment status transition")

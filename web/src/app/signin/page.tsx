@@ -1,22 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
-import { auth } from "@/firebase/firebase";
+import {
+  doSignInWithEmailAndPassword,
+  doSignInWithGoogle,
+} from "../../firebase/auth";
 import Card from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { jwtDecode } from "jwt-decode";
+import { FirebaseClaims } from "@/types/auth";
 
 export default function SignInPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await doSignInWithEmailAndPassword(email, password);
       router.push("/"); // redirect after successful login
     } catch (err: any) {
       setError(err.message);
@@ -26,8 +34,15 @@ export default function SignInPage() {
 
   const handleGoogleSignIn = async () => {
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithRedirect(auth, provider);
+      const { token, isNewUser } = await doSignInWithGoogle();
+      const claims = jwtDecode<FirebaseClaims>(token);
+      const hasRole = !!claims.role && claims.role.trim() !== "";
+
+      if (isNewUser || !hasRole) {
+        router.push(`/profile?token=${encodeURIComponent(token)}`);
+      } else {
+        router.push("/");
+      }
       router.push("/");
     } catch (err: any) {
       setError(err.message);
