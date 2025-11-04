@@ -8,6 +8,7 @@ const (
 	ChatMessageOutgoingQueue = "chat_message_outgoing_queue"
 	DeadLetterQueue          = "dead_letter_queue"
 	SettlePaymentQueue       = "settle_payment_queue"
+	NotifyCreatePayment      = "notify_create_payment"
 )
 
 // ---- DATA STRUCTURES ----
