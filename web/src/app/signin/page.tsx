@@ -8,6 +8,8 @@ import {
 } from "../../firebase/auth";
 import Card from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { jwtDecode } from "jwt-decode";
+import { FirebaseClaims } from "@/types/auth";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -32,7 +34,15 @@ export default function SignInPage() {
 
   const handleGoogleSignIn = async () => {
     try {
-      await doSignInWithGoogle();
+      const { token, isNewUser } = await doSignInWithGoogle();
+      const claims = jwtDecode<FirebaseClaims>(token);
+      const hasRole = !!claims.role && claims.role.trim() !== "";
+
+      if (isNewUser || !hasRole) {
+        router.push(`/profile?token=${encodeURIComponent(token)}`);
+      } else {
+        router.push("/");
+      }
       router.push("/");
     } catch (err: any) {
       setError(err.message);
