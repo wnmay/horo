@@ -26,9 +26,6 @@ func (p *Publisher) PublishPaymentCompleted(ctx context.Context, payment *domain
 	paymentData := message.PaymentPublishedData{
 		PaymentID:  payment.PaymentID,
 		OrderID:    payment.OrderID,
-		ProphetID:  payment.ProphetID,
-		CourseID:   payment.CourseID,
-		CustomerID: payment.CustomerID,
 		Status:     string(payment.Status),
 		Amount:     payment.Amount,
 	}
@@ -87,9 +84,6 @@ func (p *Publisher) PublishPaymentCreated(ctx context.Context, payment *domain.P
 	paymentData := message.PaymentPublishedData{
 		PaymentID:  payment.PaymentID,
 		OrderID:    payment.OrderID,
-		ProphetID:  payment.ProphetID,
-		CourseID:   payment.CourseID,
-		CustomerID: payment.CustomerID,
 		Status:     string(payment.Status),
 		Amount:     payment.Amount,
 	}
@@ -114,9 +108,6 @@ func (p *Publisher) PublishPaymentSettled(ctx context.Context, payment *domain.P
 	payload := message.PaymentPublishedData{
 		PaymentID:  payment.PaymentID,
 		OrderID:    payment.OrderID,
-		ProphetID:  payment.ProphetID,
-		CourseID:   payment.CourseID,
-		CustomerID: payment.CustomerID,
 		Status:     string(payment.Status),
 		Amount:     payment.Amount,
 	}
