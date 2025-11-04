@@ -4,3 +4,4 @@ metadata:
   name: chat-service-config
 data:
   http-port: "3004"
+  grpc-port: "50053"
