@@ -91,6 +91,7 @@ func (r *Router) setupChatRoutes(api fiber.Router) {
 	chats.Post("/rooms", authMiddleware.AddClaims, chatHandler.CreateRoom)
 	chats.Get("/customer/rooms", authMiddleware.AddClaims, chatHandler.GetChatRoomsByCustomerID)
 	chats.Get("/prophet/rooms", authMiddleware.AddClaims, chatHandler.GetChatRoomsByProphetID)
+	chats.Get("/user/rooms", authMiddleware.AddClaims, chatHandler.GetChatRoomsByUserID)
 }
 
 func (r *Router) setupCourseRoutes(api fiber.Router) {
@@ -101,10 +102,11 @@ func (r *Router) setupCourseRoutes(api fiber.Router) {
 
 	courses.Post("/", authMiddleware.AddClaims, courseHandler.CreateCourse)
 	courses.Get("/:id", authMiddleware.AddClaims, courseHandler.GetCourseByID)
-	courses.Get("/prophet/:prophet_id", authMiddleware.AddClaims, courseHandler.ListCoursesByProphet)
+	courses.Get("/prophet/:prophetId", authMiddleware.AddClaims, courseHandler.ListCoursesByProphet)
 	courses.Patch("/:id", authMiddleware.AddClaims, courseHandler.UpdateCourse)
 	courses.Patch("/delete/:id", authMiddleware.AddClaims, courseHandler.DeleteCourse)
 	courses.Get("/", authMiddleware.AddClaims, courseHandler.FindCoursesByFilter)
+	courses.Post("/:courseId/reviews", authMiddleware.AddClaims, courseHandler.CreateReview)
 }
 
 func (r *Router) setupTestRouter(api fiber.Router) {
@@ -127,7 +129,7 @@ func (r *Router) setupTestRouter(api fiber.Router) {
 func (r *Router) setupWebsocketRoutes() {
 	authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
 	chatPublisher := publishers.NewChatMessagePublisher(r.rmq)
-	chatWsHandler := ws_handler.NewChatWSHandler(r.hub, chatPublisher, r.grpcClients.ChatServiceClient)
+	chatWsHandler := ws_handler.NewChatWSHandler(r.hub, chatPublisher)
 
 	r.app.Use("/ws/chat", authMiddleware.AddClaims, func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {

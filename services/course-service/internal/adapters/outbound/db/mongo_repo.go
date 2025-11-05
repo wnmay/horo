@@ -18,7 +18,7 @@ func NewMongoCourseRepo(db *mongo.Database) *MongoCourseRepo {
 	return &MongoCourseRepo{col: db.Collection("courses")}
 }
 
-func (r *MongoCourseRepo) Save(course *domain.Course) error {
+func (r *MongoCourseRepo) SaveCourse(course *domain.Course) error {
 	_, err := r.col.InsertOne(context.TODO(), course)
 	return err
 }
@@ -94,4 +94,9 @@ func (r *MongoCourseRepo) FindByFilter(filter map[string]interface{}) ([]*domain
 		return nil, err
 	}
 	return courses, nil
+}
+
+func (r *MongoCourseRepo) SaveReview(review *domain.Review) error {
+	_, err := r.col.InsertOne(context.TODO(), review)
+	return err
 }

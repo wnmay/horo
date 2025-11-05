@@ -10,6 +10,7 @@ import (
 	inbound_port "github.com/wnmay/horo/services/chat-service/internal/ports/inbound"
 	outbound_port "github.com/wnmay/horo/services/chat-service/internal/ports/outbound"
 	"github.com/wnmay/horo/shared/contract"
+	"github.com/wnmay/horo/shared/message"
 	shared_message "github.com/wnmay/horo/shared/message"
 )
 
@@ -20,6 +21,7 @@ type chatService struct {
 }
 
 type paymentCreatedChatMessage struct {
+	MessageID   string  `json:"messageId"`
 	RoomID      string  `json:"roomId"`
 	SenderID    string  `json:"senderId"`
 	Content     string  `json:"content"`
@@ -37,12 +39,13 @@ func NewChatService(messageRepo outbound_port.MessageRepository, roomRepo outbou
 	}
 }
 
-func (s *chatService) SaveMessage(ctx context.Context, roomID string, senderID string, content string) error {
-	message := domain.CreateMessage(roomID, senderID, content, domain.MessageTypeText, domain.MessageStatusSent)
-	if err := s.messageRepo.SaveMessage(context.Background(), message); err != nil {
-		return err
+func (s *chatService) SaveMessage(ctx context.Context, roomID string, senderID string, content string) (string, error) {
+	message := domain.CreateMessage("", roomID, senderID, content, domain.MessageTypeText, domain.MessageStatusSent)
+	messageID, err := s.messageRepo.SaveMessage(context.Background(), message)
+	if err != nil {
+		return "", err
 	}
-	return nil
+	return messageID, nil
 }
 
 func (s *chatService) InitiateChatRoom(ctx context.Context, courseID string, customerID string) (string, error) {
@@ -60,17 +63,20 @@ func (s *chatService) InitiateChatRoom(ctx context.Context, courseID string, cus
 
 func (s *chatService) PublishPaymentCreatedMessage(ctx context.Context, paymentID string, orderID string, status string, amount float64) error {
 	message := domain.CreateMessage(
+		"",
 		"mock-room-id", // TO DO: filter rooomId from payment details after we enrich the payment event data
 		"system",
 		GeneratePaymentCreatedMessage(paymentID, orderID, status, amount),
 		domain.MessageTypeNotification,
 		domain.MessageStatusSent,
 	)
-	if err := s.messageRepo.SaveMessage(ctx, message); err != nil {
+	messageID, err := s.messageRepo.SaveMessage(ctx, message)
+	if err != nil {
 		return err
 	}
 
 	data, err := json.Marshal(paymentCreatedChatMessage{
+		MessageID:   messageID,
 		RoomID:      message.RoomID,
 		SenderID:    message.SenderID,
 		Content:     message.Content,
@@ -122,20 +128,58 @@ func (s *chatService) GetChatRoomsByProphetID(ctx context.Context, prophetID str
 }
 
 func (s *chatService) ValidateRoomAccess(ctx context.Context, userID string, roomID string) (bool, string, error) {
-    exists, err := s.roomRepo.RoomExists(ctx, roomID)
-    if err != nil {
-        return false, "internal error", err
-    }
-    if !exists {
-        return false, "room not found", nil
-    }
-    joinable, err := s.roomRepo.IsUserInRoom(ctx,userID,roomID)
-    if err != nil {
-        return false, "internal error", err
-    }
-    if !joinable {
-        return false, "user cannot chat in this room", nil
-    }
+	exists, err := s.roomRepo.RoomExists(ctx, roomID)
+	if err != nil {
+		return false, "internal error", err
+	}
+	if !exists {
+		return false, "room not found", nil
+	}
+	joinable, err := s.roomRepo.IsUserInRoom(ctx, userID, roomID)
+	if err != nil {
+		return false, "internal error", err
+	}
+	if !joinable {
+		return false, "user cannot chat in this room", nil
+	}
 
-    return true, "", nil
+	return true, "", nil
+}
+
+func (s *chatService) GetChatRoomsByUserID(ctx context.Context, userID string) ([]*domain.Room, error) {
+	return s.roomRepo.GetChatRoomsByUserID(ctx, userID)
+}
+
+func (s *chatService) PublishOrderCompletedNotification(ctx context.Context, notificationData message.ChatNotificationOutgoingData[message.OrderCompletedNotificationData]) error {
+	data, err := json.Marshal(notificationData)
+	if err != nil {
+		return err
+	}
+
+	return s.messagePublisher.Publish(ctx, contract.AmqpMessage{
+		OwnerID: notificationData.SenderID,
+		Data:    data,
+	})
+}
+
+func (s *chatService) PublishOrderPaymentBoundNotification(ctx context.Context, notificationData message.ChatNotificationOutgoingData[message.OrderPaymentBoundNotificationData]) error {
+	data, err := json.Marshal(notificationData)
+	if err != nil {
+		return err
+	}
+	return s.messagePublisher.Publish(ctx, contract.AmqpMessage{
+		OwnerID: notificationData.SenderID,
+		Data:    data,
+	})
+}
+
+func (s *chatService) PublishOrderPaidNotification(ctx context.Context, notificationData message.ChatNotificationOutgoingData[message.OrderPaidNotificationData]) error {
+	data, err := json.Marshal(notificationData)
+	if err != nil {
+		return err
+	}
+	return s.messagePublisher.Publish(ctx, contract.AmqpMessage{
+		OwnerID: notificationData.SenderID,
+		Data:    data,
+	})
 }

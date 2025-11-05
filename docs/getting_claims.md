@@ -13,7 +13,7 @@ After successful authentication, the gateway adds the following headers:
 
 | Header         | Description                                       | Example            |
 | -------------- | ------------------------------------------------- | ------------------ |
-| `X-User-Uid`   | Unique Firebase user ID                           | `6nFZV...W2bA`     |
+| `X-User-Id`   | Unique Firebase user ID                           | `6nFZV...W2bA`     |
 | `X-User-Email` | User’s email (if available)                       | `user@example.com` |
 | `X-User-Name`  | Display name (optional)                           | `Jane Doe`         |
 | `X-User-Role`  | Comma-separated list of user roles or permissions | `customer`         |

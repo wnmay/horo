@@ -29,7 +29,7 @@ func (h *CourseHandler) GetCourseByID(c *fiber.Ctx) error {
 }
 
 func (h *CourseHandler) ListCoursesByProphet(c *fiber.Ctx) error {
-	return ProxyRequest(c, h.client, "GET", h.courseServiceURL, fmt.Sprintf("/api/prophets/%s/courses", c.Params("prophet_id")))
+	return ProxyRequest(c, h.client, "GET", h.courseServiceURL, fmt.Sprintf("/api/prophets/%s/courses", c.Params("prophetID")))
 }
 
 func (h *CourseHandler) UpdateCourse(c *fiber.Ctx) error {
@@ -42,4 +42,8 @@ func (h *CourseHandler) DeleteCourse(c *fiber.Ctx) error {
 
 func (h *CourseHandler) FindCoursesByFilter(c *fiber.Ctx) error {
 	return ProxyRequest(c, h.client, "GET", h.courseServiceURL, "/api/courses")
+}
+
+func (h *CourseHandler) CreateReview(c *fiber.Ctx) error {
+	return ProxyRequest(c, h.client, "POST", h.courseServiceURL, fmt.Sprintf("/api/courses/%s/reviews", c.Params("courseId")))
 }

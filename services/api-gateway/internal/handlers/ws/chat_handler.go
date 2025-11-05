@@ -1,25 +1,29 @@
 package ws
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"log"
+	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
 	"github.com/wnmay/horo/services/api-gateway/internal/messaging/publishers"
 	gwWS "github.com/wnmay/horo/services/api-gateway/internal/websocket"
-	chatpb "github.com/wnmay/horo/shared/proto/chat"
+	"github.com/wnmay/horo/shared/env"
 )
 
 type ChatWSHandler struct {
 	hub       *gwWS.Hub
 	publisher *publishers.ChatMessagePublisher
-	chatClient chatpb.ChatServiceClient 
+	httpClient  *http.Client
+	chatServiceURL string
 }
 
-func NewChatWSHandler(hub *gwWS.Hub, pub *publishers.ChatMessagePublisher,chatClient chatpb.ChatServiceClient) *ChatWSHandler {
-	return &ChatWSHandler{hub: hub, publisher: pub,chatClient: chatClient}
+func NewChatWSHandler(hub *gwWS.Hub, pub *publishers.ChatMessagePublisher) *ChatWSHandler {
+	return &ChatWSHandler{hub: hub, publisher: pub,httpClient: &http.Client{},chatServiceURL: env.GetString("CHAT_SERVICE_URL", "http://localhost:3004"),}
 }
 
 func (h *ChatWSHandler) RegisterRoutes(app *fiber.App) {
@@ -104,24 +108,60 @@ func (h *ChatWSHandler) handle(c *websocket.Conn) {
 }
 
 func (h *ChatWSHandler) validateAndJoinRoom(roomID, userID string, conn *gwWS.Connection) bool {
-	resp, err := h.chatClient.ValidateRoomAccess(context.Background(), &chatpb.ValidateRoomRequest{
-		UserId: userID,
-		RoomId: roomID,
-	})
+	type validateReq struct {
+		RoomID string `json:"roomID"`
+	}
+	type validateResp struct {
+		Allowed bool   `json:"allowed"`
+		Reason  string `json:"reason"`
+	}
+
+	url := h.chatServiceURL + "/api/chat/room/validate"
+
+	bodyBytes, _ := json.Marshal(validateReq{RoomID: roomID})
+
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(bodyBytes))
 	if err != nil {
-		log.Printf("[ws] gRPC validation error for user=%s room=%s: %v", userID, roomID, err)
+		log.Printf("[ws] build http request error: %v", err)
+		_ = conn.Send([]byte(`{"error":"validation request error"}`))
+		return false
+	}
+	req = req.WithContext(context.Background())
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-User-Id", userID)
+
+	res, err := h.httpClient.Do(req)
+	if err != nil {
+		log.Printf("[ws] http call error for user=%s room=%s: %v", userID, roomID, err)
 		_ = conn.Send([]byte(`{"error":"validation failed"}`))
 		return false
 	}
-	if !resp.Allowed {
-		log.Printf("[ws] user=%s denied joining room=%s: %s", userID, roomID, resp.Reason)
-		_ = conn.Send([]byte(`{"error":"` + resp.Reason + `"}`))
+	defer res.Body.Close()
+
+	respBody, _ := io.ReadAll(res.Body)
+	if res.StatusCode != http.StatusOK {
+		log.Printf("[ws] validation http %d: %s", res.StatusCode, string(respBody))
+		_ = conn.Send([]byte(`{"error":"validation http error"}`))
+		return false
+	}
+
+	var v validateResp
+	if err := json.Unmarshal(respBody, &v); err != nil {
+		log.Printf("[ws] parse validation response error: %v", err)
+		_ = conn.Send([]byte(`{"error":"invalid validation response"}`))
+		return false
+	}
+
+	if !v.Allowed {
+		log.Printf("[ws] user=%s denied joining room=%s: %s", userID, roomID, v.Reason)
+		_ = conn.Send([]byte(`{"error":"` + v.Reason + `"}`))
 		return false
 	}
 
 	h.hub.AddToRoom(roomID, conn)
 	return true
 }
+
 
 func (h *ChatWSHandler) sendAck(conn *gwWS.Connection, roomID string) {
 	ack := map[string]any{

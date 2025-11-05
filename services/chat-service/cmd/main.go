@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	http_handler "github.com/wnmay/horo/services/chat-service/internal/adapters/inbound/http"
 	repository "github.com/wnmay/horo/services/chat-service/internal/adapters/outbound/db"
@@ -69,18 +68,18 @@ func main() {
 	}()
 
 	//grpc
-	grpcAddr := ":" + config.GRPCPort
-	grpcServer, lis, err := infrastructure.SetupGRPCServer(chatService, grpcAddr)
-	if err != nil {
-		log.Fatalf("Failed to setup gRPC server: %v", err)
-	}
+	// grpcAddr := config.GRPCPort
+	// grpcServer, lis, err := infrastructure.SetupGRPCServer(chatService, grpcAddr)
+	// if err != nil {
+	// 	log.Fatalf("Failed to setup gRPC server: %v", err)
+	// }
 
 	// Start gRPC server
-	go func() {
-		if err := grpcServer.Serve(lis); err != nil {
-			log.Printf("gRPC server error: %v", err)
-		}
-	}()
+	// go func() {
+	// 	if err := grpcServer.Serve(lis); err != nil {
+	// 		log.Printf("gRPC server error: %v", err)
+	// 	}
+	// }()
 
 	// Start all message consumers
 	if err := messagingManager.StartConsumers(); err != nil {
@@ -101,15 +100,15 @@ func main() {
 		log.Printf("Error shutting down Fiber server: %v", err)
 	}
 
-	done := make(chan struct{})
-	go func() {
-		grpcServer.GracefulStop()
-		close(done)
-	}()
-	select {
-	case <-done:
-	case <-time.After(5 * time.Second):
-		log.Println("gRPC graceful stop timeout, forcing Stop()")
-		grpcServer.Stop()
-	}
+	// done := make(chan struct{})
+	// go func() {
+	// 	grpcServer.GracefulStop()
+	// 	close(done)
+	// }()
+	// select {
+	// case <-done:
+	// case <-time.After(5 * time.Second):
+	// 	log.Println("gRPC graceful stop timeout, forcing Stop()")
+	// 	grpcServer.Stop()
+	// }
 }
