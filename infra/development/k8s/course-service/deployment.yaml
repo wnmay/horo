@@ -20,7 +20,7 @@ spec:
           ports:
             - containerPort: 3005 # REST API port (http)
               name: http
-            - containerPort: 50051 # gRPC port
+            - containerPort: 50052 # gRPC port
               name: grpc
           resources:
             requests:
@@ -38,7 +38,7 @@ spec:
             # Database configuration
             - name: DB_NAME
               value: "coursedb"
-            - name: MONGODB_URI
+            - name: MONGO_URI
               valueFrom:
                 secretKeyRef:
                   name: mongodb
@@ -55,7 +55,7 @@ spec:
     - port: 3005
       name: http
       targetPort: 3005
-    - port: 50051
+    - port: 50052
       name: grpc
-      targetPort: 50051
+      targetPort: 50052
   type: ClusterIP

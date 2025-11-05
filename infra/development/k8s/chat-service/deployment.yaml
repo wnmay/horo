@@ -17,6 +17,9 @@ spec:
           image: horo/chat-service
           ports:
             - containerPort: 3004
+              name: http
+            - containerPort: 50053 # gRPC port
+              name: grpc
           resources:
             requests:
               memory: "64Mi"
