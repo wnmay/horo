@@ -69,7 +69,7 @@ func main() {
 	}()
 
 	//grpc
-	grpcAddr := config.GRPCPort
+	grpcAddr := ":" + config.GRPCPort
 	grpcServer, lis, err := infrastructure.SetupGRPCServer(chatService, grpcAddr)
 	if err != nil {
 		log.Fatalf("Failed to setup gRPC server: %v", err)

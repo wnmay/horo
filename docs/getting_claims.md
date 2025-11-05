@@ -27,7 +27,7 @@ Example (Go/fiber):
 ```go
 app.Get("/profile", func(c *fiber.Ctx) error {
 		// Read headers injected by the gateway
-		userID := c.Get("X-User-Uid")
+		userID := c.Get("X-User-Id")
 		email := c.Get("X-User-Email")
 		role := c.Get("X-User-Role")
         ...
