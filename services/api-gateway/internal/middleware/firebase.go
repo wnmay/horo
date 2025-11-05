@@ -1,20 +1,29 @@
 package middleware
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/wnmay/horo/services/api-gateway/internal/clients"
-	pb "github.com/wnmay/horo/shared/proto/user-management"
 )
 
 type AuthMiddleware struct {
-	authGrpcClient pb.AuthServiceClient
+	authServiceAddr string
+	client          *http.Client
 }
 
-func NewAuthMiddleware(clients *clients.GrpcClients) *AuthMiddleware {
+type AuthResponse struct {
+	UserID string `json:"user_id"`
+	Email  string `json:"email"`
+	Role   string `json:"role"`
+}
+
+func NewAuthMiddleware(authServiceAddr string) *AuthMiddleware {
 	return &AuthMiddleware{
-		authGrpcClient: clients.AuthServiceClient,
+		authServiceAddr: authServiceAddr,
 	}
 }
 
@@ -44,32 +53,31 @@ func (a *AuthMiddleware) AddClaims(c *fiber.Ctx) error {
 	}
 
 	// Call gRPC to validate token and get claims
-	ctx := c.Context()
-	grpcReq := &pb.GetClaimsRequest{
-		IdToken: token,
-	}
-
-	claimsResp, err := a.authGrpcClient.GetClaims(ctx, grpcReq)
+	res, err := http.Get(fmt.Sprintf("%s/api/auth/verify-token?token=%s", a.authServiceAddr, token))
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error":   "invalid or expired token",
 			"details": err.Error(),
 		})
 	}
+	defer res.Body.Close()
 
-	// Strip any existing X-User-* headers from incoming request to prevent header injection
-	c.Request().Header.Del("X-User-Id")
-	c.Request().Header.Del("X-User-Email")
-	c.Request().Header.Del("X-User-Role")
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error":   "invalid or expired token",
+			"details": err.Error(),
+		})
+	}
+	var authResponse AuthResponse
+	err = json.Unmarshal(body, &authResponse)
 
-	// Add claims as headers for upstream services
-	c.Request().Header.Set("X-User-Id", claimsResp.UserId)
-	c.Request().Header.Set("X-User-Email", claimsResp.Email)
-	c.Request().Header.Set("X-User-Role", claimsResp.Role)
-
-	c.Locals("userId", claimsResp.UserId)
-	c.Locals("userEmail", claimsResp.Email)
-	c.Locals("userRole", claimsResp.Role)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error":   "failed to unmarshal auth response",
+			"details": err.Error(),
+		})
+	}
 
 	// Continue to next handler (proxy to upstream service)
 	return c.Next()
