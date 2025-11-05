@@ -83,6 +83,7 @@ func (c *notificationConsumer) handleOrderCompleted(ctx context.Context, deliver
 			OrderStatus: orderCompletedData.OrderStatus,
 			CourseName:  orderCompletedData.CourseName,
 		},
+		Trigger: contract.OrderCompletedEvent,
 	}
 
 	err = c.chatService.PublishOrderCompletedNotification(ctx, notificationData)
@@ -125,6 +126,18 @@ func (c *notificationConsumer) handleOrderPaymentBound(ctx context.Context, deli
 		SenderID:  "system",
 		Type:      string(domain.MessageTypeNotification),
 		CreatedAt: time.Now().Format(time.RFC3339),
+		Trigger: contract.OrderPaymentBoundEvent,
+		MessageDetail: &message.OrderPaymentBoundNotificationData{
+			OrderID:       orderPaymentBoundData.OrderID,
+			PaymentID:     orderPaymentBoundData.PaymentID,
+			RoomID:        orderPaymentBoundData.RoomID,
+			CustomerID:    orderPaymentBoundData.CustomerID,
+			CourseID:      orderPaymentBoundData.CourseID,
+			OrderStatus:   orderPaymentBoundData.OrderStatus,
+			CourseName:    orderPaymentBoundData.CourseName,
+			Amount:        orderPaymentBoundData.Amount,
+			PaymentStatus: orderPaymentBoundData.PaymentStatus,
+		},
 	}
 
 	err = c.chatService.PublishOrderPaymentBoundNotification(ctx, notificationData)
@@ -167,6 +180,18 @@ func (c *notificationConsumer) handleOrderPaid(ctx context.Context, delivery amq
 		SenderID:  "system",
 		Type:      string(domain.MessageTypeNotification),
 		CreatedAt: time.Now().Format(time.RFC3339),
+		Trigger: contract.OrderPaidEvent,
+		MessageDetail: &message.OrderPaidNotificationData{
+			OrderID:       orderPaidData.OrderID,
+			PaymentID:     orderPaidData.PaymentID,
+			RoomID:        orderPaidData.RoomID,
+			CustomerID:    orderPaidData.CustomerID,
+			CourseID:      orderPaidData.CourseID,
+			OrderStatus:   orderPaidData.OrderStatus,
+			CourseName:    orderPaidData.CourseName,
+			Amount:        orderPaidData.Amount,
+			PaymentStatus: orderPaidData.PaymentStatus,
+		},
 	}
 
 	err = c.chatService.PublishOrderPaidNotification(ctx, notificationData)
