@@ -242,7 +242,7 @@ func (r *RabbitMQ) setupDeadLetterExchange() error {
 // 	return nil
 // }
 
-func (r *RabbitMQ) declareAndBindQueue(queueName string, messageTypes []string, exchange string) error {
+func (r *RabbitMQ) DeclareQueueAndBindEvents(queueName string, messageTypes []string) error {
 	// Add dead letter configuration
 	args := amqp.Table{
 		"x-dead-letter-exchange": DeadLetterExchange,
@@ -262,9 +262,9 @@ func (r *RabbitMQ) declareAndBindQueue(queueName string, messageTypes []string, 
 
 	for _, msg := range messageTypes {
 		if err := r.Channel.QueueBind(
-			q.Name,   // queue name
-			msg,      // routing key
-			exchange, // exchange
+			q.Name,      // queue name
+			msg,         // routing key
+			AppExchange, // exchange
 			false,
 			nil,
 		); err != nil {
