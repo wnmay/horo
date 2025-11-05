@@ -13,7 +13,7 @@ After successful authentication, the gateway adds the following headers:
 
 | Header         | Description                                       | Example            |
 | -------------- | ------------------------------------------------- | ------------------ |
-| `X-User-Uid`   | Unique Firebase user ID                           | `6nFZV...W2bA`     |
+| `X-User-Id`   | Unique Firebase user ID                           | `6nFZV...W2bA`     |
 | `X-User-Email` | User’s email (if available)                       | `user@example.com` |
 | `X-User-Name`  | Display name (optional)                           | `Jane Doe`         |
 | `X-User-Role`  | Comma-separated list of user roles or permissions | `customer`         |
@@ -27,7 +27,7 @@ Example (Go/fiber):
 ```go
 app.Get("/profile", func(c *fiber.Ctx) error {
 		// Read headers injected by the gateway
-		userID := c.Get("X-User-Uid")
+		userID := c.Get("X-User-Id")
 		email := c.Get("X-User-Email")
 		role := c.Get("X-User-Role")
         ...
