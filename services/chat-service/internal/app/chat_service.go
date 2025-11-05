@@ -10,6 +10,7 @@ import (
 	inbound_port "github.com/wnmay/horo/services/chat-service/internal/ports/inbound"
 	outbound_port "github.com/wnmay/horo/services/chat-service/internal/ports/outbound"
 	"github.com/wnmay/horo/shared/contract"
+	"github.com/wnmay/horo/shared/message"
 	shared_message "github.com/wnmay/horo/shared/message"
 )
 
@@ -143,4 +144,42 @@ func (s *chatService) ValidateRoomAccess(ctx context.Context, userID string, roo
 	}
 
 	return true, "", nil
+}
+
+func (s *chatService) GetChatRoomsByUserID(ctx context.Context, userID string) ([]*domain.Room, error) {
+	return s.roomRepo.GetChatRoomsByUserID(ctx, userID)
+}
+
+func (s *chatService) PublishOrderCompletedNotification(ctx context.Context, notificationData message.ChatNotificationOutgoingData[message.OrderCompletedNotificationData]) error {
+	data, err := json.Marshal(notificationData)
+	if err != nil {
+		return err
+	}
+
+	return s.messagePublisher.Publish(ctx, contract.AmqpMessage{
+		OwnerID: notificationData.SenderID,
+		Data:    data,
+	})
+}
+
+func (s *chatService) PublishOrderPaymentBoundNotification(ctx context.Context, notificationData message.ChatNotificationOutgoingData[message.OrderPaymentBoundNotificationData]) error {
+	data, err := json.Marshal(notificationData)
+	if err != nil {
+		return err
+	}
+	return s.messagePublisher.Publish(ctx, contract.AmqpMessage{
+		OwnerID: notificationData.SenderID,
+		Data:    data,
+	})
+}
+
+func (s *chatService) PublishOrderPaidNotification(ctx context.Context, notificationData message.ChatNotificationOutgoingData[message.OrderPaidNotificationData]) error {
+	data, err := json.Marshal(notificationData)
+	if err != nil {
+		return err
+	}
+	return s.messagePublisher.Publish(ctx, contract.AmqpMessage{
+		OwnerID: notificationData.SenderID,
+		Data:    data,
+	})
 }
