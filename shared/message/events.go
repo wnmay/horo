@@ -93,6 +93,7 @@ type ChatNotificationOutgoingData[T any] struct {
 	Type          string `json:"type"` // text | notification
 	CreatedAt     string `json:"createdAt"`
 	MessageDetail *T     `json:"messageDetail"`
+	Trigger       string `json:"trigger"`
 }
 
 type OrderCompletedNotificationData struct {

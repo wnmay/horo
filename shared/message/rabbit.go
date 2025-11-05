@@ -111,7 +111,7 @@ func (r *RabbitMQ) ConsumeMessages(queueName string, handler MessageHandler) err
 	go func() {
 		for msg := range msgs {
 			if err := tracing.TracedConsumer(msg, func(ctx context.Context, d amqp.Delivery) error {
-				log.Printf("Received a message: %s", msg.Body)
+				log.Printf("Received a message: %s with routing key: %s", msg.Body, d.RoutingKey)
 
 				cfg := retry.DefaultConfig()
 				err := retry.WithBackoff(ctx, cfg, func() error {
