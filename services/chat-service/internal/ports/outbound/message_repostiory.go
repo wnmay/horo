@@ -7,6 +7,6 @@ import (
 )
 
 type MessageRepository interface {
-	SaveMessage(ctx context.Context, message *domain.Message) error
+	SaveMessage(ctx context.Context, message *domain.Message) (string, error)
 	FindMessagesByRoomID(ctx context.Context, roomID string) ([]*domain.Message, error)
 }

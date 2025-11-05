@@ -7,7 +7,7 @@ import (
 )
 
 type ChatService interface {
-	SaveMessage(ctx context.Context, roomID, senderID, content string) error
+	SaveMessage(ctx context.Context, roomID, senderID, content string) (string, error)
 	InitiateChatRoom(ctx context.Context, courseID string, customerID string) (string, error)
 	PublishPaymentCreatedMessage(ctx context.Context, paymentID string, orderID string, status string, amount float64) error
 	GetMessagesByRoomID(ctx context.Context, roomID string) ([]*domain.Message, error)

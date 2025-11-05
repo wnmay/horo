@@ -24,11 +24,14 @@ func NewMongoMessageRepository(db *mongo.Database, collectionName string) reposi
 	}
 }
 
-func (r *mongoMessageRepository) SaveMessage(ctx context.Context, message *domain.Message) error {
+func (r *mongoMessageRepository) SaveMessage(ctx context.Context, message *domain.Message) (string,error) {
 	model := ToModel(message)
-
-	_, err := r.collection.InsertOne(ctx, model)
-	return err
+	insertResult, err := r.collection.InsertOne(ctx, model)
+	if err != nil {
+		return "", err
+	}
+	messageID := insertResult.InsertedID.(primitive.ObjectID).Hex()
+	return messageID, nil
 }
 
 func (r *mongoMessageRepository) FindMessagesByRoomID(ctx context.Context, roomID string) ([]*domain.Message, error) {
