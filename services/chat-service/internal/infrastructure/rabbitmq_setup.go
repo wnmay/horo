@@ -21,20 +21,19 @@ func SetupChatQueues(rmq *message.RabbitMQ) error {
 	}
 
 	// Setup outgoing message queue (binds to AppExchange by default)
-	if err := rmq.DeclareQueue(
+	if err := rmq.DeclareQueueAndBindEvents(
 		message.NotifyCreatePayment,
-		contract.PaymentCreatedEvent,
+		[]string{contract.PaymentCreatedEvent, contract.OrderCompletedEvent},
 	); err != nil {
 		return fmt.Errorf("failed to setup outgoing queue: %v", err)
 	}
 
-		if err := rmq.DeclareQueue(
+	if err := rmq.DeclareQueue(
 		message.ChatMessageOutgoingQueue,
 		contract.ChatMessageOutgoingEvent,
 	); err != nil {
 		return fmt.Errorf("failed to setup outgoing queue: %v", err)
 	}
-
 
 	return nil
 }
