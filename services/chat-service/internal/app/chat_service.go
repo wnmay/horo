@@ -144,3 +144,7 @@ func (s *chatService) ValidateRoomAccess(ctx context.Context, userID string, roo
 
 	return true, "", nil
 }
+
+func (s *chatService) GetChatRoomsByUserID(ctx context.Context, userID string) ([]*domain.Room, error) {
+	return s.roomRepo.GetChatRoomsByUserID(ctx, userID)
+}
