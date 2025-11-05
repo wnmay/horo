@@ -51,3 +51,37 @@ type ChatMessageOutgoingData struct {
 	Type      string `json:"type"` // text | notification
 	CreatedAt string `json:"createdAt"`
 }
+
+type OrderCompletedData struct {
+	OrderID     string `json:"orderId"`
+	PaymentID   string `json:"paymentId"`
+	Status      string `json:"status"`
+	OrderStatus string `json:"orderStatus"`
+	CourseID    string `json:"courseId"`
+	CourseName  string `json:"courseName"`
+}
+
+type OrderPaymentBoundData struct {
+	OrderID     string `json:"orderId"`
+	PaymentID   string `json:"paymentId"`
+	RoomID      string `json:"roomId"`
+	CustomerID  string `json:"customerId"`
+	Status      string `json:"status"`
+	OrderStatus string `json:"orderStatus"`
+	CourseName  string `json:"courseName"`
+	Amount      float64 `json:"amount"`
+	PaymentStatus string `json:"paymentStatus"`
+}
+
+type OrderPaidData struct {
+	OrderID string `json:"orderId"`
+	PaymentID string `json:"paymentId"`
+	RoomID string `json:"roomId"`
+	CustomerID string `json:"customerId"`
+	CourseID string `json:"courseId"`
+	Status string `json:"status"`
+	OrderStatus string `json:"orderStatus"`
+	CourseName string `json:"courseName"`
+	Amount float64 `json:"amount"`
+	PaymentStatus string `json:"paymentStatus"`
+}
