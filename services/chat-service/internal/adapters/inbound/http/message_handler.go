@@ -15,6 +15,11 @@ type CreateRoomRequest struct {
 	CourseID string `json:"courseID"`
 }
 
+
+type ValidateRoomAccessRequest struct {
+	RoomID string `json:"roomID"`
+}
+
 func NewMessageHandler(chatService inbound_port.ChatService) *ChatHandler {
 	return &ChatHandler{
 		chatService: chatService,
@@ -106,4 +111,37 @@ func (h *ChatHandler) GetChatRoomsByUserID(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(rooms)
+}
+
+func (h *ChatHandler) ValidateRoomAccess(c *fiber.Ctx) error {
+	userID := c.Get("X-User-Id")
+	if userID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "X-User-Id header is required",
+		})
+	}
+
+	var req ValidateRoomAccessRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body: " + err.Error(),
+		})
+	}
+	if req.RoomID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "roomID is required",
+		})
+	}
+
+	allowed, reason, err := h.chatService.ValidateRoomAccess(c.Context(), userID, req.RoomID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"allowed": allowed,
+		"reason":  reason,
+	})
 }

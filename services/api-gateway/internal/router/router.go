@@ -128,7 +128,7 @@ func (r *Router) setupTestRouter(api fiber.Router) {
 func (r *Router) setupWebsocketRoutes() {
 	authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
 	chatPublisher := publishers.NewChatMessagePublisher(r.rmq)
-	chatWsHandler := ws_handler.NewChatWSHandler(r.hub, chatPublisher, r.grpcClients.ChatServiceClient)
+	chatWsHandler := ws_handler.NewChatWSHandler(r.hub, chatPublisher)
 
 	r.app.Use("/ws/chat", authMiddleware.AddClaims, func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {
