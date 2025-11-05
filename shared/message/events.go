@@ -68,6 +68,7 @@ type OrderPaymentBoundData struct {
 	RoomID        string  `json:"roomId"`
 	CustomerID    string  `json:"customerId"`
 	OrderStatus   string  `json:"orderStatus"`
+	CourseID      string  `json:"courseId"`
 	CourseName    string  `json:"courseName"`
 	Amount        float64 `json:"amount"`
 	PaymentStatus string  `json:"paymentStatus"`
@@ -99,4 +100,28 @@ type OrderCompletedNotificationData struct {
 	CourseID    string `json:"courseId"`
 	OrderStatus string `json:"orderStatus"`
 	CourseName  string `json:"courseName"`
+}
+
+type OrderPaymentBoundNotificationData struct {
+	OrderID       string  `json:"orderId"`
+	PaymentID     string  `json:"paymentId"`
+	RoomID        string  `json:"roomId"`
+	CustomerID    string  `json:"customerId"`
+	CourseID      string  `json:"courseId"`
+	OrderStatus   string  `json:"orderStatus"`
+	CourseName    string  `json:"courseName"`
+	Amount        float64 `json:"amount"`
+	PaymentStatus string  `json:"paymentStatus"`
+}
+
+type OrderPaidNotificationData struct {
+	OrderID       string  `json:"orderId"`
+	PaymentID     string  `json:"paymentId"`
+	RoomID        string  `json:"roomId"`
+	CustomerID    string  `json:"customerId"`
+	CourseID      string  `json:"courseId"`
+	OrderStatus   string  `json:"orderStatus"`
+	CourseName    string  `json:"courseName"`
+	Amount        float64 `json:"amount"`
+	PaymentStatus string  `json:"paymentStatus"`
 }

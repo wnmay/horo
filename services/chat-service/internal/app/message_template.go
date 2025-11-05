@@ -25,3 +25,29 @@ func GenerateOrderCompletedMessage(orderID string, courseID string, orderStatus 
 	</div>
 	`
 }
+
+func GenerateOrderPaymentBoundMessage(orderID string, courseID string, orderStatus string, courseName string) string {
+	return `
+	<div class="message-container">
+		<div class="message-header">
+			<h3>Successfully create payment for order</h3>
+		</div>
+		<div class="message-body">
+			<p>Order %s payment created successfully for course %s. Status: %s, Course Name: %s</p>
+		</div>
+	</div>
+	`
+}
+
+func GenerateOrderPaidMessage(orderID string, courseID string, orderStatus string, courseName string) string {
+	return `
+	<div class="message-container">
+		<div class="message-header">
+			<h3>Order Paid</h3>
+		</div>
+		<div class="message-body">
+			<p>Order %s paid successfully for course %s. Status: %s, Course Name: %s</p>
+		</div>
+	</div>
+	`
+}

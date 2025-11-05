@@ -155,7 +155,29 @@ func (s *chatService) PublishOrderCompletedNotification(ctx context.Context, not
 	if err != nil {
 		return err
 	}
-	
+
+	return s.messagePublisher.Publish(ctx, contract.AmqpMessage{
+		OwnerID: notificationData.SenderID,
+		Data:    data,
+	})
+}
+
+func (s *chatService) PublishOrderPaymentBoundNotification(ctx context.Context, notificationData message.ChatNotificationOutgoingData[message.OrderPaymentBoundNotificationData]) error {
+	data, err := json.Marshal(notificationData)
+	if err != nil {
+		return err
+	}
+	return s.messagePublisher.Publish(ctx, contract.AmqpMessage{
+		OwnerID: notificationData.SenderID,
+		Data:    data,
+	})
+}
+
+func (s *chatService) PublishOrderPaidNotification(ctx context.Context, notificationData message.ChatNotificationOutgoingData[message.OrderPaidNotificationData]) error {
+	data, err := json.Marshal(notificationData)
+	if err != nil {
+		return err
+	}
 	return s.messagePublisher.Publish(ctx, contract.AmqpMessage{
 		OwnerID: notificationData.SenderID,
 		Data:    data,

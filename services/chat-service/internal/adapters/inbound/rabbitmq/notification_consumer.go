@@ -111,10 +111,7 @@ func (c *notificationConsumer) handleOrderPaymentBound(ctx context.Context, deli
 	}
 
 	// Generate notification content for payment bound
-	content := fmt.Sprintf("Payment created for order %s. Amount: %.2f, Status: %s",
-		orderPaymentBoundData.OrderID,
-		orderPaymentBoundData.Amount,
-		orderPaymentBoundData.PaymentStatus)
+	content := service.GenerateOrderPaymentBoundMessage(orderPaymentBoundData.OrderID, orderPaymentBoundData.CourseID, orderPaymentBoundData.OrderStatus, orderPaymentBoundData.CourseName)
 
 	messageID, err := c.chatService.SaveMessage(ctx, orderPaymentBoundData.RoomID, "system", content)
 	if err != nil {
@@ -122,8 +119,20 @@ func (c *notificationConsumer) handleOrderPaymentBound(ctx context.Context, deli
 		return err
 	}
 
-	// You can add a publish notification here if needed
-	log.Printf("Saved payment bound notification message: %s", messageID)
+	notificationData := message.ChatNotificationOutgoingData[message.OrderPaymentBoundNotificationData]{
+		MessageID: messageID,
+		RoomID:    orderPaymentBoundData.RoomID,
+		SenderID:  "system",
+		Type:      string(domain.MessageTypeNotification),
+		CreatedAt: time.Now().Format(time.RFC3339),
+	}
+
+	err = c.chatService.PublishOrderPaymentBoundNotification(ctx, notificationData)
+	if err != nil {
+		log.Printf("Failed to publish order payment bound notification: %v", err)
+		return err
+	}
+	log.Printf("Published order payment bound notification: %s", messageID)
 	return nil
 }
 
@@ -144,10 +153,7 @@ func (c *notificationConsumer) handleOrderPaid(ctx context.Context, delivery amq
 	}
 
 	// Generate notification content for payment success
-	content := fmt.Sprintf("Payment successful! Order %s for %s has been paid. Amount: %.2f",
-		orderPaidData.OrderID,
-		orderPaidData.CourseName,
-		orderPaidData.Amount)
+	content := service.GenerateOrderPaidMessage(orderPaidData.OrderID, orderPaidData.CourseID, orderPaidData.OrderStatus, orderPaidData.CourseName)
 
 	messageID, err := c.chatService.SaveMessage(ctx, orderPaidData.RoomID, "system", content)
 	if err != nil {
@@ -155,7 +161,19 @@ func (c *notificationConsumer) handleOrderPaid(ctx context.Context, delivery amq
 		return err
 	}
 
-	// You can add a publish notification here if needed
-	log.Printf("Saved order paid notification message: %s", messageID)
+	notificationData := message.ChatNotificationOutgoingData[message.OrderPaidNotificationData]{
+		MessageID: messageID,
+		RoomID:    orderPaidData.RoomID,
+		SenderID:  "system",
+		Type:      string(domain.MessageTypeNotification),
+		CreatedAt: time.Now().Format(time.RFC3339),
+	}
+
+	err = c.chatService.PublishOrderPaidNotification(ctx, notificationData)
+	if err != nil {
+		log.Printf("Failed to publish order paid notification: %v", err)
+		return err
+	}
+	log.Printf("Published order paid notification: %s", messageID)
 	return nil
 }
