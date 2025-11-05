@@ -91,6 +91,7 @@ func (r *Router) setupChatRoutes(api fiber.Router) {
 	chats.Post("/rooms", authMiddleware.AddClaims, chatHandler.CreateRoom)
 	chats.Get("/customer/rooms", authMiddleware.AddClaims, chatHandler.GetChatRoomsByCustomerID)
 	chats.Get("/prophet/rooms", authMiddleware.AddClaims, chatHandler.GetChatRoomsByProphetID)
+	chats.Get("/user/rooms", authMiddleware.AddClaims, chatHandler.GetChatRoomsByUserID)
 }
 
 func (r *Router) setupCourseRoutes(api fiber.Router) {
