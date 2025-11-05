@@ -39,8 +39,8 @@ func NewChatService(messageRepo outbound_port.MessageRepository, roomRepo outbou
 	}
 }
 
-func (s *chatService) SaveMessage(ctx context.Context, roomID string, senderID string, content string) (string, error) {
-	message := domain.CreateMessage("", roomID, senderID, content, domain.MessageTypeText, domain.MessageStatusSent)
+func (s *chatService) SaveMessage(ctx context.Context, roomID string, senderID string, content string, messageType domain.MessageType) (string, error) {
+	message := domain.CreateMessage("", roomID, senderID, content, messageType, domain.MessageStatusSent)
 	messageID, err := s.messageRepo.SaveMessage(context.Background(), message)
 	if err != nil {
 		return "", err
@@ -59,40 +59,6 @@ func (s *chatService) InitiateChatRoom(ctx context.Context, courseID string, cus
 	}
 
 	return roomID, nil
-}
-
-func (s *chatService) PublishPaymentCreatedMessage(ctx context.Context, paymentID string, orderID string, status string, amount float64) error {
-	message := domain.CreateMessage(
-		"",
-		"mock-room-id", // TO DO: filter rooomId from payment details after we enrich the payment event data
-		"system",
-		GeneratePaymentCreatedMessage(paymentID, orderID, status, amount),
-		domain.MessageTypeNotification,
-		domain.MessageStatusSent,
-	)
-	messageID, err := s.messageRepo.SaveMessage(ctx, message)
-	if err != nil {
-		return err
-	}
-
-	data, err := json.Marshal(paymentCreatedChatMessage{
-		MessageID:   messageID,
-		RoomID:      message.RoomID,
-		SenderID:    message.SenderID,
-		Content:     message.Content,
-		PaymentID:   paymentID,
-		OrderID:     orderID,
-		MessageType: string(message.Type),
-		Amount:      amount,
-	})
-	if err != nil {
-		return err
-	}
-
-	return s.messagePublisher.Publish(ctx, contract.AmqpMessage{
-		OwnerID: orderID,
-		Data:    data,
-	})
 }
 
 // Publish message from another user to the chat room

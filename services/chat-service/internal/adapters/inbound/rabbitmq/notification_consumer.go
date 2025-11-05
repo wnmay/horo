@@ -66,7 +66,7 @@ func (c *notificationConsumer) handleOrderCompleted(ctx context.Context, deliver
 	}
 	content := service.GenerateOrderCompletedMessage(orderCompletedData.OrderID, orderCompletedData.CourseID, orderCompletedData.OrderStatus, orderCompletedData.CourseName)
 
-	messageID, err := c.chatService.SaveMessage(ctx, orderCompletedData.RoomID, "system", content)
+	messageID, err := c.chatService.SaveMessage(ctx, orderCompletedData.RoomID, "system", content, domain.MessageTypeNotification)
 	if err != nil {
 		log.Printf("Failed to save message: %v", err)
 		return err
@@ -114,7 +114,7 @@ func (c *notificationConsumer) handleOrderPaymentBound(ctx context.Context, deli
 	// Generate notification content for payment bound
 	content := service.GenerateOrderPaymentBoundMessage(orderPaymentBoundData.OrderID, orderPaymentBoundData.CourseID, orderPaymentBoundData.OrderStatus, orderPaymentBoundData.CourseName)
 
-	messageID, err := c.chatService.SaveMessage(ctx, orderPaymentBoundData.RoomID, "system", content)
+	messageID, err := c.chatService.SaveMessage(ctx, orderPaymentBoundData.RoomID, "system", content, domain.MessageTypeNotification)
 	if err != nil {
 		log.Printf("Failed to save message: %v", err)
 		return err
@@ -168,7 +168,7 @@ func (c *notificationConsumer) handleOrderPaid(ctx context.Context, delivery amq
 	// Generate notification content for payment success
 	content := service.GenerateOrderPaidMessage(orderPaidData.OrderID, orderPaidData.CourseID, orderPaidData.OrderStatus, orderPaidData.CourseName)
 
-	messageID, err := c.chatService.SaveMessage(ctx, orderPaidData.RoomID, "system", content)
+	messageID, err := c.chatService.SaveMessage(ctx, orderPaidData.RoomID, "system", content, domain.MessageTypeNotification)
 	if err != nil {
 		log.Printf("Failed to save message: %v", err)
 		return err
