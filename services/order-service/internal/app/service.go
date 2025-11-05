@@ -125,6 +125,12 @@ func (s *OrderService) MarkCustomerCompleted(ctx context.Context, orderID uuid.U
 
 	// Mark as completed by customer
 	order.MarkCustomerCompleted()
+	if( order.Status == domain.StatusCompleted) {
+		// Publish order completed event
+		if err := s.eventPublisher.PublishOrderCompleted(ctx, order); err != nil {
+			return fmt.Errorf("failed to publish order completed event: %w", err)
+		}
+	}
 
 	// Save updated order
 	if err := s.orderRepo.Update(ctx, order); err != nil {
@@ -148,7 +154,12 @@ func (s *OrderService) MarkProphetCompleted(ctx context.Context, orderID uuid.UU
 
 	// Mark as completed by prophet
 	order.MarkProphetCompleted()
-
+	if( order.Status == domain.StatusCompleted) {
+		// Publish order completed event
+		if err := s.eventPublisher.PublishOrderCompleted(ctx, order); err != nil {
+			return fmt.Errorf("failed to publish order completed event: %w", err)
+		}
+	}
 	// Save updated order
 	if err := s.orderRepo.Update(ctx, order); err != nil {
 		return fmt.Errorf("failed to mark order as completed by prophet: %w", err)

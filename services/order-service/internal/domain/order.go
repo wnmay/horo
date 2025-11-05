@@ -65,7 +65,7 @@ func (o *Order) checkAndMarkComplete() {
 	// Only mark as completed if both prophet and customer have completed
 	if o.IsCustomerCompleted && o.IsProphetCompleted {
 		o.Status = StatusCompleted
-	}
+	}	
 }
 
 func (o *Order) Complete() {
