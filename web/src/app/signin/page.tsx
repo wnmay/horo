@@ -2,46 +2,74 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
 import { auth } from "@/firebase/firebase";
 import Card from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
 
 export default function SignInPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [role, setRoll] = useState("customer")
+  const backendurl = process.env.NEXT_PUBLIC_APIGATEWAY
+
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      alert("login succesful")
-      router.push("/");
+      const user = await signInWithEmailAndPassword(auth, email, password);
+      const token = await user.user.getIdToken();
+      // TODO: Replace with actual role check from backend
+      const res = await axios.get(`${backendurl}/api/users/me`, {
+        headers : {
+          Authorization : `Bearer ${token}`
+        }
+      })
+      setRoll(res.data.role)
+      // For now, redirect to dashboard as a placeholder
+      if (role === "prophet")router.push("/dashboard");
+      else router.push("/");
     } catch (err: any) {
       setError(err.message);
       console.error(err);
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      const provider = new GoogleAuthProvider();
-      await signInWithRedirect(auth, provider);
-      router.push("/");
-    } catch (err: any) {
-      setError(err.message);
-      console.error(err);
-    }
-  };
+const handleGoogleSignIn = async () => {
+  try {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    console.log("result : ",result.user)
+    const token = await result.user.getIdToken();
+
+    const res = await axios.get("http://localhost:3000/api/users/me", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    setRoll(res.data.role);
+    if (role === "prophet") router.push("/dashboard");
+    else router.push("/");
+
+  } catch (err) {
+    console.error("Google sign-in failed:", err);
+  }
+};
+
 
   return (
     <div className="flex min-h-screen items-center justify-center relative">
       <Card className="w-full max-w-md p-6">
         <h1 className="text-3xl font-bold mb-6 text-center">Sign In</h1>
         <form onSubmit={handleSignIn} className="flex flex-col gap-4">
-          
           {/* Email */}
           <div className="flex flex-col">
             <label className="text-sm text-gray-500 mb-1">Email Address</label>
@@ -68,7 +96,9 @@ export default function SignInPage() {
             />
           </div>
 
-          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+          {error && (
+            <p className="text-red-500 text-sm text-center">{error}</p>
+          )}
 
           {/* Sign In Button */}
           <Button

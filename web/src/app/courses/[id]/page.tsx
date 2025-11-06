@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface Course {
   id: string;
@@ -20,47 +21,37 @@ export default function CourseDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const { id } = use(params); // unwrap the Promise using React.use()
+  const router = useRouter();
+
   const [course, setCourse] = useState<Course | null>(null);
   const [showChat, setShowChat] = useState(false);
-  const [chatMessages, setChatMessages] = useState<
-    { sender: string; text: string }[]
-  >([]);
+  const [chatMessages, setChatMessages] = useState<{ sender: string; text: string }[]>([]);
   const [input, setInput] = useState("");
 
   useEffect(() => {
-    async function loadCourse() {
-      const { id } = await params;
-      const mockCourse: Course = {
-        id,
-        name: "Advanced Astrology Reading",
-        price: 1200,
-        rating: 4.9,
-        prophet: "Master Flook",
-        experience: "15 years of experience in astrology and tarot reading",
-        specialties: ["Love", "Career", "Destiny", "Future Prediction"],
-        description:
-          "Discover deep insights into your personal and professional life. This course covers planetary alignments, zodiac compatibility, and real-life case readings to help you master astrology interpretation.",
-        image:
-          "https://images.unsplash.com/photo-1606112219348-204d7d8b94ee?auto=format&fit=crop&w=900&q=80",
-        reviews: [
-          { user: "Anna", comment: "Truly life-changing session!", rating: 5 },
-          {
-            user: "Mike",
-            comment: "Accurate and insightful — highly recommend!",
-            rating: 5,
-          },
-          {
-            user: "Sophie",
-            comment: "Very professional and detailed reading.",
-            rating: 4.5,
-          },
-        ],
-      };
-      setCourse(mockCourse);
-    }
+    // simulate fetching course data
+    const mockCourse: Course = {
+      id,
+      name: "Advanced Astrology Reading",
+      price: 1200,
+      rating: 4.9,
+      prophet: "Master Flook",
+      experience: "15 years of experience in astrology and tarot reading",
+      specialties: ["Love", "Career", "Destiny", "Future Prediction"],
+      description:
+        "Discover deep insights into your personal and professional life. This course covers planetary alignments, zodiac compatibility, and real-life case readings to help you master astrology interpretation.",
+      image:
+        "https://images.unsplash.com/photo-1606112219348-204d7d8b94ee?auto=format&fit=crop&w=900&q=80",
+      reviews: [
+        { user: "Anna", comment: "Truly life-changing session!", rating: 5 },
+        { user: "Mike", comment: "Accurate and insightful — highly recommend!", rating: 5 },
+        { user: "Sophie", comment: "Very professional and detailed reading.", rating: 4.5 },
+      ],
+    };
 
-    loadCourse();
-  }, [params]);
+    setCourse(mockCourse);
+  }, [id]);
 
   const handleSendMessage = () => {
     if (!input.trim()) return;
@@ -80,11 +71,7 @@ export default function CourseDetailPage({
       <div className="max-w-5xl w-full bg-white shadow-xl rounded-2xl overflow-hidden">
         {/* Top section with image */}
         <div className="relative h-64 w-full">
-          <img
-            src={course.image}
-            alt={course.name}
-            className="object-cover w-full h-full"
-          />
+          <img src={course.image} alt={course.name} className="object-cover w-full h-full" />
         </div>
 
         {/* Details */}
@@ -93,9 +80,7 @@ export default function CourseDetailPage({
           <p className="text-gray-600 mb-1">By {course.prophet}</p>
           <p className="text-sm text-gray-500 mb-4">{course.experience}</p>
 
-          <p className="text-lg text-gray-700 leading-relaxed mb-6">
-            {course.description}
-          </p>
+          <p className="text-lg text-gray-700 leading-relaxed mb-6">{course.description}</p>
 
           <div className="mb-6">
             <h3 className="font-semibold text-lg mb-2">Specialties:</h3>
@@ -113,17 +98,17 @@ export default function CourseDetailPage({
 
           <div className="flex justify-between items-center border-t pt-4">
             <div>
-              <p className="text-2xl font-semibold text-green-600">
-                ฿{course.price}
-              </p>
+              <p className="text-2xl font-semibold text-green-600">฿{course.price}</p>
               <p className="text-yellow-500 mt-1">⭐ {course.rating} / 5</p>
             </div>
 
             <button
-              onClick={() => setShowChat(true)}
+              onClick={() =>
+                router.push(`/chat/${course.prophet.toLowerCase().replace(/\s+/g, "-")}`)
+              }
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium"
             >
-              💬 Start Chat
+              Start Chat
             </button>
           </div>
 
@@ -132,10 +117,7 @@ export default function CourseDetailPage({
             <h3 className="text-xl font-semibold mb-4">Customer Reviews</h3>
             <div className="space-y-3">
               {course.reviews.map((r, i) => (
-                <div
-                  key={i}
-                  className="border rounded-lg p-4 bg-gray-50 hover:shadow-sm"
-                >
+                <div key={i} className="border rounded-lg p-4 bg-gray-50 hover:shadow-sm">
                   <div className="flex justify-between">
                     <span className="font-medium text-gray-800">{r.user}</span>
                     <span className="text-yellow-500">⭐ {r.rating}</span>
@@ -148,7 +130,7 @@ export default function CourseDetailPage({
         </div>
       </div>
 
-      {/* Chat Box */}
+      {/* Optional Chat Box */}
       {showChat && (
         <div className="fixed bottom-6 right-6 w-80 bg-white rounded-xl shadow-2xl border flex flex-col overflow-hidden">
           <div className="bg-indigo-600 text-white px-4 py-3 flex justify-between items-center">
