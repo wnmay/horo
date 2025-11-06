@@ -27,13 +27,21 @@ func NewPublisher(rabbit *message.RabbitMQ, courseClient *grpc.CourseClient) out
 
 func (p *Publisher) PublishOrderCreated(ctx context.Context, order *domain.Order) error {
 	course, err := p.courseClient.GetCourseByID(ctx, order.CourseID)
+	
+	// Default values if course fetch fails
+	coursePrice := 200.0
+	if err != nil {
+		log.Printf("Warning: Failed to fetch course details for %s: %v. Using default price.", order.CourseID, err)
+	} else if course != nil {
+		coursePrice = course.Price
+	}
 
 	// Create order data for the event
 	orderData := message.OrderData{
 		OrderID:    order.OrderID.String(),
 		CustomerID: order.CustomerID,
 		Status:     string(order.Status),
-		Amount:     course.Price,
+		Amount:     coursePrice,
 	}
 
 	// Marshal the order data
@@ -53,24 +61,31 @@ func (p *Publisher) PublishOrderCreated(ctx context.Context, order *domain.Order
 		return fmt.Errorf("failed to publish order created event: %w", err)
 	}
 
-	fmt.Printf("Published order created event for order: %s with price: %.2f\n", order.OrderID, course.Price)
+	fmt.Printf("Published order created event for order: %s with price: %.2f\n", order.OrderID, coursePrice)
 	return nil
 }
 
 func (p *Publisher) PublishOrderCompleted(ctx context.Context, order *domain.Order) error {
 	// Fetch course details from course service
 	course, err := p.courseClient.GetCourseByID(ctx, order.CourseID)
+	
+	// Default values if course fetch fails
+	courseName := "Unknown Course"
+	prophetID := ""
+	
 	if err != nil {
 		log.Printf("Warning: Failed to fetch course details for %s: %v. Using default course name.", order.CourseID, err)
-		// Continue with default course name if fetch fails
+	} else if course != nil {
+		courseName = course.Coursename
+		prophetID = course.ProphetId
 	}
 
 	orderCompletedData := message.OrderCompletedData{
 		OrderID:     order.OrderID.String(),
 		CourseID:    order.CourseID,
-		CourseName:  course.Coursename,
+		CourseName:  courseName,
 		OrderStatus: string(order.Status),
-		ProphetID:   course.ProphetId,
+		ProphetID:   prophetID,
 	}
 
 	data, err := json.Marshal(orderCompletedData)
@@ -87,21 +102,33 @@ func (p *Publisher) PublishOrderCompleted(ctx context.Context, order *domain.Ord
 		return fmt.Errorf("failed to publish order completed event: %w", err)
 	}
 
-	fmt.Printf("Published order completed event for order: %s, course: %s, prophet: %s\n", order.OrderID, course.Coursename, course.ProphetId)
+	fmt.Printf("Published order completed event for order: %s, course: %s, prophet: %s\n", order.OrderID, courseName, prophetID)
 	return nil
 }
 
 func (p *Publisher) PublishOrderPaid(ctx context.Context, order *domain.Order) error {
 	course, err := p.courseClient.GetCourseByID(ctx, order.CourseID)
+	
+	// Default values if course fetch fails
+	courseName := "Unknown Course"
+	coursePrice := 200.0
+	
+	if err != nil {
+		log.Printf("Warning: Failed to fetch course details for %s: %v. Using defaults.", order.CourseID, err)
+	} else if course != nil {
+		courseName = course.Coursename
+		coursePrice = course.Price
+	}
+	
 	orderPaidData := message.OrderPaidData{
 		OrderID:       order.OrderID.String(),
 		PaymentID:     order.PaymentID.String(),
-		RoomID:        order.RoomID.String(),
-		CustomerID:    order.CustomerID.String(),
-		CourseID:      order.CourseID.String(),
+		RoomID:        order.RoomID,
+		CustomerID:    order.CustomerID,
+		CourseID:      order.CourseID,
 		OrderStatus:   string(order.Status),
-		CourseName:    course.Coursename,
-		Amount:       course.Price,
+		CourseName:    courseName,
+		Amount:        coursePrice,
 		PaymentStatus: "COMPLETED",
 	}
 
@@ -125,15 +152,27 @@ func (p *Publisher) PublishOrderPaid(ctx context.Context, order *domain.Order) e
 
 func (p *Publisher) PublishOrderPaymentBound(ctx context.Context, order *domain.Order) error {
 	course, err := p.courseClient.GetCourseByID(ctx, order.CourseID)
+	
+	// Default values if course fetch fails
+	courseName := "Unknown Course"
+	coursePrice := 200.0
+	
+	if err != nil {
+		log.Printf("Warning: Failed to fetch course details for %s: %v. Using defaults.", order.CourseID, err)
+	} else if course != nil {
+		courseName = course.Coursename
+		coursePrice = course.Price
+	}
+	
 	orderPaymentBoundData := message.OrderPaymentBoundData{
-		OrderID:      order.OrderID.String(),
-		PaymentID:    order.PaymentID.String(),
-		RoomID:       order.RoomID.String(),
-		CustomerID:   order.CustomerID.String(),
-		OrderStatus:  string(order.Status),
-		CourseID:     order.CourseID.String(),
-		CourseName:   course.Coursename,
-		Amount:      course.Price,
+		OrderID:       order.OrderID.String(),
+		PaymentID:     order.PaymentID.String(),
+		RoomID:        order.RoomID,
+		CustomerID:    order.CustomerID,
+		OrderStatus:   string(order.Status),
+		CourseID:      order.CourseID,
+		CourseName:    courseName,
+		Amount:        coursePrice,
 		PaymentStatus: "PENDING",
 	}
 
