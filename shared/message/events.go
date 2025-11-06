@@ -21,6 +21,14 @@ type OrderData struct {
 	Amount     float64 `json:"amount"`
 }
 
+type OrderCompletedData struct {
+	OrderID    string `json:"order_id"`
+	CourseID   string `json:"course_id"`
+	CourseName string `json:"course_name"`
+	OrderStatus string `json:"order_status"`
+	ProphetID  string `json:"prophet_id"`
+}
+
 type PaymentSuccessData struct {
 	OrderID       string `json:"order_id"`
 	PaymentMethod string `json:"payment_method"`

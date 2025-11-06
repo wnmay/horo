@@ -39,7 +39,7 @@ func (h *Handler) Register(app *fiber.App) {
 // AuthMiddleware validates user identity from headers injected by API Gateway
 func (h *Handler) AuthMiddleware(c *fiber.Ctx) error {
 	// Read user ID from header injected by API Gateway
-	userID := c.Get("X-User-Uid")
+	userID := c.Get("X-User-Id")
 	
 	// If header is missing, try to extract from Bearer token (for direct testing)
 	if userID == "" {
@@ -98,10 +98,17 @@ func (h *Handler) CreateOrder(c *fiber.Ctx) error {
 		})
 	}
 
+	if req.RoomID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Room ID is required",
+		})
+	}
+
 	// Create command with authenticated user ID
 	cmd := inbound.CreateOrderCommand{
 		CustomerID: userID, // From JWT token
 		CourseID:   req.CourseID,
+		RoomID:     req.RoomID,
 	}
 
 	// Call service
