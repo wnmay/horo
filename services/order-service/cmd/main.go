@@ -55,7 +55,7 @@ func main() {
 	defer rabbit.Close()
 
 	// Initialize course gRPC client
-	courseServiceAddr := env.GetString("COURSE_SERVICE_ADDR", "localhost:50054")
+	courseServiceAddr := env.GetString("COURSE_SERVICE_ADDR", "localhost:50052")
 	courseClient, err := grpc.NewCourseClient(courseServiceAddr)
 	if err != nil {
 		log.Fatal("Failed to initialize course client:", err)
