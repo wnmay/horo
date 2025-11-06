@@ -21,6 +21,8 @@ type OrderRepository interface {
 type EventPublisher interface {
 	PublishOrderCreated(ctx context.Context, order *domain.Order) error
 	PublishOrderCompleted(ctx context.Context, order *domain.Order) error
+	PublishOrderPaid(ctx context.Context, order *domain.Order) error
+	PublishOrderPaymentBound(ctx context.Context, order *domain.Order) error
 }
 
 // PaymentService defines the interface for payment operations

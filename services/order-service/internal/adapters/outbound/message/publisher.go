@@ -90,3 +90,67 @@ func (p *Publisher) PublishOrderCompleted(ctx context.Context, order *domain.Ord
 	fmt.Printf("Published order completed event for order: %s, course: %s, prophet: %s\n", order.OrderID, course.Coursename, course.ProphetId)
 	return nil
 }
+
+func (p *Publisher) PublishOrderPaid(ctx context.Context, order *domain.Order) error {
+	course, err := p.courseClient.GetCourseByID(ctx, order.CourseID)
+	orderPaidData := message.OrderPaidData{
+		OrderID:       order.OrderID.String(),
+		PaymentID:     order.PaymentID.String(),
+		RoomID:        order.RoomID.String(),
+		CustomerID:    order.CustomerID.String(),
+		CourseID:      order.CourseID.String(),
+		OrderStatus:   string(order.Status),
+		CourseName:    course.Coursename,
+		Amount:       course.Price,
+		PaymentStatus: "COMPLETED",
+	}
+
+	data, err := json.Marshal(orderPaidData)
+	if err != nil {
+		return fmt.Errorf("failed to marshal order paid data: %w", err)
+	}
+
+	amqpMessage := contract.AmqpMessage{
+		OwnerID: order.OrderID.String(),
+		Data:    data,
+	}
+
+	if err := p.rabbit.PublishMessage(ctx, contract.OrderPaidEvent, amqpMessage); err != nil {
+		return fmt.Errorf("failed to publish order paid event: %w", err)
+	}
+
+	fmt.Printf("Published order paid event for order: %s, payment: %s\n", order.OrderID, order.PaymentID)
+	return nil
+}
+
+func (p *Publisher) PublishOrderPaymentBound(ctx context.Context, order *domain.Order) error {
+	course, err := p.courseClient.GetCourseByID(ctx, order.CourseID)
+	orderPaymentBoundData := message.OrderPaymentBoundData{
+		OrderID:      order.OrderID.String(),
+		PaymentID:    order.PaymentID.String(),
+		RoomID:       order.RoomID.String(),
+		CustomerID:   order.CustomerID.String(),
+		OrderStatus:  string(order.Status),
+		CourseID:     order.CourseID.String(),
+		CourseName:   course.Coursename,
+		Amount:      course.Price,
+		PaymentStatus: "PENDING",
+	}
+
+	data, err := json.Marshal(orderPaymentBoundData)
+	if err != nil {
+		return fmt.Errorf("failed to marshal order payment bound data: %w", err)
+	}
+
+	amqpMessage := contract.AmqpMessage{
+		OwnerID: order.OrderID.String(),
+		Data:    data,
+	}
+
+	if err := p.rabbit.PublishMessage(ctx, contract.OrderPaymentBoundEvent, amqpMessage); err != nil {
+		return fmt.Errorf("failed to publish order payment bound event: %w", err)
+	}
+
+	fmt.Printf("Published order payment bound event for order: %s, payment: %s\n", order.OrderID, order.PaymentID)
+	return nil
+}

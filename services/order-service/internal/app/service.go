@@ -30,7 +30,7 @@ func NewOrderService(
 
 func (s *OrderService) CreateOrder(ctx context.Context, cmd inbound.CreateOrderCommand) (*domain.Order, error) {
 	// Create new order entity
-	order := domain.NewOrder(cmd.CustomerID, cmd.CourseID)
+	order := domain.NewOrder(cmd.CustomerID, cmd.CourseID, cmd.RoomID)
 
 	// Save order to repository
 	if err := s.orderRepo.Create(ctx, order); err != nil {
@@ -90,6 +90,13 @@ func (s *OrderService) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID,
 		return fmt.Errorf("failed to update order: %w", err)
 	}
 
+	// If order is confirmed, publish order paid event
+	if status == domain.StatusConfirmed {
+		if err := s.eventPublisher.PublishOrderPaid(ctx, order); err != nil {
+			return fmt.Errorf("failed to publish order paid event: %w", err)
+		}
+	}
+
 	return nil
 }
 
@@ -106,6 +113,11 @@ func (s *OrderService) UpdateOrderPaymentID(ctx context.Context, orderID uuid.UU
 	// Save updated order
 	if err := s.orderRepo.Update(ctx, order); err != nil {
 		return fmt.Errorf("failed to update order with payment ID: %w", err)
+	}
+
+	// Publish order payment bound event
+	if err := s.eventPublisher.PublishOrderPaymentBound(ctx, order); err != nil {
+		return fmt.Errorf("failed to publish order payment bound event: %w", err)
 	}
 
 	return nil

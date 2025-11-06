@@ -23,4 +23,5 @@ type OrderService interface {
 type CreateOrderCommand struct {
 	CustomerID string `json:"customer_id" validate:"required"`
 	CourseID   string `json:"course_id" validate:"required"`
+	RoomID     string `json:"room_id" validate:"required"`
 }

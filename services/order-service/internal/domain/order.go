@@ -25,13 +25,15 @@ type Order struct {
 	CustomerCompletedAt  *time.Time  `json:"customer_completed_at,omitempty"`
 	ProphetCompletedAt   *time.Time  `json:"prophet_completed_at,omitempty"`
 	OrderDate            time.Time   `json:"order_date"`
+	RoomID				 string   `json:"room_id"`
 }
 
-func NewOrder(customerID string, courseID string) *Order {
+func NewOrder(customerID string, courseID string, roomID string) *Order {
 	return &Order{
 		OrderID:             uuid.New(),
 		CustomerID:          customerID,
 		CourseID:            courseID,
+		RoomID:              roomID,
 		Status:              StatusPending,
 		IsCustomerCompleted: false,
 		IsProphetCompleted:  false,

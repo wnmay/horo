@@ -98,10 +98,17 @@ func (h *Handler) CreateOrder(c *fiber.Ctx) error {
 		})
 	}
 
+	if req.RoomID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Room ID is required",
+		})
+	}
+
 	// Create command with authenticated user ID
 	cmd := inbound.CreateOrderCommand{
 		CustomerID: userID, // From JWT token
 		CourseID:   req.CourseID,
+		RoomID:     req.RoomID,
 	}
 
 	// Call service
