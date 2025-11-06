@@ -70,6 +70,7 @@ func (h *Handler) AuthMiddleware(c *fiber.Ctx) error {
 
 type CreateOrderRequest struct {
 	CourseID string `json:"courseId" validate:"required"`
+	RoomID   string `json:"roomId" validate:"required"`
 }
 
 type UpdateOrderStatusRequest struct {
