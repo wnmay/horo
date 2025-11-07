@@ -76,6 +76,11 @@ spec:
                 configMapKeyRef:
                   name: order-service-config
                   key: db-sslmode
+            - name: COURSE_SERVICE_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: order-service-config
+                  key: course-service-addr
             # Secrets
             - name: DB_USER
               valueFrom:

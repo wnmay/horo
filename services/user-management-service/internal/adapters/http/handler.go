@@ -13,6 +13,7 @@ import (
 
 type HTTPHandler struct {
 	userService ports.UserManagementService
+	authService ports.AuthService
 }
 
 func NewHTTPHandler(userService ports.UserManagementService) *HTTPHandler {
@@ -22,9 +23,9 @@ func NewHTTPHandler(userService ports.UserManagementService) *HTTPHandler {
 }
 
 type RegisterRequest struct {
-	IdToken string `json:"idToken" validate:"required"`
-	FullName      string `json:"fullName" validate:"required"`
-	Role          string `json:"role" validate:"required"`
+	IdToken  string `json:"idToken" validate:"required"`
+	FullName string `json:"fullName" validate:"required"`
+	Role     string `json:"role" validate:"required"`
 }
 
 type RegisterResponse struct {
@@ -88,6 +89,10 @@ func (h *HTTPHandler) Register(c *fiber.Ctx) error {
 		Success: true,
 		Message: "User registered successfully",
 	})
+}
+
+func (h *HTTPHandler) GetClaims(c *fiber.Ctx) error {
+	searchQuery := c.Query("idToken")
 }
 
 func StartHTTPServer(handler *HTTPHandler, port string) error {

@@ -96,12 +96,13 @@ func (r *Router) setupCourseRoutes(api fiber.Router) {
 
 	courses := api.Group("/courses")
 
-	courses.Post("/", r.authMiddleware.AddClaims, courseHandler.CreateCourse)
+	courses.Post("/", authMiddleware.AddClaims, courseHandler.CreateCourse)
 	courses.Get("/:id", courseHandler.GetCourseByID)
-	courses.Get("/prophet/:prophet_id", courseHandler.ListCoursesByProphet)
-	courses.Patch("/:id", r.authMiddleware.AddClaims, courseHandler.UpdateCourse)
-	courses.Patch("/delete/:id", r.authMiddleware.AddClaims, courseHandler.DeleteCourse)
+	courses.Get("/prophet/:prophetId", courseHandler.ListCoursesByProphet)
+	courses.Patch("/:id", authMiddleware.AddClaims, courseHandler.UpdateCourse)
+	courses.Patch("/delete/:id", authMiddleware.AddClaims, courseHandler.DeleteCourse)
 	courses.Get("/", courseHandler.FindCoursesByFilter)
+	courses.Post("/:courseId/reviews", authMiddleware.AddClaims, courseHandler.CreateReview)
 }
 
 func (r *Router) setupTestRouter(api fiber.Router) {
