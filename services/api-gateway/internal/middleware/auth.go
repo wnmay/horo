@@ -12,7 +12,6 @@ import (
 
 type AuthMiddleware struct {
 	authServiceAddr string
-	client          *http.Client
 }
 
 type AuthResponse struct {

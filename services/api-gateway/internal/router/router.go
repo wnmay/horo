@@ -25,7 +25,7 @@ func NewRouter(app *fiber.App, cfg *config.Config, rmq *message.RabbitMQ) *Route
 		app:            app,
 		rmq:            rmq,
 		hub:            gwWS.NewHub(),
-		authMiddleware: middleware.NewAuthMiddleware(cfg.UserManagementAddr),
+		authMiddleware: middleware.NewAuthMiddleware(cfg.UserManagementServiceURL),
 	}
 }
 
