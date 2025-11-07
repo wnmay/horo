@@ -126,7 +126,7 @@ func (r *Router) setupWebsocketRoutes() {
 	chatPublisher := publishers.NewChatMessagePublisher(r.rmq)
 	chatWsHandler := ws_handler.NewChatWSHandler(r.hub, chatPublisher)
 
-	r.app.Use("/ws/chat", r.authMiddleware.AddClaims, func(c *fiber.Ctx) error {
+	r.app.Use("/ws/chat", r.authMiddleware.AddClaimsWS, func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {
 			return c.Next()
 		}
