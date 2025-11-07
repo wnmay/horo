@@ -99,7 +99,6 @@ func publishOrderCompletedNotification(ctx context.Context, rmq *message.RabbitM
 	// Create test order completed data
 	testData := message.OrderCompletedData{
 		OrderID:     "order-test-123",
-		PaymentID:   "payment-test-456",
 		OrderStatus: "completed",
 		CourseID:    "course-test-789",
 		CourseName:  "Test Course: Introduction to Testing",

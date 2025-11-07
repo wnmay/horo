@@ -93,6 +93,7 @@ func (r *Router) setupChatRoutes(api fiber.Router) {
 
 func (r *Router) setupCourseRoutes(api fiber.Router) {
 	courseHandler := http_handler.NewCourseHandler()
+	authMiddleware := r.authMiddleware
 
 	courses := api.Group("/courses")
 

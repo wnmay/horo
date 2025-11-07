@@ -91,10 +91,6 @@ func (h *HTTPHandler) Register(c *fiber.Ctx) error {
 	})
 }
 
-func (h *HTTPHandler) GetClaims(c *fiber.Ctx) error {
-	searchQuery := c.Query("idToken")
-}
-
 func StartHTTPServer(handler *HTTPHandler, port string) error {
 	app := fiber.New(fiber.Config{
 		AppName: "User Management Service",
