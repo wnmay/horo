@@ -1,36 +1,32 @@
-//ref web-firebase\src\contexts\authContext\index.jsx
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-// The shape of the auth context
+// shape of the context
 interface AuthContextType {
   token: string | null;
   login: (newToken: string) => void;
   logout: () => void;
 }
 
-// Default (empty) context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Hook for easy access
 export function useAuth(): AuthContextType {
   const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error("useAuth must be used inside an AuthProvider");
-  }
+  if (!ctx) throw new Error("useAuth must be used inside an AuthProvider");
   return ctx;
 }
 
-// Mock Provider implementation
+// your hardcoded mock JWT
+const MOCK_TOKEN = 'replace-with-firebase-token'
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
 
-  // mock auto-login behavior (optional)
   useEffect(() => {
-    // If you want, pull a token from localStorage to simulate persistence
-    const saved = localStorage.getItem("mock_token");
-    if (saved) setToken(saved);
+    // auto-login immediately with mock token
+    setToken(MOCK_TOKEN);
+    localStorage.setItem("mock_token", MOCK_TOKEN);
   }, []);
 
   const login = (newToken: string) => {
