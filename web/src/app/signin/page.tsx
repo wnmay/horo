@@ -17,53 +17,59 @@ export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [role, setRoll] = useState("customer")
-  const backendurl = process.env.NEXT_PUBLIC_APIGATEWAY
+  const backendurl = process.env.NEXT_PUBLIC_APIGATEWAY;
 
+  const saveUserToLocal = (user: any, role: string, token: string) => {
+    localStorage.setItem(
+      "user",
+      JSON.stringify({
+        email: user.email,
+        uid: user.uid,
+        role: role,
+        token: token,
+      })
+    );
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const user = await signInWithEmailAndPassword(auth, email, password);
-      const token = await user.user.getIdToken();
-      // TODO: Replace with actual role check from backend
+      const userCred = await signInWithEmailAndPassword(auth, email, password);
+      const token = await userCred.user.getIdToken();
+
       const res = await axios.get(`${backendurl}/api/users/me`, {
-        headers : {
-          Authorization : `Bearer ${token}`
-        }
-      })
-      setRoll(res.data.role)
-      // For now, redirect to dashboard as a placeholder
-      if (role === "prophet")router.push("/dashboard");
-      else router.push("/");
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const role = res.data.role;
+      saveUserToLocal(userCred.user, role, token);
+      router.push("/")
+      // redirect based on role
     } catch (err: any) {
       setError(err.message);
       console.error(err);
     }
   };
 
-const handleGoogleSignIn = async () => {
-  try {
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    console.log("result : ",result.user)
-    const token = await result.user.getIdToken();
+  const handleGoogleSignIn = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const token = await result.user.getIdToken();
 
-    const res = await axios.get("http://localhost:3000/api/users/me", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+      const res = await axios.get(`${backendurl}/api/users/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    setRoll(res.data.role);
-    if (role === "prophet") router.push("/dashboard");
-    else router.push("/");
+      const role = res.data.role;
+      saveUserToLocal(result.user, role, token);
+      router.push("/")
 
-  } catch (err) {
-    console.error("Google sign-in failed:", err);
-  }
-};
-
+    } catch (err) {
+      console.error("Google sign-in failed:", err);
+      setError("Google sign-in failed");
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center relative">
@@ -96,9 +102,7 @@ const handleGoogleSignIn = async () => {
             />
           </div>
 
-          {error && (
-            <p className="text-red-500 text-sm text-center">{error}</p>
-          )}
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
           {/* Sign In Button */}
           <Button
