@@ -39,3 +39,7 @@ func (h *PaymentHandler) CompletePayment(c *fiber.Ctx) error {
 	id := c.Params("id")
 	return ProxyRequest(c, h.client, "PUT", h.paymentServiceURL, fmt.Sprintf("/api/payments/%s/complete", id))
 }
+
+func (h *PaymentHandler) GetProphetBalance(c *fiber.Ctx) error {
+	return ProxyRequest(c, h.client, "GET", h.paymentServiceURL, fmt.Sprintf("/api/payments/balance"))
+}

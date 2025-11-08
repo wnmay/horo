@@ -102,7 +102,7 @@ func (c *Consumer) handleOrderCompleted(ctx context.Context, delivery amqp.Deliv
 
     log.Printf("Processing order completed event for order: %s", orderCompletedData.OrderID)
 
-    if err := c.paymentService.SettlePayment(ctx, orderCompletedData.OrderID); err != nil {
+    if err := c.paymentService.SettlePayment(ctx, orderCompletedData.OrderID, orderCompletedData.ProphetID); err != nil {
         log.Printf("Failed to complete payment %s for order %s: %v",
             orderCompletedData.OrderID, orderCompletedData.OrderID, err)
         return err

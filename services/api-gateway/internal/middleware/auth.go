@@ -40,17 +40,6 @@ func (a *AuthMiddleware) AddClaims(c *fiber.Ctx) error {
 		}
 	}
 
-	// extract from query param for connecting ws
-	if token == "" {
-		token = c.Query("token")
-	}
-
-	if token == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "missing authorization header or token query param",
-		})
-	}
-
 	// Call gRPC to validate token and get claims
 	res, err := http.Get(fmt.Sprintf("%s/api/auth/verify-token?token=%s", a.authServiceAddr, token))
 	if err != nil {
@@ -77,6 +66,20 @@ func (a *AuthMiddleware) AddClaims(c *fiber.Ctx) error {
 			"details": err.Error(),
 		})
 	}
+
+	c.Request().Header.Del("X-User-Id")
+	c.Request().Header.Del("X-User-Email")
+	c.Request().Header.Del("X-User-Role")
+
+	// Add claims as headers for upstream services
+	c.Request().Header.Set("X-User-Id", authResponse.UserID)
+	c.Request().Header.Set("X-User-Email", authResponse.Email)
+	c.Request().Header.Set("X-User-Role",authResponse.Role)
+
+	c.Locals("userId",  authResponse.UserID)
+	c.Locals("userEmail",  authResponse.Email)
+	c.Locals("userRole",  authResponse.Role)
+
 
 	// Continue to next handler (proxy to upstream service)
 	return c.Next()

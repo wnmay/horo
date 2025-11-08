@@ -12,4 +12,5 @@ type PaymentRepository interface {
 	GetByOrderID(ctx context.Context, orderID string) (*domain.Payment, error)
 	Update(ctx context.Context, payment *domain.Payment) error
 	Delete(ctx context.Context, paymentID string) error
+	GetProphetSettledBalance(ctx context.Context, prophetID string) (float64, error)
 }
