@@ -51,3 +51,24 @@ func (r *MongoUserRepository) Save(ctx context.Context, user domain.User) error 
 	_, err := r.collection.UpdateOne(ctx, filter, update, opts)
 	return err
 }
+
+func (r *MongoUserRepository) FindById(ctx context.Context, userId string) (*domain.User, error) {
+	var userModel UserModel
+
+	err := r.collection.FindOne(ctx, bson.M{"user_id": userId}).Decode(&userModel)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil // not found
+		}
+		return nil, err
+	}
+
+	user := &domain.User{
+		ID:       userModel.UserID,
+		Email:    userModel.Email,
+		FullName: userModel.FullName,
+		Role:     userModel.Role,
+	}
+
+	return user, nil
+}

@@ -13,7 +13,7 @@ import (
 
 type UserManagementService struct {
 	authClient ports.AuthPort
-	repo ports.UserRepositoryPort
+	repo       ports.UserRepositoryPort
 }
 
 func NewUserManagementService(authCleint ports.AuthPort, repo ports.UserRepositoryPort) *UserManagementService {
@@ -43,4 +43,13 @@ func (s *UserManagementService) Register(ctx context.Context, idToken, fullName,
 	}
 
 	return s.repo.Save(ctx, user)
+}
+
+func (s *UserManagementService) GetMe(ctx context.Context, userID string) (*domain.User, error) {
+	user, err := s.repo.FindById(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
