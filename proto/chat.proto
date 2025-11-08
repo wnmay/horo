@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package chat;
+option go_package =  "github.com/wnmay/horo/shared/proto/chat;chat";
+
+service ChatService {
+  rpc ValidateRoomAccess(ValidateRoomRequest) returns (ValidateRoomResponse);
+}
+
+message ValidateRoomRequest {
+  string user_id = 1;
+  string room_id = 2;
+}
+
+message ValidateRoomResponse {
+  bool allowed = 1;
+  string reason = 2;
+}

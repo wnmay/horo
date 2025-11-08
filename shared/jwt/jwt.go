@@ -1,8 +1,10 @@
 package jwt
 
 import (
+	"context"
 	"fmt"
 
+	"firebase.google.com/go/v4/auth"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -70,4 +72,38 @@ func ExtractClaims(tokenString string) (*JWTClaims, error) {
 	}
 
 	return nil, fmt.Errorf("invalid token")
+}
+
+// VerifyFirebaseToken verifies a Firebase ID token and returns the user ID
+func VerifyFirebaseToken(ctx context.Context, token string) (string, error) {
+	// Get Firebase auth client from context or initialize it
+	// This assumes you've initialized Firebase in your main.go
+	client, err := getFirebaseAuthClient(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get Firebase auth client: %w", err)
+	}
+
+	// Verify the ID token
+	t, err := client.VerifyIDToken(ctx, token)
+	if err != nil {
+		return "", fmt.Errorf("failed to verify Firebase token: %w", err)
+	}
+
+	return t.UID, nil
+}
+
+// Global Firebase auth client
+var firebaseAuthClient *auth.Client
+
+// InitFirebase initializes the Firebase auth client
+func InitFirebase(client *auth.Client) {
+	firebaseAuthClient = client
+}
+
+// getFirebaseAuthClient returns the Firebase auth client
+func getFirebaseAuthClient(ctx context.Context) (*auth.Client, error) {
+	if firebaseAuthClient == nil {
+		return nil, fmt.Errorf("Firebase auth client not initialized. Call jwt.InitFirebase() first")
+	}
+	return firebaseAuthClient, nil
 }

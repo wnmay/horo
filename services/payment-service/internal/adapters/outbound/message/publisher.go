@@ -7,6 +7,7 @@ import (
 
 	"github.com/wnmay/horo/services/payment-service/internal/domain"
 	"github.com/wnmay/horo/shared/contract"
+	"github.com/wnmay/horo/shared/message"
 	sharedMessage "github.com/wnmay/horo/shared/message"
 )
 
@@ -22,12 +23,11 @@ func NewPublisher(rabbit *sharedMessage.RabbitMQ) *Publisher {
 
 func (p *Publisher) PublishPaymentCompleted(ctx context.Context, payment *domain.Payment) error {
 	// Create payment completion data
-	paymentData := map[string]interface{}{
-		//TO DO: Add course_id, prophet_id, customer_id for this payment
-		"payment_id": payment.PaymentID,
-		"order_id":   payment.OrderID,
-		"status":     payment.Status,
-		"amount":     payment.Amount,
+	paymentData := message.PaymentPublishedData{
+		PaymentID:  payment.PaymentID,
+		OrderID:    payment.OrderID,
+		Status:     string(payment.Status),
+		Amount:     payment.Amount,
 	}
 
 	// Marshal the payment data
@@ -81,14 +81,12 @@ func (p *Publisher) PublishPaymentFailed(ctx context.Context, payment *domain.Pa
 }
 
 func (p *Publisher) PublishPaymentCreated(ctx context.Context, payment *domain.Payment) error {
-	paymentData := map[string]interface{}{
-		"payment_id": payment.PaymentID,
-		"order_id":   payment.OrderID,
-		"status":     payment.Status,
-		"amount":     payment.Amount,
-		"created_at": payment.CreatedAt,
+	paymentData := message.PaymentPublishedData{
+		PaymentID:  payment.PaymentID,
+		OrderID:    payment.OrderID,
+		Status:     string(payment.Status),
+		Amount:     payment.Amount,
 	}
-
 	data, err := json.Marshal(paymentData)
 	if err != nil {
 		return fmt.Errorf("failed to marshal payment data: %w", err)
@@ -107,12 +105,11 @@ func (p *Publisher) PublishPaymentCreated(ctx context.Context, payment *domain.P
 }
 
 func (p *Publisher) PublishPaymentSettled(ctx context.Context, payment *domain.Payment) error {
-	payload := map[string]interface{}{
-		"payment_id": payment.PaymentID,
-		"order_id":   payment.OrderID,
-		"status":     payment.Status,
-		"amount":     payment.Amount,
-		"settled_at": payment.UpdatedAt,
+	payload := message.PaymentPublishedData{
+		PaymentID:  payment.PaymentID,
+		OrderID:    payment.OrderID,
+		Status:     string(payment.Status),
+		Amount:     payment.Amount,
 	}
 
 	data, err := json.Marshal(payload)

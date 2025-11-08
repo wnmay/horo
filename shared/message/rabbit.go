@@ -15,7 +15,6 @@ import (
 const (
 	AppExchange        = "app"
 	DeadLetterExchange = "dlx"
-	ChatExchange       = "chat"
 )
 
 type RabbitMQ struct {
@@ -44,12 +43,6 @@ func NewRabbitMQ(uri string) (*RabbitMQ, error) {
 	if err := rmq.setupExchanges(); err != nil {
 		rmq.Close()
 		return nil, fmt.Errorf("failed to setup exchanges: %v", err)
-	}
-
-	if err := rmq.setupExchangesAndQueues(); err != nil {
-		// Clean up if setup fails
-		rmq.Close()
-		return nil, fmt.Errorf("failed to setup exchanges and queues: %v", err)
 	}
 
 	return rmq, nil
@@ -118,7 +111,7 @@ func (r *RabbitMQ) ConsumeMessages(queueName string, handler MessageHandler) err
 	go func() {
 		for msg := range msgs {
 			if err := tracing.TracedConsumer(msg, func(ctx context.Context, d amqp.Delivery) error {
-				log.Printf("Received a message: %s", msg.Body)
+				log.Printf("Received a message: %s with routing key: %s", msg.Body, d.RoutingKey)
 
 				cfg := retry.DefaultConfig()
 				err := retry.WithBackoff(ctx, cfg, func() error {
@@ -249,35 +242,7 @@ func (r *RabbitMQ) setupDeadLetterExchange() error {
 // 	return nil
 // }
 
-func (r *RabbitMQ) setupExchangesAndQueues() error {
-	err := r.Channel.ExchangeDeclare(
-		ChatExchange, // name
-		"topic",      // type
-		true,         // durable
-		false,        // auto-deleted
-		false,        // internal
-		false,        // no-wait
-		nil,          // arguments
-	)
-	if err != nil {
-		return fmt.Errorf("failed to declare exchange: %s: %v", ChatExchange, err)
-	}
-	if err := r.declareAndBindQueue(ChatMessageIncomingQueue, []string{
-		contract.ChatMessageIncomingEvent,
-	}, ChatExchange); err != nil {
-		return err
-	}
-
-	if err := r.declareAndBindQueue(ChatMessageOutgoingQueue, []string{
-		contract.ChatMessageOutgoingEvent,
-	}, ChatExchange); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *RabbitMQ) declareAndBindQueue(queueName string, messageTypes []string, exchange string) error {
+func (r *RabbitMQ) DeclareQueueAndBindEvents(queueName string, messageTypes []string) error {
 	// Add dead letter configuration
 	args := amqp.Table{
 		"x-dead-letter-exchange": DeadLetterExchange,
@@ -297,9 +262,9 @@ func (r *RabbitMQ) declareAndBindQueue(queueName string, messageTypes []string, 
 
 	for _, msg := range messageTypes {
 		if err := r.Channel.QueueBind(
-			q.Name,   // queue name
-			msg,      // routing key
-			exchange, // exchange
+			q.Name,      // queue name
+			msg,         // routing key
+			AppExchange, // exchange
 			false,
 			nil,
 		); err != nil {

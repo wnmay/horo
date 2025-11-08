@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package course;
+option go_package = "github.com/wnmay/horo/shared/proto/course;course";
+
+import "google/protobuf/timestamp.proto";
+
+enum Duration {
+  DURATION_UNSPECIFIED = 0;
+  DURATION_15 = 15;
+  DURATION_30 = 30;
+  DURATION_60 = 60;
+}
+
+message Course {
+  string id = 1;
+  string prophet_id = 2;
+  string coursename = 3;
+  string description = 4;
+  double price = 5;
+  Duration duration = 6;
+  google.protobuf.Timestamp created_time = 7;
+}
+
+message CreateCourseRequest {
+  string prophet_id = 1;
+  string coursename = 2;
+  string description = 3;
+  double price = 4;
+  Duration duration = 5;
+}
+message CreateCourseResponse { Course course = 1; }
+
+message GetCourseByIDRequest { string id = 1; }
+message GetCourseByIDResponse { Course course = 1; }
+
+message ListCoursesByProphetRequest { string prophet_id = 1; }
+message ListCoursesByProphetResponse { repeated Course courses = 1; }
+
+service CourseService {
+  rpc CreateCourse(CreateCourseRequest) returns (CreateCourseResponse);
+  rpc GetCourseByID(GetCourseByIDRequest) returns (GetCourseByIDResponse);
+  rpc ListCoursesByProphet(ListCoursesByProphetRequest) returns (ListCoursesByProphetResponse);
+}

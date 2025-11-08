@@ -77,8 +77,8 @@ func (c *Consumer) handlePaymentSuccess(ctx context.Context, delivery amqp.Deliv
 
 	// Parse payment completion data
 	var paymentData struct {
-		PaymentID string  `json:"payment_id"`
-		OrderID   string  `json:"order_id"`
+		PaymentID string  `json:"paymentId"`
+		OrderID   string  `json:"orderId"`
 		Status    string  `json:"status"`
 		Amount    float64 `json:"amount"`
 	}

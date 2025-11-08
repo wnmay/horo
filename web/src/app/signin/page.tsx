@@ -1,24 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
-import { auth } from "@/firebase/firebase";
+import {
+  doSignInWithEmailAndPassword,
+  doSignInWithGoogle,
+} from "../../firebase/auth";
 import Card from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { jwtDecode } from "jwt-decode";
+import { FirebaseClaims } from "@/types/auth";
 
 export default function SignInPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      alert("login succesful")
-      router.push("/");
+      await doSignInWithEmailAndPassword(email, password);
+      router.push("/"); // redirect after successful login
     } catch (err: any) {
       setError(err.message);
       console.error(err);
@@ -27,8 +34,15 @@ export default function SignInPage() {
 
   const handleGoogleSignIn = async () => {
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithRedirect(auth, provider);
+      const { token, isNewUser } = await doSignInWithGoogle();
+      const claims = jwtDecode<FirebaseClaims>(token);
+      const hasRole = !!claims.role && claims.role.trim() !== "";
+
+      if (isNewUser || !hasRole) {
+        router.push(`/profile?token=${encodeURIComponent(token)}`);
+      } else {
+        router.push("/");
+      }
       router.push("/");
     } catch (err: any) {
       setError(err.message);
@@ -41,7 +55,6 @@ export default function SignInPage() {
       <Card className="w-full max-w-md p-6">
         <h1 className="text-3xl font-bold mb-6 text-center">Sign In</h1>
         <form onSubmit={handleSignIn} className="flex flex-col gap-4">
-          
           {/* Email */}
           <div className="flex flex-col">
             <label className="text-sm text-gray-500 mb-1">Email Address</label>

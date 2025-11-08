@@ -12,8 +12,6 @@ type Message struct {
 	Type      MessageType   // text | notification
 	Status    MessageStatus // sent | delivered | read
 	CreatedAt time.Time
-
-	Room Room
 }
 
 type MessageStatus string
@@ -32,8 +30,9 @@ const (
 	MessageTypeNotification MessageType = "notification"
 )
 
-func CreateMessage(roomID, senderID, content string, messageType MessageType, status MessageStatus) *Message {
+func CreateMessage(messageID, roomID, senderID, content string, messageType MessageType, status MessageStatus) *Message {
 	return &Message{
+		ID:        messageID,
 		RoomID:    roomID,
 		SenderID:  senderID,
 		Content:   content,
