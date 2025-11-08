@@ -67,6 +67,7 @@ func (r *Router) setupOrderRoutes(api fiber.Router) {
 	orders.Post("/", r.authMiddleware.AddClaims, orderHandler.CreateOrder)
 	orders.Get("/:id", r.authMiddleware.AddClaims, orderHandler.GetOrderByID)
 	orders.Get("/customer/:customerID", r.authMiddleware.AddClaims, orderHandler.GetOrdersByCustomer)
+	orders.Get("/room/:roomID", r.authMiddleware.AddClaims, orderHandler.GetOrdersByRoom)
 	orders.Patch("/:id/status", r.authMiddleware.AddClaims, orderHandler.UpdateOrderStatus)
 	orders.Patch("/customer/:id", r.authMiddleware.AddClaims, orderHandler.MarkCustomerCompleted)
 	orders.Patch("/prophet/:id", r.authMiddleware.AddClaims, orderHandler.MarkProphetCompleted)

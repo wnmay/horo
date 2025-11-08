@@ -45,6 +45,11 @@ func (h *OrderHandler) GetOrdersByCustomer(c *fiber.Ctx) error {
 	return ProxyRequest(c, h.client, "GET", h.orderServiceURL, fmt.Sprintf("/api/orders/customer/%s", customerID))
 }
 
+func (h *OrderHandler) GetOrdersByRoom(c *fiber.Ctx) error {
+	roomID := c.Params("roomID")
+	return ProxyRequest(c, h.client, "GET", h.orderServiceURL, fmt.Sprintf("/api/orders/room/%s", roomID))
+}
+
 func (h *OrderHandler) UpdateOrderStatus(c *fiber.Ctx) error {
 	id := c.Params("id")
 	return ProxyRequest(c, h.client, "PUT", h.orderServiceURL, fmt.Sprintf("/api/orders/%s/status", id))

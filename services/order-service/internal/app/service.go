@@ -76,6 +76,14 @@ func (s *OrderService) GetOrdersByCustomer(ctx context.Context, customerID strin
 	return orders, nil
 }
 
+func (s *OrderService) GetOrdersByRoom(ctx context.Context, roomID string) ([]*domain.Order, error) {
+	orders, err := s.orderRepo.GetByRoomID(ctx, roomID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get orders for room: %w", err)
+	}
+	return orders, nil
+}
+
 func (s *OrderService) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status domain.OrderStatus) error {
 	order, err := s.orderRepo.GetByID(ctx, orderID)
 	if err != nil {
