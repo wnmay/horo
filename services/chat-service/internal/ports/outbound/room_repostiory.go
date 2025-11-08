@@ -13,4 +13,5 @@ type RoomRepositoryPort interface {
 	RoomExists(ctx context.Context, roomID string) (bool, error)
 	IsUserInRoom(ctx context.Context, roomID string, userID string) (bool, error)
 	GetChatRoomsByUserID(ctx context.Context, userID string) ([]*domain.Room, error)
+	UpdateRoomIsDoneByRoomID(ctx context.Context, roomID string, isDone bool) error
 }

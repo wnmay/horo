@@ -84,7 +84,7 @@ func (r *Router) setupPaymentRoutes(api fiber.Router) {
 
 func (r *Router) setupChatRoutes(api fiber.Router) {
 	chatHandler := http_handler.NewChatHandler()
-	chats := api.Group("/chats")
+	chats := api.Group("/chat")
 	chats.Get("/:roomID/messages", r.authMiddleware.AddClaims, chatHandler.GetMessagesByRoomID)
 	chats.Post("/rooms", r.authMiddleware.AddClaims, chatHandler.CreateRoom)
 	chats.Get("/customer/rooms", r.authMiddleware.AddClaims, chatHandler.GetChatRoomsByCustomerID)

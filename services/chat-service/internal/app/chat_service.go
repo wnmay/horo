@@ -50,7 +50,7 @@ func (s *chatService) SaveMessage(ctx context.Context, roomID string, senderID s
 
 func (s *chatService) InitiateChatRoom(ctx context.Context, courseID string, customerID string) (string, error) {
 	mockProphetID := "prophet-1234" // TO DO: Use real prophet ID from course service
-	room := domain.CreateRoom(mockProphetID, customerID, courseID)
+	room := domain.CreateRoom(mockProphetID, customerID, courseID, false)
 
 	roomID, err := s.roomRepo.CreateRoom(context.Background(), room)
 	if err != nil {
@@ -182,4 +182,8 @@ func (s *chatService) PublishOrderPaidNotification(ctx context.Context, notifica
 		OwnerID: notificationData.SenderID,
 		Data:    data,
 	})
+}
+
+func (s *chatService) UpdateRoomIsDone(ctx context.Context, roomID string, isDone bool) error {
+	return s.roomRepo.UpdateRoomIsDoneByRoomID(ctx, roomID, isDone)
 }

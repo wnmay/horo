@@ -15,7 +15,6 @@ type CreateRoomRequest struct {
 	CourseID string `json:"courseID"`
 }
 
-
 type ValidateRoomAccessRequest struct {
 	RoomID string `json:"roomID"`
 }
@@ -63,12 +62,13 @@ func (h *ChatHandler) CreateRoom(c *fiber.Ctx) error {
 
 	if customerID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "X-User-Id header is required",
+			"error": "Authentication is required",
 		})
 	}
 
 	roomID, err := h.chatService.InitiateChatRoom(c.Context(), req.CourseID, customerID)
 	if err != nil {
+		log.Println("Error initiating chat room:", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
