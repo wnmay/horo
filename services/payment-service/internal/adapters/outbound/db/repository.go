@@ -14,7 +14,7 @@ import (
 type paymentModel struct {
 	PaymentID string    `gorm:"primaryKey;type:uuid;column:payment_id"`
 	OrderID   string    `gorm:"not null;index;type:uuid"`
-	ProphetID string    `gorm:"index;type:uuid"`
+	ProphetID string    `gorm:"index;type:string"`
 	Amount    float64   `gorm:"not null"`
 	Status    domain.PaymentStatus `gorm:"not null;default:PENDING"`
 	CreatedAt time.Time `gorm:"not null"`
