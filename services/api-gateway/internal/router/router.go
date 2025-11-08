@@ -79,6 +79,7 @@ func (r *Router) setupPaymentRoutes(api fiber.Router) {
 	payments.Get("/:id", r.authMiddleware.AddClaims, paymentHandler.GetPayment)
 	payments.Get("/order/:orderID", r.authMiddleware.AddClaims, paymentHandler.GetPaymentByOrder)
 	payments.Put("/:id/complete", r.authMiddleware.AddClaims, paymentHandler.CompletePayment)
+	payments.Get("/balance", r.authMiddleware.AddClaims, paymentHandler.GetProphetBalance)
 }
 
 func (r *Router) setupChatRoutes(api fiber.Router) {
