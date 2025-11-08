@@ -19,10 +19,10 @@ func (h *Handler) Register(app *fiber.App) {
 	api := app.Group("/api")
 	payments := api.Group("/payments")
 
-	payments.Get("/:id", h.GetPayment)
-	payments.Get("/order/:orderID", h.GetPaymentByOrder)
-	payments.Put("/:id/complete", h.CompletePayment)
 	payments.Get("/balance", h.GetProphetBalance)
+	payments.Get("/order/:orderID", h.GetPaymentByOrder)
+	payments.Get("/:id", h.GetPayment)
+	payments.Put("/:id/complete", h.CompletePayment)
 }
 
 func (h *Handler) GetPayment(c *fiber.Ctx) error {
