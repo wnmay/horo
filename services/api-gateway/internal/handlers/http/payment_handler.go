@@ -27,15 +27,15 @@ func NewPaymentHandler() *PaymentHandler {
 
 func (h *PaymentHandler) GetPayment(c *fiber.Ctx) error {
 	id := c.Params("id")
-	return ProxyRequest(c,  h.client, "GET", h.paymentServiceURL, fmt.Sprintf("/api/payments/%s", id))
+	return ProxyRequest(c, h.client, "GET", h.paymentServiceURL, fmt.Sprintf("/api/payments/%s", id))
 }
 
 func (h *PaymentHandler) GetPaymentByOrder(c *fiber.Ctx) error {
 	orderID := c.Params("orderID")
-	return ProxyRequest(c,  h.client, "GET", h.paymentServiceURL, fmt.Sprintf("/api/payments/order/%s", orderID))
+	return ProxyRequest(c, h.client, "GET", h.paymentServiceURL, fmt.Sprintf("/api/payments/order/%s", orderID))
 }
 
 func (h *PaymentHandler) CompletePayment(c *fiber.Ctx) error {
 	id := c.Params("id")
-	return ProxyRequest(c,  h.client, "PUT", h.paymentServiceURL, fmt.Sprintf("/api/payments/%s/complete", id))
+	return ProxyRequest(c, h.client, "PUT", h.paymentServiceURL, fmt.Sprintf("/api/payments/%s/complete", id))
 }

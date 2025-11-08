@@ -183,9 +183,6 @@ k8s_resource(
 
 ### Course Service ###
 
-# load secrets
-k8s_yaml('./infra/development/k8s/course-service/secrets.yaml')
-
 course_compile_cmd = 'CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/course-service ./services/course-service/cmd/main.go'
 
 local_resource(

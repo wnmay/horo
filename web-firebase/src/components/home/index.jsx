@@ -7,7 +7,7 @@ const Home = () => {
   const { currentUser } = useAuth();
   const [resp, setResp] = useState(null);
   const [err, setErr] = useState("");
-  const apiGatewayURL = "localhost:3000";
+  const apiGatewayURL = "localhost:8080";
   const sendRequest = async () => {
     setErr("");
     setResp(null);

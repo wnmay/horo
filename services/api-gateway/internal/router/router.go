@@ -4,7 +4,7 @@ package router
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
-	"github.com/wnmay/horo/services/api-gateway/internal/clients"
+	"github.com/wnmay/horo/services/api-gateway/internal/config"
 	http_handler "github.com/wnmay/horo/services/api-gateway/internal/handlers/http"
 	ws_handler "github.com/wnmay/horo/services/api-gateway/internal/handlers/ws"
 	"github.com/wnmay/horo/services/api-gateway/internal/messaging/publishers"
@@ -14,18 +14,18 @@ import (
 )
 
 type Router struct {
-	app         *fiber.App
-	grpcClients *clients.GrpcClients
-	rmq         *message.RabbitMQ
-	hub         *gwWS.Hub
+	app            *fiber.App
+	rmq            *message.RabbitMQ
+	hub            *gwWS.Hub
+	authMiddleware *middleware.AuthMiddleware
 }
 
-func NewRouter(app *fiber.App, grpcClients *clients.GrpcClients, rmq *message.RabbitMQ) *Router {
+func NewRouter(app *fiber.App, cfg *config.Config, rmq *message.RabbitMQ) *Router {
 	return &Router{
-		app:         app,
-		grpcClients: grpcClients,
-		rmq:         rmq,
-		hub:         gwWS.NewHub(),
+		app:            app,
+		rmq:            rmq,
+		hub:            gwWS.NewHub(),
+		authMiddleware: middleware.NewAuthMiddleware(cfg.UserManagementServiceURL),
 	}
 }
 
@@ -60,42 +60,40 @@ func (r *Router) setupUserRoutes(api fiber.Router) {
 }
 
 func (r *Router) setupOrderRoutes(api fiber.Router) {
-	authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
 	orderHandler := http_handler.NewOrderHandler()
 	orders := api.Group("/orders")
 
-	orders.Get("/", authMiddleware.AddClaims, orderHandler.GetOrders)
-	orders.Post("/", authMiddleware.AddClaims, orderHandler.CreateOrder)
-	orders.Get("/:id", authMiddleware.AddClaims, orderHandler.GetOrderByID)
-	orders.Get("/customer/:customerID", authMiddleware.AddClaims, orderHandler.GetOrdersByCustomer)
-	orders.Patch("/:id/status", authMiddleware.AddClaims, orderHandler.UpdateOrderStatus)
-	orders.Patch("/customer/:id", authMiddleware.AddClaims, orderHandler.MarkCustomerCompleted)
-	orders.Patch("/prophet/:id", authMiddleware.AddClaims, orderHandler.MarkProphetCompleted)
+	orders.Get("/", r.authMiddleware.AddClaims, orderHandler.GetOrders)
+	orders.Post("/", r.authMiddleware.AddClaims, orderHandler.CreateOrder)
+	orders.Get("/:id", r.authMiddleware.AddClaims, orderHandler.GetOrderByID)
+	orders.Get("/customer/:customerID", r.authMiddleware.AddClaims, orderHandler.GetOrdersByCustomer)
+	orders.Patch("/:id/status", r.authMiddleware.AddClaims, orderHandler.UpdateOrderStatus)
+	orders.Patch("/customer/:id", r.authMiddleware.AddClaims, orderHandler.MarkCustomerCompleted)
+	orders.Patch("/prophet/:id", r.authMiddleware.AddClaims, orderHandler.MarkProphetCompleted)
 }
 
 func (r *Router) setupPaymentRoutes(api fiber.Router) {
-	authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
 	paymentHandler := http_handler.NewPaymentHandler()
 
 	payments := api.Group("/payments")
-	payments.Get("/:id", authMiddleware.AddClaims, paymentHandler.GetPayment)
-	payments.Get("/order/:orderID", authMiddleware.AddClaims, paymentHandler.GetPaymentByOrder)
-	payments.Put("/:id/complete", authMiddleware.AddClaims, paymentHandler.CompletePayment)
+	payments.Get("/:id", r.authMiddleware.AddClaims, paymentHandler.GetPayment)
+	payments.Get("/order/:orderID", r.authMiddleware.AddClaims, paymentHandler.GetPaymentByOrder)
+	payments.Put("/:id/complete", r.authMiddleware.AddClaims, paymentHandler.CompletePayment)
 }
 
 func (r *Router) setupChatRoutes(api fiber.Router) {
-	authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
 	chatHandler := http_handler.NewChatHandler()
 	chats := api.Group("/chats")
-	chats.Get("/:roomID/messages", authMiddleware.AddClaims, chatHandler.GetMessagesByRoomID)
-	chats.Post("/rooms", authMiddleware.AddClaims, chatHandler.CreateRoom)
-	chats.Get("/customer/rooms", authMiddleware.AddClaims, chatHandler.GetChatRoomsByCustomerID)
-	chats.Get("/prophet/rooms", authMiddleware.AddClaims, chatHandler.GetChatRoomsByProphetID)
+	chats.Get("/:roomID/messages", r.authMiddleware.AddClaims, chatHandler.GetMessagesByRoomID)
+	chats.Post("/rooms", r.authMiddleware.AddClaims, chatHandler.CreateRoom)
+	chats.Get("/customer/rooms", r.authMiddleware.AddClaims, chatHandler.GetChatRoomsByCustomerID)
+	chats.Get("/prophet/rooms", r.authMiddleware.AddClaims, chatHandler.GetChatRoomsByProphetID)
+	chats.Get("/user/rooms", r.authMiddleware.AddClaims, chatHandler.GetChatRoomsByUserID)
 }
 
 func (r *Router) setupCourseRoutes(api fiber.Router) {
-	authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
 	courseHandler := http_handler.NewCourseHandler()
+	authMiddleware := r.authMiddleware
 
 	courses := api.Group("/courses")
 
@@ -111,8 +109,7 @@ func (r *Router) setupCourseRoutes(api fiber.Router) {
 }
 
 func (r *Router) setupTestRouter(api fiber.Router) {
-	authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
-	api.Post("/test-auth", authMiddleware.AddClaims, func(c *fiber.Ctx) error {
+	api.Post("/test-auth", r.authMiddleware.AddClaims, func(c *fiber.Ctx) error {
 		var body map[string]interface{}
 		if err := c.BodyParser(&body); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -128,11 +125,10 @@ func (r *Router) setupTestRouter(api fiber.Router) {
 }
 
 func (r *Router) setupWebsocketRoutes() {
-	authMiddleware := middleware.NewAuthMiddleware(r.grpcClients)
 	chatPublisher := publishers.NewChatMessagePublisher(r.rmq)
-	chatWsHandler := ws_handler.NewChatWSHandler(r.hub, chatPublisher, r.grpcClients.ChatServiceClient)
+	chatWsHandler := ws_handler.NewChatWSHandler(r.hub, chatPublisher)
 
-	r.app.Use("/ws/chat", authMiddleware.AddClaims, func(c *fiber.Ctx) error {
+	r.app.Use("/ws/chat", r.authMiddleware.AddClaimsWS, func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {
 			return c.Next()
 		}

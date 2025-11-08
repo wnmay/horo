@@ -126,3 +126,24 @@ func (r *mongoRoomRepository) IsUserInRoom(ctx context.Context, userID string,ro
 
 	return count > 0, nil
 }
+
+func (r *mongoRoomRepository) GetChatRoomsByUserID(ctx context.Context, userID string) ([]*domain.Room, error) {
+	filter := bson.M{"$or": []bson.M{
+		{"prophet_id": userID},
+		{"customer_id": userID},
+	}}
+	cursor, err := r.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+	var rooms []*RoomModel
+	if err := cursor.All(ctx, &rooms); err != nil {
+		return nil, err
+	}
+	var domainRooms []*domain.Room
+	for _, rm := range rooms {
+		domainRooms = append(domainRooms, rm.ToDomain())
+	}
+	return domainRooms, nil
+}

@@ -18,8 +18,7 @@ type MessagingManager struct {
 
 	// Consumers
 	messageIncomingConsumer inbound_port.MessageConsumer
-	paymentConsumer         inbound_port.MessageConsumer
-
+	notificationConsumer    inbound_port.MessageConsumer
 	// Publishers
 	messagePublisher outbound_port.MessagePublisher
 }
@@ -50,7 +49,7 @@ func NewMessagingManager(rabbitmqURI string) (*MessagingManager, outbound_port.M
 
 func (m *MessagingManager) InitializeConsumers(chatService inbound_port.ChatService) {
 	m.messageIncomingConsumer = consumerRabbit.NewMessageIncomingConsumer(chatService, m.client)
-	m.paymentConsumer = consumerRabbit.NewPaymentConsumer(chatService, m.client)
+	m.notificationConsumer = consumerRabbit.NewNotificationConsumer(chatService, m.client)
 	log.Println("Consumers initialized successfully")
 }
 
@@ -62,8 +61,8 @@ func (m *MessagingManager) StartConsumers() error {
 		return fmt.Errorf("failed to start message incoming consumer: %w", err)
 	}
 
-	if err := m.paymentConsumer.StartListening(); err != nil {
-		return fmt.Errorf("failed to start payment consumer: %w", err)
+	if err := m.notificationConsumer.StartListening(); err != nil {
+		return fmt.Errorf("failed to start notification consumer: %w", err)
 	}
 
 	log.Println("All consumers started successfully")
@@ -98,6 +97,25 @@ func setupChatQueues(rmq *message.RabbitMQ) error {
 		contract.ChatMessageOutgoingEvent,
 	); err != nil {
 		return fmt.Errorf("failed to setup outgoing queue: %v", err)
+	}
+
+	if err := rmq.DeclareQueue(
+		message.NotifyCreatePayment,
+		contract.PaymentCreatedEvent,
+	); err != nil {
+		return fmt.Errorf("failed to setup outgoing queue: %v", err)
+	}
+
+	// Setup notification queue with multiple event bindings
+	if err := rmq.DeclareQueueAndBindEvents(
+		message.NotifyOrderCompleted,
+		[]string{
+			contract.OrderCompletedEvent,
+			contract.OrderPaymentBoundEvent,
+			contract.OrderPaidEvent,
+		},
+	); err != nil {
+		return fmt.Errorf("failed to setup notification queue: %v", err)
 	}
 
 	return nil

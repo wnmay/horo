@@ -50,7 +50,7 @@ func main() {
 	proto.RegisterAuthServiceServer(grpcServer, authServer)
 
 	// Create HTTP handler
-	httpHandler := httpadapter.NewHTTPHandler(userApp)
+	httpHandler := httpadapter.NewHTTPHandler(userApp, authApp)
 
 	// Use WaitGroup to run both servers
 	var wg sync.WaitGroup

@@ -3,10 +3,11 @@ package db
 import (
 	"time"
 
-	"github.com/google/uuid"
 	"context"
 	"errors"
 	"log"
+
+	"github.com/google/uuid"
 
 	"github.com/wnmay/horo/services/order-service/internal/domain"
 	"gorm.io/gorm"
@@ -23,8 +24,9 @@ const (
 type Order struct {
 	OrderID     uuid.UUID   `gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
 	CustomerID  string      `gorm:"type:varchar(255);not null"`
-	CourseID    uuid.UUID   `gorm:"type:uuid;not null"`
+	CourseID    string      `gorm:"type:varchar(255);not null"`
 	PaymentID   uuid.UUID   `gorm:"type:uuid"` 
+	RoomID      string      `gorm:"type:varchar(255)"`
 	Status      OrderStatus `gorm:"type:varchar(20);not null"`
 	OrderDate   time.Time   `gorm:"not null"`
 	IsCustomerCompleted  bool        `gorm:"default:false;not null"`
@@ -131,6 +133,7 @@ func toOrderModel(order *domain.Order) *Order {
 		OrderID:    order.OrderID,
 		CustomerID: order.CustomerID,
 		CourseID:   order.CourseID,
+		RoomID:     order.RoomID,
 		Status:     OrderStatus(order.Status),
 		OrderDate:  order.OrderDate,
 		IsCustomerCompleted: order.IsCustomerCompleted,
@@ -151,6 +154,7 @@ func toOrderEntity(model *Order) *domain.Order {
 		OrderID:    model.OrderID,
 		CustomerID: model.CustomerID,
 		CourseID:   model.CourseID,
+		RoomID:     model.RoomID,
 		Status:     domain.OrderStatus(model.Status),
 		OrderDate:  model.OrderDate,
 		IsCustomerCompleted: model.IsCustomerCompleted,

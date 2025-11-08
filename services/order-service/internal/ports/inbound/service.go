@@ -21,6 +21,7 @@ type OrderService interface {
 
 // CreateOrderCommand represents the command to create an order
 type CreateOrderCommand struct {
-	CustomerID string    `json:"customer_id" validate:"required"`
-	CourseID   uuid.UUID `json:"course_id" validate:"required"`
+	CustomerID string `json:"customer_id" validate:"required"`
+	CourseID   string `json:"course_id" validate:"required"`
+	RoomID     string `json:"room_id" validate:"required"`
 }

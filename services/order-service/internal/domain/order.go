@@ -1,4 +1,5 @@
 package domain
+
 import (
 	"time"
 
@@ -16,7 +17,7 @@ const (
 type Order struct {
 	OrderID              uuid.UUID   `json:"order_id"`
 	CustomerID           string      `json:"customer_id"`
-	CourseID             uuid.UUID   `json:"course_id"`
+	CourseID             string       `json:"course_id"`
 	PaymentID            *uuid.UUID  `json:"payment_id,omitempty"`
 	Status               OrderStatus `json:"status"`
 	IsCustomerCompleted  bool        `json:"is_customer_completed"`
@@ -24,13 +25,15 @@ type Order struct {
 	CustomerCompletedAt  *time.Time  `json:"customer_completed_at,omitempty"`
 	ProphetCompletedAt   *time.Time  `json:"prophet_completed_at,omitempty"`
 	OrderDate            time.Time   `json:"order_date"`
+	RoomID				 string   `json:"room_id"`
 }
 
-func NewOrder(customerID string, courseID uuid.UUID) *Order {
+func NewOrder(customerID string, courseID string, roomID string) *Order {
 	return &Order{
 		OrderID:             uuid.New(),
 		CustomerID:          customerID,
 		CourseID:            courseID,
+		RoomID:              roomID,
 		Status:              StatusPending,
 		IsCustomerCompleted: false,
 		IsProphetCompleted:  false,
@@ -64,7 +67,7 @@ func (o *Order) checkAndMarkComplete() {
 	// Only mark as completed if both prophet and customer have completed
 	if o.IsCustomerCompleted && o.IsProphetCompleted {
 		o.Status = StatusCompleted
-	}
+	}	
 }
 
 func (o *Order) Complete() {

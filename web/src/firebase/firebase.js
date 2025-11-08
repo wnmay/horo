@@ -1,32 +1,32 @@
-'use client'
-
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getAnalytics, isSupported } from "firebase/analytics";
+import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getAnalytics, isSupported } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  // measurementId can be omitted if not used
+  apiKey: "AIzaSyBnN693MGJZ2p1yRICP6IzoOgEKj3ZBsKI",
+  authDomain: "horo-d47b1.firebaseapp.com",
+  projectId: "horo-d47b1",
+  storageBucket: "horo-d47b1.firebasestorage.app",
+  messagingSenderId: "796546060161",
+  appId: "1:796546060161:web:c244aafd8ebcd96c2ce280",
+  measurementId: "G-S14W0PE44V"
 };
 
+// Initialize Firebase only once
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
+// Optional analytics
 let analytics;
 if (typeof window !== "undefined") {
   isSupported().then((yes) => {
-    if (yes) {
-      analytics = getAnalytics(app);
-    }
+    if (yes) analytics = getAnalytics(app);
   });
 }
 
+// Initialize Auth and Firestore
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Export everything you need
 export { app, analytics, auth, db };

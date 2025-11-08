@@ -3,6 +3,7 @@ package firebase
 
 import (
 	"context"
+
 	"firebase.google.com/go/v4/auth"
 	"github.com/wnmay/horo/services/user-management-service/internal/ports"
 )
@@ -11,8 +12,8 @@ type FirebaseAuthAdapter struct {
 	client *auth.Client
 }
 
-func NewFirebaseAuthAdapter(client *auth.Client) * FirebaseAuthAdapter {
-	return & FirebaseAuthAdapter{client: client}
+func NewFirebaseAuthAdapter(client *auth.Client) *FirebaseAuthAdapter {
+	return &FirebaseAuthAdapter{client: client}
 }
 
 func (f *FirebaseAuthAdapter) VerifyIDToken(ctx context.Context, token string) (*ports.Claims, error) {
@@ -38,6 +39,6 @@ func (f *FirebaseAuthAdapter) VerifyIDToken(ctx context.Context, token string) (
 	return claims, nil
 }
 
-func (f *FirebaseAuthAdapter) SetCustomUserClaims(ctx context.Context, uid string, customClaims map[string]interface{}) (error){
+func (f *FirebaseAuthAdapter) SetCustomUserClaims(ctx context.Context, uid string, customClaims map[string]interface{}) error {
 	return f.client.SetCustomUserClaims(ctx, uid, customClaims)
 }
