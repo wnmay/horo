@@ -124,6 +124,7 @@ func (h *Handler) DeleteCourse(c *fiber.Ctx) error {
 }
 
 // FindCoursesbyFilter — GET /courses?coursename=&prophet_name=&duration=
+// GetAllCourses — GET /courses
 func (h *Handler) FindCoursesByFilter(c *fiber.Ctx) error {
 	courseName := c.Query("coursename")
 	prophetName := c.Query("prophetname")
@@ -158,7 +159,7 @@ func (h *Handler) FindCoursesByFilter(c *fiber.Ctx) error {
 	})
 }
 
-// CreateReview — POST /courses/:courseId/reviews
+// CreateReview — POST /courses/:courseId/review
 func (h *Handler) CreateReview(c *fiber.Ctx) error {
 	var req struct {
 		CustomerId   string  `json:"customer_id"`
@@ -201,7 +202,7 @@ func (h *Handler) CreateReview(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(review)
 }
 
-// GetReviewByID — GET /courses/reviews/:id
+// GetReviewByID — GET /courses/review/:id
 func (h *Handler) GetReviewByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -213,7 +214,7 @@ func (h *Handler) GetReviewByID(c *fiber.Ctx) error {
 	return c.JSON(review)
 }
 
-// GetReviewByCourseID — GET /courses/reviews/:courseId
+// GetReviewByCourseID — GET /courses/:courseId/reviews
 func (h *Handler) GetReviewByCourseID(c *fiber.Ctx) error {
 	courseId := c.Params("courseId")
 
