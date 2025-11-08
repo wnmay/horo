@@ -36,9 +36,9 @@ func (h *Handler) Register(router fiber.Router) {
 
 // CreateCourse — POST /courses
 func (h *Handler) CreateCourse(c *fiber.Ctx) error {
+	prophetID := c.Get("X-User-Id")
 	var req struct {
-		ProphetID   string  `json:"prophet_id"`
-		ProphetName string  `json:"prophetname"`
+		ProphetName string  `json:"prophetname"` //TODO: get from user mgt service!
 		CourseName  string  `json:"coursename"`
 		CourseType  string  `json:"coursetype"`
 		Description string  `json:"description"`
@@ -51,7 +51,7 @@ func (h *Handler) CreateCourse(c *fiber.Ctx) error {
 	}
 
 	input := app.CreateCourseInput{
-		ProphetID:   req.ProphetID,
+		ProphetID:   prophetID,
 		ProphetName: req.ProphetName,
 		CourseName:  req.CourseName,
 		CourseType:  domain.CourseType(req.CourseType),
