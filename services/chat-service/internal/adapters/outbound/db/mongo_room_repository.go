@@ -105,7 +105,7 @@ func (r *mongoRoomRepository) RoomExists(ctx context.Context, roomID string) (bo
 	return count > 0, nil
 }
 
-func (r *mongoRoomRepository) IsUserInRoom(ctx context.Context, userID string,roomID string) (bool, error) {
+func (r *mongoRoomRepository) IsUserInRoom(ctx context.Context, userID string, roomID string) (bool, error) {
 	objID, err := primitive.ObjectIDFromHex(roomID)
 	if err != nil {
 		return false, err
@@ -146,4 +146,14 @@ func (r *mongoRoomRepository) GetChatRoomsByUserID(ctx context.Context, userID s
 		domainRooms = append(domainRooms, rm.ToDomain())
 	}
 	return domainRooms, nil
+}
+
+func (r *mongoRoomRepository) UpdateRoomIsDoneByRoomID(ctx context.Context, roomID string, isDone bool) error {
+	objID, err := primitive.ObjectIDFromHex(roomID)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.collection.UpdateOne(ctx, bson.M{"_id": objID}, bson.M{"$set": bson.M{"is_done": isDone}})
+	return err
 }

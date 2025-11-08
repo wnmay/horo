@@ -64,6 +64,12 @@ func (c *notificationConsumer) handleOrderCompleted(ctx context.Context, deliver
 		log.Printf("Failed to unmarshal message data: %v", err)
 		return err
 	}
+
+	if err := c.chatService.UpdateRoomIsDone(ctx, orderCompletedData.RoomID, true); err != nil {
+		log.Printf("Failed to update room is done: %v", err)
+		return err
+	}
+
 	content := service.GenerateOrderCompletedMessage(orderCompletedData.OrderID, orderCompletedData.CourseID, orderCompletedData.OrderStatus, orderCompletedData.CourseName)
 
 	messageID, err := c.chatService.SaveMessage(ctx, orderCompletedData.RoomID, "system", content)
@@ -126,7 +132,7 @@ func (c *notificationConsumer) handleOrderPaymentBound(ctx context.Context, deli
 		SenderID:  "system",
 		Type:      string(domain.MessageTypeNotification),
 		CreatedAt: time.Now().Format(time.RFC3339),
-		Trigger: contract.OrderPaymentBoundEvent,
+		Trigger:   contract.OrderPaymentBoundEvent,
 		MessageDetail: &message.OrderPaymentBoundNotificationData{
 			OrderID:       orderPaymentBoundData.OrderID,
 			PaymentID:     orderPaymentBoundData.PaymentID,
@@ -180,7 +186,7 @@ func (c *notificationConsumer) handleOrderPaid(ctx context.Context, delivery amq
 		SenderID:  "system",
 		Type:      string(domain.MessageTypeNotification),
 		CreatedAt: time.Now().Format(time.RFC3339),
-		Trigger: contract.OrderPaidEvent,
+		Trigger:   contract.OrderPaidEvent,
 		MessageDetail: &message.OrderPaidNotificationData{
 			OrderID:       orderPaidData.OrderID,
 			PaymentID:     orderPaidData.PaymentID,
