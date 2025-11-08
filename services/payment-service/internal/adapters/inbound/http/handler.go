@@ -22,6 +22,7 @@ func (h *Handler) Register(app *fiber.App) {
 	payments.Get("/:id", h.GetPayment)
 	payments.Get("/order/:orderID", h.GetPaymentByOrder)
 	payments.Put("/:id/complete", h.CompletePayment)
+	payments.Get("/balance", h.GetProphetBalance)
 }
 
 func (h *Handler) GetPayment(c *fiber.Ctx) error {
@@ -78,4 +79,26 @@ func (h *Handler) CompletePayment(c *fiber.Ctx) error {
 		"message": "Payment completed successfully",
 		"payment_id": paymentID,
 	})
+}
+
+func (h *Handler) GetProphetBalance(c *fiber.Ctx) error {
+    userID := c.Get("X-User-Id")
+	role := c.Get("X-User-Role")
+    if userID == "" {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "userID is required"})
+    }
+
+	if role != "prophet"{
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+        "error": "only prophets or admins can access this endpoint",
+    })
+	}
+
+
+    amount, err := h.paymentSvc.GetProphetBalance(c.Context(), userID)
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+    }
+
+    return c.JSON(amount)
 }

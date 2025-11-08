@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"log"
 	"time"
 
@@ -96,4 +97,18 @@ func (r *GormPaymentRepository) Update(ctx context.Context, p *domain.Payment) e
 
 func (r *GormPaymentRepository) Delete(ctx context.Context, paymentID string) error {
 	return r.db.WithContext(ctx).Delete(&paymentModel{}, "payment_id = ?", paymentID).Error
+}
+
+func (r *GormPaymentRepository) GetProphetSettledBalance(ctx context.Context, prophetID string) (float64, error) {
+    type row struct{ Sum float64 }
+    var out row
+    err := r.db.WithContext(ctx).
+        Model(&paymentModel{}).
+        Select("COALESCE(SUM(amount), 0) AS sum").
+        Where("prophet_id = ? AND status = ?", prophetID, domain.PaymentStatusSettled).
+        Take(&out).Error
+    if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+        return 0, err
+    }
+    return out.Sum, nil
 }

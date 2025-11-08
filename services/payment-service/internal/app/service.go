@@ -123,3 +123,11 @@ func (s *Service) SettlePayment(ctx context.Context, orderID string, prophetID s
 	log.Printf("Payment %s settled successfully", payment.PaymentID)
 	return nil
 }
+
+
+func (s *Service) GetProphetBalance(ctx context.Context, prophetID string) (float64, error) {
+    if prophetID == "" {
+        return 0, fmt.Errorf("prophet id is required")
+    }
+    return s.paymentRepo.GetProphetSettledBalance(ctx, prophetID)
+}
