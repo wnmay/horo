@@ -29,12 +29,9 @@ func (h *Handler) Register(router fiber.Router) {
 	group.Get("/courses", h.FindCoursesByFilter)
 
 	// Review
-	group.Post("/courses/:courseId/reviews", h.CreateReview)
-	// router.Get("/reviews/:id", h.GetReviewByID)
-	// router.Get("/reviews/:course_id", h.GetReviewByCourseID)
-	// router.Patch("/reviews/:id", h.UpdateCourse)
-	// router.Patch("/reviews/delete/:id", h.DeleteCourse)
-	// router.Get("/reviews", h.FindCoursesByFilter)
+	group.Post("/courses/:courseId/review", h.CreateReview)
+	group.Get("/courses/review/:id", h.GetReviewByID)
+	group.Get("/courses/:courseId/reviews", h.GetReviewByCourseID)
 }
 
 // CreateCourse — POST /courses
@@ -127,6 +124,7 @@ func (h *Handler) DeleteCourse(c *fiber.Ctx) error {
 }
 
 // FindCoursesbyFilter — GET /courses?coursename=&prophet_name=&duration=
+// GetAllCourses — GET /courses
 func (h *Handler) FindCoursesByFilter(c *fiber.Ctx) error {
 	courseName := c.Query("coursename")
 	prophetName := c.Query("prophetname")
@@ -161,7 +159,7 @@ func (h *Handler) FindCoursesByFilter(c *fiber.Ctx) error {
 	})
 }
 
-// CreateReview — POST /courses/:courseId/reviews
+// CreateReview — POST /courses/:courseId/review
 func (h *Handler) CreateReview(c *fiber.Ctx) error {
 	var req struct {
 		CustomerId   string  `json:"customer_id"`
@@ -202,4 +200,35 @@ func (h *Handler) CreateReview(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(review)
+}
+
+// GetReviewByID — GET /courses/review/:id
+func (h *Handler) GetReviewByID(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	review, err := h.service.GetReviewByID(id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusNotFound, "review not found")
+	}
+
+	return c.JSON(review)
+}
+
+// GetReviewByCourseID — GET /courses/:courseId/reviews
+func (h *Handler) GetReviewByCourseID(c *fiber.Ctx) error {
+	courseId := c.Params("courseId")
+
+	reviews, err := h.service.ListReviewsByCourse(courseId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	response := fiber.Map{
+		"timestamp": time.Now(),
+		"course_id": courseId,
+		"count":     len(reviews),
+		"reviews":   reviews,
+	}
+
+	return c.JSON(response)
 }
