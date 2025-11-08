@@ -100,7 +100,8 @@ func (r *Router) setupCourseRoutes(api fiber.Router) {
 
 	courses.Post("/", authMiddleware.AddClaims, courseHandler.CreateCourse)
 	courses.Get("/:id", authMiddleware.AddClaims, courseHandler.GetCourseByID)
-	courses.Get("/prophet/:prophetId/courses", authMiddleware.AddClaims, courseHandler.ListCoursesByProphet)
+	courses.Get("/prophet/:prophetId/courses", courseHandler.ListCoursesByProphet)
+	courses.Get("/prophet/courses", authMiddleware.AddClaims, courseHandler.ListCurrentProphetCourses)
 	courses.Patch("/:id", authMiddleware.AddClaims, courseHandler.UpdateCourse)
 	courses.Patch("/delete/:id", authMiddleware.AddClaims, courseHandler.DeleteCourse)
 	courses.Get("/", authMiddleware.AddClaims, courseHandler.FindCoursesByFilter)
