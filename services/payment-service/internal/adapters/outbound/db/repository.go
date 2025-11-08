@@ -13,6 +13,7 @@ import (
 type paymentModel struct {
 	PaymentID string    `gorm:"primaryKey;type:uuid;column:payment_id"`
 	OrderID   string    `gorm:"not null;index;type:uuid"`
+	ProphetID string    `gorm:"index;type:uuid"`
 	Amount    float64   `gorm:"not null"`
 	Status    domain.PaymentStatus `gorm:"not null;default:PENDING"`
 	CreatedAt time.Time `gorm:"not null"`
@@ -56,6 +57,7 @@ func (r *GormPaymentRepository) GetByID(ctx context.Context, id string) (*domain
 	return &domain.Payment{
 		PaymentID: model.PaymentID,
 		OrderID:   model.OrderID,
+		ProphetID: model.ProphetID,
 		Amount:    model.Amount,
 		Status:    model.Status,
 		CreatedAt: model.CreatedAt,
@@ -71,6 +73,7 @@ func (r *GormPaymentRepository) GetByOrderID(ctx context.Context, orderID string
 	return &domain.Payment{
 		PaymentID: model.PaymentID,
 		OrderID:   model.OrderID,
+		ProphetID: model.ProphetID,
 		Amount:    model.Amount,
 		Status:    model.Status,
 		CreatedAt: model.CreatedAt,
@@ -82,6 +85,7 @@ func (r *GormPaymentRepository) Update(ctx context.Context, p *domain.Payment) e
 	model := paymentModel{
 		PaymentID: p.PaymentID,
 		OrderID:   p.OrderID,
+		ProphetID: p.ProphetID,
 		Amount:    p.Amount,
 		Status:    p.Status,
 		CreatedAt: p.CreatedAt,
