@@ -44,6 +44,7 @@ func (r *mongoRoomRepository) CreateRoom(ctx context.Context, room *domain.Room)
 		ProphetID:  room.ProphetID,
 		CustomerID: room.CustomerID,
 		CourseID:   room.CourseID,
+		IsDone:     room.IsDone,
 		CreatedAt:  time.Now(),
 	}
 	res, err := r.collection.InsertOne(ctx, model)
