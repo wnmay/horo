@@ -67,6 +67,20 @@ func (a *AuthMiddleware) AddClaims(c *fiber.Ctx) error {
 		})
 	}
 
+	c.Request().Header.Del("X-User-Id")
+	c.Request().Header.Del("X-User-Email")
+	c.Request().Header.Del("X-User-Role")
+
+	// Add claims as headers for upstream services
+	c.Request().Header.Set("X-User-Id", authResponse.UserID)
+	c.Request().Header.Set("X-User-Email", authResponse.Email)
+	c.Request().Header.Set("X-User-Role",authResponse.Role)
+
+	c.Locals("userId",  authResponse.UserID)
+	c.Locals("userEmail",  authResponse.Email)
+	c.Locals("userRole",  authResponse.Role)
+
+
 	// Continue to next handler (proxy to upstream service)
 	return c.Next()
 }
