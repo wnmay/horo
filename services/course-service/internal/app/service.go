@@ -16,6 +16,8 @@ type CourseService interface {
 	DeleteCourse(id string) error
 	FindCoursesByFilter(filter map[string]interface{}) ([]*domain.Course, error)
 	CreateReview(input CreateReviewInput) (*domain.Review, error)
+	GetReviewByID(id string) (*domain.Review, error)
+	ListReviewsByCourse(courseId string) ([]*domain.Review, error)
 }
 
 type courseService struct {
@@ -23,11 +25,11 @@ type courseService struct {
 }
 
 func (s courseService) GetCourseByID(id string) (*domain.Course, error) {
-	return s.repo.FindByID(id)
+	return s.repo.FindCourseByID(id)
 }
 
 func (s courseService) ListCoursesByProphet(prophetID string) ([]*domain.Course, error) {
-	return s.repo.FindAllByProphet(prophetID)
+	return s.repo.FindCoursesByProphet(prophetID)
 }
 
 func NewCourseService(r outbound.CourseRepository) CourseService {
@@ -96,6 +98,14 @@ func (s *courseService) CreateReview(input CreateReviewInput) (*domain.Review, e
 		return nil, err
 	}
 	return c, nil
+}
+
+func (s courseService) GetReviewByID(id string) (*domain.Review, error) {
+	return s.repo.FindReviewByID(id)
+}
+
+func (s courseService) ListReviewsByCourse(courseId string) ([]*domain.Review, error) {
+	return s.repo.FindReviewsByCourse(courseId)
 }
 
 func generateID(objType string) string {

@@ -23,7 +23,7 @@ func (r *MongoCourseRepo) SaveCourse(course *domain.Course) error {
 	return err
 }
 
-func (r *MongoCourseRepo) FindByID(id string) (*domain.Course, error) {
+func (r *MongoCourseRepo) FindCourseByID(id string) (*domain.Course, error) {
 	var c domain.Course
 	err := r.col.FindOne(context.TODO(), bson.M{"id": id, "deleted_at": false}).Decode(&c)
 	if err != nil {
@@ -32,7 +32,7 @@ func (r *MongoCourseRepo) FindByID(id string) (*domain.Course, error) {
 	return &c, nil
 }
 
-func (r *MongoCourseRepo) FindAllByProphet(prophetID string) ([]*domain.Course, error) {
+func (r *MongoCourseRepo) FindCoursesByProphet(prophetID string) ([]*domain.Course, error) {
 	cur, err := r.col.Find(context.TODO(), bson.M{"prophet_id": prophetID, "deleted_at": false})
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func (r *MongoCourseRepo) Update(id string, updates map[string]interface{}) (*do
 	if err != nil {
 		return nil, err
 	}
-	return r.FindByID(id)
+	return r.FindCourseByID(id)
 }
 
 func (r *MongoCourseRepo) Delete(id string) error {
@@ -65,7 +65,10 @@ func (r *MongoCourseRepo) Delete(id string) error {
 }
 
 func (r *MongoCourseRepo) FindByFilter(filter map[string]interface{}) ([]*domain.Course, error) {
-	query := bson.M{"deleted_at": false}
+	query := bson.M{
+		"deleted_at": false,
+		"id":         bson.M{"$regex": "^COURSE-"},
+	}
 	for key, val := range filter {
 		switch key {
 		case "coursename":
@@ -99,4 +102,34 @@ func (r *MongoCourseRepo) FindByFilter(filter map[string]interface{}) ([]*domain
 func (r *MongoCourseRepo) SaveReview(review *domain.Review) error {
 	_, err := r.col.InsertOne(context.TODO(), review)
 	return err
+}
+
+func (r *MongoCourseRepo) FindReviewByID(id string) (*domain.Review, error) {
+	var rv domain.Review
+	err := r.col.FindOne(context.TODO(), bson.M{"id": id, "deleted_at": false}).Decode(&rv)
+	if err != nil {
+		return nil, err
+	}
+	return &rv, nil
+}
+
+func (r *MongoCourseRepo) FindReviewsByCourse(courseId string) ([]*domain.Review, error) {
+	cur, err := r.col.Find(context.TODO(), bson.M{"course_id": courseId, "deleted_at": false})
+	if err != nil {
+		return nil, err
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(context.TODO())
+
+	var reviews []*domain.Review
+	for cur.Next(context.TODO()) {
+		var rv domain.Review
+		if err := cur.Decode(&rv); err != nil {
+			return nil, err
+		}
+		reviews = append(reviews, &rv)
+	}
+	return reviews, nil
 }

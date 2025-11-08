@@ -29,7 +29,7 @@ func (h *CourseHandler) GetCourseByID(c *fiber.Ctx) error {
 }
 
 func (h *CourseHandler) ListCoursesByProphet(c *fiber.Ctx) error {
-	return ProxyRequest(c, h.client, "GET", h.courseServiceURL, fmt.Sprintf("/api/prophets/%s/courses", c.Params("prophetID")))
+	return ProxyRequest(c, h.client, "GET", h.courseServiceURL, fmt.Sprintf("/api/prophets/%s/courses", c.Params("prophetId")))
 }
 
 func (h *CourseHandler) UpdateCourse(c *fiber.Ctx) error {
@@ -45,5 +45,13 @@ func (h *CourseHandler) FindCoursesByFilter(c *fiber.Ctx) error {
 }
 
 func (h *CourseHandler) CreateReview(c *fiber.Ctx) error {
-	return ProxyRequest(c, h.client, "POST", h.courseServiceURL, fmt.Sprintf("/api/courses/%s/reviews", c.Params("courseId")))
+	return ProxyRequest(c, h.client, "POST", h.courseServiceURL, fmt.Sprintf("/api/courses/%s/review", c.Params("courseId")))
+}
+
+func (h *CourseHandler) GetReviewByID(c *fiber.Ctx) error {
+	return ProxyRequest(c, h.client, "GET", h.courseServiceURL, fmt.Sprintf("/api/courses/review/%s", c.Params("id")))
+}
+
+func (h *CourseHandler) ListReviewsByCourse(c *fiber.Ctx) error {
+	return ProxyRequest(c, h.client, "GET", h.courseServiceURL, fmt.Sprintf("/api/courses/%s/reviews", c.Params("courseId")))
 }
