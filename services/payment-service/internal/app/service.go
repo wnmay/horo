@@ -99,14 +99,14 @@ func (s *Service) CompletePayment(ctx context.Context, paymentID string) error {
 	return nil
 }
 
-func (s *Service) SettlePayment(ctx context.Context, orderID string) error {
+func (s *Service) SettlePayment(ctx context.Context, orderID string, prophetID string) error {
 	payment, err := s.paymentRepo.GetByOrderID(ctx, orderID)
 	if err != nil {
 		return fmt.Errorf("failed to get payment: %w", err)
 	}
 
 	prev := payment.Status
-	if err := payment.Settle(); err != nil {
+	if err := payment.Settle(prophetID); err != nil {
 		return fmt.Errorf("failed to settle payment: %w", err)
 	}
 

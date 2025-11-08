@@ -12,7 +12,8 @@ type PaymentService interface {
 	GetPaymentByOrderID(ctx context.Context, orderID string) (*domain.Payment, error)
 	UpdatePaymentStatus(ctx context.Context, paymentID string, status domain.PaymentStatus) error
 	CompletePayment(ctx context.Context, paymentID string) error
-	SettlePayment(ctx context.Context, paymentID string) error
+	SettlePayment(ctx context.Context, paymentID string, prophetID string) error
+	GetProphetBalance(ctx context.Context, prophetID string) (float64, error)
 }
 
 type CreatePaymentCommand struct {
