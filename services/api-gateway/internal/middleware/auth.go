@@ -40,17 +40,6 @@ func (a *AuthMiddleware) AddClaims(c *fiber.Ctx) error {
 		}
 	}
 
-	// extract from query param for connecting ws
-	if token == "" {
-		token = c.Query("token")
-	}
-
-	if token == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "missing authorization header or token query param",
-		})
-	}
-
 	// Call gRPC to validate token and get claims
 	res, err := http.Get(fmt.Sprintf("%s/api/auth/verify-token?token=%s", a.authServiceAddr, token))
 	if err != nil {
