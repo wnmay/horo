@@ -1,10 +1,15 @@
-import React from 'react'
+'use client';
+
+import {useState} from 'react'
 import ChatRoomList from '@/components/ChatRoomList'
 
 function page() {
+  const [roomId, setRoomId] = useState<string | null>(null)
+  
   return (
-    <div className='w-[30%]'>
-      <ChatRoomList />
+    <div className='w-full flex'>
+      <ChatRoomList onRoomSelect={setRoomId} />
+      <p>Selected Room ID: {roomId}</p>
     </div>
   )
 }

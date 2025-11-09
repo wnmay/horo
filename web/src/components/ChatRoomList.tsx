@@ -6,7 +6,11 @@ import api from "@/lib/api/api-client";
 import { auth } from '@/firebase/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
-const ChatRoomList = () => {
+interface ChatRoomListProps {
+  onRoomSelect?: (roomId: string) => void;
+}
+
+const ChatRoomList = ({ onRoomSelect }: ChatRoomListProps) => {
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +78,9 @@ const ChatRoomList = () => {
 
   const handleRoomClick = (roomId: string) => {
     console.log('Room clicked:', roomId);
-    // Add your navigation or room selection logic here
+    if (onRoomSelect) {
+      onRoomSelect(roomId);
+    }
   };
 
   if (loading) {
@@ -94,7 +100,7 @@ const ChatRoomList = () => {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto">
+    <div className="flex flex-col h-full overflow-y-auto w-[30%]">
       {chatRooms.length === 0 ? (
         <p className="text-gray-500 text-center p-4">No chat rooms found</p>
       ) : (
