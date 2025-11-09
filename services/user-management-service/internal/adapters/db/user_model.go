@@ -7,3 +7,8 @@ type UserModel struct {
 	Email    string `bson:"email"`
 	Role     string `bson:"role"` // "prophet" or "customer"
 }
+
+type ProphetModel struct {
+	User    UserModel `bson:",inline"`
+	Balance float64   `bson:"balance"`
+}
