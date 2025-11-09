@@ -3,8 +3,13 @@
 import "./globals.css";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { Toaster } from "sonner";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [showMenu, setShowMenu] = useState(false);
@@ -65,11 +70,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <div className="absolute top-full right-0 mt-2 w-56 flex flex-col bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 z-50 overflow-hidden">
                     <button
                       onClick={() => {
-                        const newName = prompt("Enter your full name", user.name || "");
+                        const newName = prompt(
+                          "Enter your full name",
+                          user.name || ""
+                        );
                         if (newName) {
                           const updatedUser = { ...user, name: newName };
                           setUser(updatedUser);
-                          localStorage.setItem("user", JSON.stringify(updatedUser));
+                          localStorage.setItem(
+                            "user",
+                            JSON.stringify(updatedUser)
+                          );
                         }
                         setShowMenu(false);
                       }}
@@ -120,6 +131,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         {/* Main content */}
         <main className="flex-1 mt-20">{children}</main>
+        <Toaster />
       </body>
     </html>
   );

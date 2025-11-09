@@ -27,7 +27,7 @@ func (h *Handler) Register(router fiber.Router) {
 	group.Patch("/courses/:id", h.UpdateCourse)
 	group.Patch("/courses/delete/:id", h.DeleteCourse)
 	group.Get("/courses", h.FindCoursesByFilter)
-
+	group.Get("/courses/prophet/courses", h.ListCurrentProphetCourses)
 	// Review
 	group.Post("/courses/:courseId/review", h.CreateReview)
 	group.Get("/courses/review/:id", h.GetReviewByID)
@@ -36,9 +36,9 @@ func (h *Handler) Register(router fiber.Router) {
 
 // CreateCourse — POST /courses
 func (h *Handler) CreateCourse(c *fiber.Ctx) error {
+	prophetID := c.Get("X-User-Id")
 	var req struct {
-		ProphetID   string  `json:"prophet_id"`
-		ProphetName string  `json:"prophetname"`
+		ProphetName string  `json:"prophetname"` //TODO: get from user mgt service!
 		CourseName  string  `json:"coursename"`
 		CourseType  string  `json:"coursetype"`
 		Description string  `json:"description"`
@@ -51,7 +51,7 @@ func (h *Handler) CreateCourse(c *fiber.Ctx) error {
 	}
 
 	input := app.CreateCourseInput{
-		ProphetID:   req.ProphetID,
+		ProphetID:   prophetID,
 		ProphetName: req.ProphetName,
 		CourseName:  req.CourseName,
 		CourseType:  domain.CourseType(req.CourseType),
@@ -231,4 +231,16 @@ func (h *Handler) GetReviewByCourseID(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(response)
+}
+
+// ListCurrentProphetCourses — GET /courses/prophet/courses
+func (h *Handler) ListCurrentProphetCourses(c *fiber.Ctx) error {
+	prophetID := c.Get("X-User-Id")
+
+	courses, err := h.service.ListCoursesByProphet(prophetID)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(courses)
 }
