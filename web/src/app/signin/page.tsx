@@ -24,13 +24,26 @@ export default function SignInPage() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await doSignInWithEmailAndPassword(email, password);
+      const userCredential = await doSignInWithEmailAndPassword(email, password);
+      
+      // Example: get user info
+      const user = {
+        name: userCredential.user.displayName || "",
+        email: userCredential.user.email,
+        role: "prophet", // or "customer" depending on your app logic
+      };
+
+      // Store in localStorage
+      localStorage.setItem("user", JSON.stringify(user));
+
+      // Redirect
       router.replace("/");
     } catch (err: any) {
       setError(err.message);
       console.error(err);
     }
   };
+
 
   const handleGoogleSignIn = async () => {
     try {
