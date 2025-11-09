@@ -9,3 +9,4 @@ data:
   order-service-url: "http://order-service:3002"
   user-management-service-url: "http://user-management-service:3003"
   chat-service-url: "http://chat-service:3004"
+  course-service-url: "http://course-service:3005"

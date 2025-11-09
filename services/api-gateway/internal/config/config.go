@@ -10,7 +10,8 @@ type Config struct {
 	PaymentServiceURL        string
 	ChatServiceURL           string
 	RabbitMQURI              string
-	ChatAddr       string
+	ChatAddr                 string
+	CourseServiceURL         string
 }
 
 func LoadConfig() *Config {
@@ -21,7 +22,8 @@ func LoadConfig() *Config {
 		OrderServiceURL:          env.GetString("ORDER_SERVICE_URL", "http://localhost:3002"),
 		PaymentServiceURL:        env.GetString("PAYMENT_SERVICE_URL", "http://localhost:3001"),
 		ChatServiceURL:           env.GetString("CHAT_SERVICE_URL", "http://localhost:3004"),
+		CourseServiceURL:         env.GetString("COURSE_SERVICE_URL", "http://localhost:3005"),
 		RabbitMQURI:              env.GetString("RABBITMQ_URI", "amqp://guest:guest@localhost:5672/"),
-		ChatAddr: env.GetString("CHAT_ADDR", "localhost:50053"),
+		ChatAddr:                 env.GetString("CHAT_ADDR", "localhost:50053"),
 	}
 }
