@@ -67,7 +67,7 @@ func (h *UserHandler) Register(c *fiber.Ctx) error {
 	}
 
 	// Make HTTP POST request
-	url := fmt.Sprintf("%s/users/register", h.userManagementURL)
+	url := fmt.Sprintf("%s/api/users/register", h.userManagementURL)
 	resp, err := h.httpClient.Post(url, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
