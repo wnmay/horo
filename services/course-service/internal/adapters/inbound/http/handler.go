@@ -38,7 +38,6 @@ func (h *Handler) Register(router fiber.Router) {
 func (h *Handler) CreateCourse(c *fiber.Ctx) error {
 	prophetID := c.Get("X-User-Id")
 	var req struct {
-		ProphetName string  `json:"prophetname"` //TODO: get from user mgt service!
 		CourseName  string  `json:"coursename"`
 		CourseType  string  `json:"coursetype"`
 		Description string  `json:"description"`
@@ -52,7 +51,6 @@ func (h *Handler) CreateCourse(c *fiber.Ctx) error {
 
 	input := app.CreateCourseInput{
 		ProphetID:   prophetID,
-		ProphetName: req.ProphetName,
 		CourseName:  req.CourseName,
 		CourseType:  domain.CourseType(req.CourseType),
 		Description: req.Description,
@@ -72,7 +70,7 @@ func (h *Handler) CreateCourse(c *fiber.Ctx) error {
 func (h *Handler) GetCourseByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	course, err := h.service.GetCourseByID(id)
+	course, err := h.service.GetCourseByID(c.Context(), id)
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, "course not found")
 	}

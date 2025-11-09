@@ -32,7 +32,7 @@ func (s *CourseGRPCServer) CreateCourse(ctx context.Context, req *pb.CreateCours
 }
 
 func (s *CourseGRPCServer) GetCourseByID(ctx context.Context, req *pb.GetCourseByIDRequest) (*pb.GetCourseByIDResponse, error) {
-	c, err := s.svc.GetCourseByID(req.GetId())
+	c, err := s.svc.GetCourseByID(ctx, req.GetId())
 	if err != nil {
 		return nil, err
 	}

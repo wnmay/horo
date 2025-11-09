@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,7 +11,7 @@ import (
 
 type CourseService interface {
 	CreateCourse(input CreateCourseInput) (*domain.Course, error)
-	GetCourseByID(id string) (*domain.Course, error)
+	GetCourseByID(ctx context.Context, id string) (*domain.Course, error)
 	ListCoursesByProphet(prophetID string) ([]*domain.Course, error)
 	UpdateCourse(id string, input *domain.UpdateCourseInput) (*domain.Course, error)
 	DeleteCourse(id string) error
@@ -21,26 +22,44 @@ type CourseService interface {
 }
 
 type courseService struct {
-	repo outbound.CourseRepository
+	repo          outbound.CourseRepository
+	user_provider outbound.UserProvider
 }
 
-func (s courseService) GetCourseByID(id string) (*domain.Course, error) {
-	return s.repo.FindCourseByID(id)
+func (s courseService) GetCourseByID(ctx context.Context, id string) (*domain.Course, error) {
+	course, err := s.repo.FindCourseByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if course == nil {
+		return nil, nil
+	}
+
+	prophetID := course.ProphetID
+	prophetName, err := s.user_provider.GetProphetName(ctx, prophetID)
+	if err != nil {
+		return nil, err
+	}
+	course.ProphetName = prophetName
+	return course, nil
 }
 
 func (s courseService) ListCoursesByProphet(prophetID string) ([]*domain.Course, error) {
 	return s.repo.FindCoursesByProphet(prophetID)
 }
 
-func NewCourseService(r outbound.CourseRepository) CourseService {
-	return &courseService{repo: r}
+func NewCourseService(r outbound.CourseRepository, u outbound.UserProvider) CourseService {
+	return &courseService{
+		repo:          r,
+		user_provider: u,
+	}
 }
 
 func (s *courseService) CreateCourse(input CreateCourseInput) (*domain.Course, error) {
 	c := &domain.Course{
 		ID:          generateID("COURSE"),
 		ProphetID:   input.ProphetID,
-		ProphetName: input.ProphetName,
 		CourseName:  input.CourseName,
 		CourseType:  input.CourseType,
 		Description: input.Description,
@@ -115,7 +134,6 @@ func generateID(objType string) string {
 type CreateCourseInput struct {
 	ID          string
 	ProphetID   string
-	ProphetName string
 	CourseName  string
 	CourseType  domain.CourseType
 	Description string
