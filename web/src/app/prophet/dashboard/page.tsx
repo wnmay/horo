@@ -22,31 +22,20 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Pencil, Plus } from "lucide-react";
-
-// Mock fetch function
-async function fetchProphetCourses(token: string) {
-  await new Promise((r) => setTimeout(r, 500)); // simulate network delay
-  return [
-    {
-      courseId: "course-1",
-      prophetId: "prophet-1",
-      prophetName: "Prophet Name 1",
-      courseName: "Course Name 8",
-      description: "An in-depth course exploring advanced spiritual practices.",
-      price: 750,
-      duration: 60,
-    },
-  ];
-}
+import api from "@/lib/api/api-client";
+import { auth } from "@/firebase/firebase";
 
 interface Course {
-  courseId: string;
-  prophetId: string;
-  prophetName: string;
-  courseName: string;
+  id: string;
+  prophet_id: string;
+  prophetname: string;
+  coursename: string;
+  coursetype: string;
   description: string;
   price: number;
   duration: number;
+  created_time: string;
+  deleted_at: boolean;
 }
 
 export default function ProphetCoursesPage() {
@@ -57,12 +46,26 @@ export default function ProphetCoursesPage() {
   const [saving, setSaving] = useState(false);
   const router = useRouter();
 
-  const token = "auth-token";
-
   useEffect(() => {
     async function loadCourses() {
       try {
-        const data = await fetchProphetCourses(token);
+        if (!auth.currentUser) {
+          await new Promise<void>((resolve) => {
+            const unsubscribe = auth.onAuthStateChanged((user) => {
+              if (user) {
+                unsubscribe();
+                resolve();
+              }
+            });
+            setTimeout(() => {
+              unsubscribe();
+              resolve();
+            }, 1000);
+          });
+        }
+
+        const res = await api.get("/api/courses/prophet/courses");
+        const data = res.data.data;
         setCourses(data);
       } catch (err) {
         toast("Failed to load prophet courses", {
@@ -83,15 +86,15 @@ export default function ProphetCoursesPage() {
     try {
       setSaving(true);
 
-      const res = await fetch(`/api/courses/${editingCourse.courseId}`, {
+      const res = await fetch(`/api/courses/${editingCourse.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          coursename: editingCourse.courseName,
+          coursename: editingCourse.coursename,
           description: editingCourse.description,
           price: Number(editingCourse.price),
           duration: Number(editingCourse.duration),
-          prophetname: editingCourse.prophetName,
+          prophetname: editingCourse.prophetname,
         }),
       });
 
@@ -103,7 +106,7 @@ export default function ProphetCoursesPage() {
       // Optimistically update the UI
       setCourses((prev) =>
         prev.map((c) =>
-          c.prophetId === editingCourse.prophetId ? editingCourse : c
+          c.prophet_id === editingCourse.prophet_id ? editingCourse : c
         )
       );
 
@@ -150,12 +153,12 @@ export default function ProphetCoursesPage() {
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
           {courses.map((course) => (
             <Card
-              key={course.courseName}
+              key={course.coursename}
               className="p-6 flex flex-col justify-between rounded-2xl shadow-lg border border-blue-100 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/70 backdrop-blur-md hover:shadow-blue-200/60 dark:hover:shadow-blue-900/50"
             >
               <div>
                 <h2 className="text-2xl font-semibold text-blue-800 dark:text-blue-300 mb-3">
-                  {course.courseName}
+                  {course.coursename}
                 </h2>
                 <p className="text-zinc-600 dark:text-zinc-400 mb-5 leading-relaxed">
                   {course.description}
@@ -164,9 +167,9 @@ export default function ProphetCoursesPage() {
                 <div className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
                   <p>
                     <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                      Prophet:
+                      Course Type:
                     </span>{" "}
-                    {course.prophetName}
+                    {course.coursetype}
                   </p>
                   <p>
                     <span className="font-medium text-zinc-800 dark:text-zinc-200">
@@ -220,11 +223,11 @@ export default function ProphetCoursesPage() {
                   Course Name
                 </label>
                 <Input
-                  value={editingCourse.courseName}
+                  value={editingCourse.coursename}
                   onChange={(e) =>
                     setEditingCourse({
                       ...editingCourse,
-                      courseName: e.target.value,
+                      coursename: e.target.value,
                     })
                   }
                   className="bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 focus:ring-2 focus:ring-blue-400"

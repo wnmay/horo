@@ -5,9 +5,25 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import Card from "@/components/ui/card";
 import { toast } from "sonner";
+import api from "@/lib/api/api-client";
+
+const courseTypes = [
+  "Love",
+  "Study",
+  "Work",
+  "Health",
+  "Finance",
+  "Personal Growth",
+];
 
 export default function CreateCoursePage() {
   const [form, setForm] = useState({
@@ -16,20 +32,28 @@ export default function CreateCoursePage() {
     price: "",
     duration: "",
     prophetname: "",
+    courseType: "",
   });
 
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
-  const token = localStorage.getItem("token"); //TODO: get from auth context once ready
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  function handleChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!form.coursename || !form.description || !form.price || !form.duration || !form.prophetname) {
+    if (
+      !form.coursename ||
+      !form.description ||
+      !form.price ||
+      !form.duration ||
+      !form.prophetname
+    ) {
       toast("Please fill out all fields.", { position: "top-right" });
       return;
     }
@@ -43,24 +67,19 @@ export default function CreateCoursePage() {
         price: parseInt(form.price, 10),
         duration: parseInt(form.duration, 10),
         prophetname: form.prophetname.trim(),
+        courseType: form.courseType.trim(),
       };
 
-      const res = await fetch("/courses", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
+      const res = await api.post("/api/courses", body);
 
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || "Failed to create course");
+      if (res.status !== 200) {
+        throw new Error(res.data.message || "Failed to create course");
       }
 
-      toast.success("Course created successfully!", { position: "top-right" });
-      router.push("/prophet/courses");
+      toast.success(`Course name: ${form.coursename} created successfully!`, {
+        position: "top-right",
+      });
+      router.push("/prophet/dashboard");
     } catch (err) {
       toast.error("Failed to create course", {
         description: (err as Error).message,
@@ -131,32 +150,52 @@ export default function CreateCoursePage() {
               <Select
                 value={form.duration}
                 onValueChange={(value) => setForm({ ...form, duration: value })}
-                >
+              >
                 <SelectTrigger className="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 focus:ring-2 focus:ring-blue-400">
-                    <SelectValue placeholder="Select duration" />
+                  <SelectValue placeholder="Select duration" />
                 </SelectTrigger>
                 <SelectContent className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-md">
-                    <SelectItem value="15">15</SelectItem>
-                    <SelectItem value="30">30</SelectItem>
-                    <SelectItem value="45">45</SelectItem>
-                    <SelectItem value="60">60</SelectItem>
+                  <SelectItem value="15">15</SelectItem>
+                  <SelectItem value="30">30</SelectItem>
+                  <SelectItem value="45">45</SelectItem>
+                  <SelectItem value="60">60</SelectItem>
                 </SelectContent>
-            </Select>
+              </Select>
             </div>
-          </div>
-
-          {/* Prophet Name */}
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-              Prophet Name
-            </label>
-            <Input
-              name="prophetname"
-              placeholder="Enter prophet name"
-              value={form.prophetname}
-              onChange={handleChange}
-              className="focus:ring-2 focus:ring-blue-400"
-            />
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                Course Type
+              </label>
+              <Select
+                value={form.courseType}
+                onValueChange={(value) =>
+                  setForm({ ...form, courseType: value })
+                }
+              >
+                <SelectTrigger className="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 focus:ring-2 focus:ring-blue-400">
+                  <SelectValue placeholder="Select course type" />
+                </SelectTrigger>
+                <SelectContent className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-md">
+                  {courseTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                Prophet Name
+              </label>
+              <Input
+                name="prophetname"
+                placeholder="Enter prophet name"
+                value={form.prophetname}
+                onChange={handleChange}
+                className="focus:ring-2 focus:ring-blue-400"
+              />
+            </div>
           </div>
 
           {/* Submit Button */}
