@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"log"
 	"time"
 
 	"github.com/wnmay/horo/services/chat-service/internal/domain"
@@ -8,21 +9,19 @@ import (
 )
 
 type MessageModel struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty"`
-	RoomID    string             `bson:"room_id" gorm:"index;size:64" json:"roomId"`
-	SenderID  string             `bson:"sender_id" gorm:"index;size:64" json:"senderId"`
-	Content   string             `bson:"content" gorm:"type:text" json:"content"`
-	Type      string             `bson:"type" gorm:"size:32;default:'text'" json:"type"`     // text | notification
-	Status    string             `bson:"status" gorm:"size:32;default:'sent'" json:"status"` // sent | delivered | read
-	CreatedAt time.Time          `bson:"creat_at" json:"createdAt"`
-
-	Room RoomModel `gorm:"foreignKey:RoomID;constraint:OnDelete:CASCADE" json:"-"`
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	RoomID    primitive.ObjectID `bson:"room_id,omitempty" json:"roomId"`
+	SenderID  string             `bson:"sender_id" json:"senderId"`
+	Content   string             `bson:"content" json:"content"`
+	Type      string             `bson:"type" json:"type"`     // text | notification
+	Status    string             `bson:"status" json:"status"` // sent | delivered | read
+	CreatedAt time.Time          `bson:"created_at" json:"createdAt"`
 }
 
-func ToMessageEntity(model MessageModel) *domain.Message {
+func ToDomain(model *MessageModel) *domain.Message {
 	return &domain.Message{
 		ID:        model.ID.Hex(),
-		RoomID:    model.RoomID,
+		RoomID:    model.RoomID.Hex(),
 		SenderID:  model.SenderID,
 		Content:   model.Content,
 		Type:      domain.MessageType(model.Type),
@@ -31,10 +30,15 @@ func ToMessageEntity(model MessageModel) *domain.Message {
 	}
 }
 
-func ToMessageModel(entity *domain.Message) MessageModel {
-	return MessageModel{
+func ToModel(entity *domain.Message) *MessageModel {
+	roomOID, err := primitive.ObjectIDFromHex(entity.RoomID)
+	if err != nil {
+		log.Println("Invalid RoomID for MessageModel:", err)
+		roomOID = primitive.NilObjectID
+	}
+	return &MessageModel{
 		ID:        primitive.NewObjectID(),
-		RoomID:    entity.RoomID,
+		RoomID:    roomOID,
 		SenderID:  entity.SenderID,
 		Content:   entity.Content,
 		Type:      string(entity.Type),

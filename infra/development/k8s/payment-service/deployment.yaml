@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+        - name: payment-service
+          image: horo/payment-service
+          ports:
+            - containerPort: 3001
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+          env:
+            # Service configuration
+            - name: REST_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: payment-service-config
+                  key: rest-port
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: payment-service-config
+                  key: db-host
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: payment-service-config
+                  key: db-port
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: payment-service-config
+                  key: db-name
+            - name: DB_SSLMODE
+              valueFrom:
+                configMapKeyRef:
+                  name: payment-service-config
+                  key: db-sslmode
+            # Secrets
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: payment-postgres-credentials
+                  key: username
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: payment-postgres-credentials
+                  key: password
+            - name: RABBIT_URL
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: uri
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+spec:
+  selector:
+    app: payment-service
+  ports:
+    - port: 3001
+      name: http
+      targetPort: 3001
+  type: ClusterIP

@@ -3,10 +3,11 @@ package db
 import (
 	"time"
 
-	"github.com/google/uuid"
 	"context"
 	"errors"
 	"log"
+
+	"github.com/google/uuid"
 
 	"github.com/wnmay/horo/services/order-service/internal/domain"
 	"gorm.io/gorm"
@@ -23,10 +24,14 @@ const (
 type Order struct {
 	OrderID     uuid.UUID   `gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
 	CustomerID  string      `gorm:"type:varchar(255);not null"`
-	CourseID    uuid.UUID   `gorm:"type:uuid;not null"`
+	CourseID    string      `gorm:"type:varchar(255);not null"`
 	PaymentID   uuid.UUID   `gorm:"type:uuid"` 
 	Status      OrderStatus `gorm:"type:varchar(20);not null"`
 	OrderDate   time.Time   `gorm:"not null"`
+	IsCustomerCompleted  bool        `gorm:"default:false;not null"`
+	IsProphetCompleted   bool        `gorm:"default:false;not null"`
+	CustomerCompletedAt  *time.Time  `gorm:"default:null"`
+	ProphetCompletedAt   *time.Time  `gorm:"default:null"`
 }
 
 func (o *Order) TableName() string {
@@ -129,6 +134,10 @@ func toOrderModel(order *domain.Order) *Order {
 		CourseID:   order.CourseID,
 		Status:     OrderStatus(order.Status),
 		OrderDate:  order.OrderDate,
+		IsCustomerCompleted: order.IsCustomerCompleted,
+		IsProphetCompleted:  order.IsProphetCompleted,
+		CustomerCompletedAt: order.CustomerCompletedAt,
+		ProphetCompletedAt:  order.ProphetCompletedAt,
 	}
 
 	if order.PaymentID != nil {
@@ -145,6 +154,10 @@ func toOrderEntity(model *Order) *domain.Order {
 		CourseID:   model.CourseID,
 		Status:     domain.OrderStatus(model.Status),
 		OrderDate:  model.OrderDate,
+		IsCustomerCompleted: model.IsCustomerCompleted,
+		IsProphetCompleted:  model.IsProphetCompleted,
+		CustomerCompletedAt: model.CustomerCompletedAt,
+		ProphetCompletedAt:  model.ProphetCompletedAt,
 	}
 
 	if model.PaymentID != (uuid.UUID{}) {

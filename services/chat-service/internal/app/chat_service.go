@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"time"
 
 	"github.com/wnmay/horo/services/chat-service/internal/domain"
@@ -46,10 +47,11 @@ func (s *chatService) SaveMessage(ctx context.Context, roomID string, senderID s
 
 func (s *chatService) InitiateChatRoom(ctx context.Context, courseID string, customerID string) (string, error) {
 	mockProphetID := "prophet-1234" // TO DO: Use real prophet ID from course service
-	room := domain.CreateRoom(mockProphetID, courseID, customerID)
+	room := domain.CreateRoom(mockProphetID, customerID, courseID)
 
 	roomID, err := s.roomRepo.CreateRoom(context.Background(), room)
 	if err != nil {
+		log.Println("Error creating chat room:", err)
 		return "", err
 	}
 
@@ -117,4 +119,23 @@ func (s *chatService) GetChatRoomsByCustomerID(ctx context.Context, customerID s
 
 func (s *chatService) GetChatRoomsByProphetID(ctx context.Context, prophetID string) ([]*domain.Room, error) {
 	return s.roomRepo.GetChatRoomsByProphetID(ctx, prophetID)
+}
+
+func (s *chatService) ValidateRoomAccess(ctx context.Context, userID string, roomID string) (bool, string, error) {
+    exists, err := s.roomRepo.RoomExists(ctx, roomID)
+    if err != nil {
+        return false, "internal error", err
+    }
+    if !exists {
+        return false, "room not found", nil
+    }
+    joinable, err := s.roomRepo.IsUserInRoom(ctx,userID,roomID)
+    if err != nil {
+        return false, "internal error", err
+    }
+    if !joinable {
+        return false, "user cannot chat in this room", nil
+    }
+
+    return true, "", nil
 }

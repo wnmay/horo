@@ -24,12 +24,12 @@ func NewPaymentConsumer(chatService inbound_port.ChatService, rmq *message.Rabbi
 }
 
 func (c *paymentConsumer) StartListening() error {
-	return c.rmq.ConsumeMessages(message.CreatePaymentQueue, c.handlePaymentCreated)
+	return c.rmq.ConsumeMessages(message.NotifyCreatePayment, c.handlePaymentCreated)
 }
 
 func (c *paymentConsumer) handlePaymentCreated(ctx context.Context, delivery amqp.Delivery) error {
 	var amqpMessage contract.AmqpMessage
-	var paymentData message.PaymentCreatedData
+	var paymentData message.PaymentPublishedData
 
 	// Parse the AMQP message
 	if err := json.Unmarshal(delivery.Body, &amqpMessage); err != nil {

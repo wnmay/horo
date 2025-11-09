@@ -100,5 +100,12 @@ func setupChatQueues(rmq *message.RabbitMQ) error {
 		return fmt.Errorf("failed to setup outgoing queue: %v", err)
 	}
 
+		if err := rmq.DeclareQueue(
+		message.NotifyCreatePayment,
+		contract.PaymentCreatedEvent,
+	); err != nil {
+		return fmt.Errorf("failed to setup outgoing queue: %v", err)
+	}
+
 	return nil
 }

@@ -110,3 +110,49 @@ func (s *OrderService) UpdateOrderPaymentID(ctx context.Context, orderID uuid.UU
 
 	return nil
 }
+
+func (s *OrderService) MarkCustomerCompleted(ctx context.Context, orderID uuid.UUID) error {
+	// Get order
+	order, err := s.orderRepo.GetByID(ctx, orderID)
+	if err != nil {
+		return fmt.Errorf("failed to get order: %w", err)
+	}
+
+	// Check if order is confirmed (payment completed)
+	if order.Status != domain.StatusConfirmed && order.Status != domain.StatusCompleted {
+		return fmt.Errorf("order must be confirmed before marking as completed")
+	}
+
+	// Mark as completed by customer
+	order.MarkCustomerCompleted()
+
+	// Save updated order
+	if err := s.orderRepo.Update(ctx, order); err != nil {
+		return fmt.Errorf("failed to mark order as completed by customer: %w", err)
+	}
+
+	return nil
+}
+
+func (s *OrderService) MarkProphetCompleted(ctx context.Context, orderID uuid.UUID) error {
+	// Get order
+	order, err := s.orderRepo.GetByID(ctx, orderID)
+	if err != nil {
+		return fmt.Errorf("failed to get order: %w", err)
+	}
+
+	// Check if order is confirmed (payment completed)
+	if order.Status != domain.StatusConfirmed && order.Status != domain.StatusCompleted {
+		return fmt.Errorf("order must be confirmed before marking as completed")
+	}
+
+	// Mark as completed by prophet
+	order.MarkProphetCompleted()
+
+	// Save updated order
+	if err := s.orderRepo.Update(ctx, order); err != nil {
+		return fmt.Errorf("failed to mark order as completed by prophet: %w", err)
+	}
+
+	return nil
+}

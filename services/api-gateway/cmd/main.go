@@ -21,6 +21,7 @@ type APIGateway struct {
 	messagingManager *messaging.MessagingManager
 	router           *gw_router.Router
 	port             string
+	cfg              *config.Config
 }
 
 const (
@@ -31,6 +32,7 @@ func NewAPIGateway(cfg *config.Config) (*APIGateway, error) {
 	// Initialize gRPC clients with all service addresses
 	grpcClients, err := client.NewGrpcClients(
 		cfg.UserManagementAddr,
+		cfg.ChatAddr,
 	)
 	if err != nil {
 		return nil, err
@@ -38,6 +40,7 @@ func NewAPIGateway(cfg *config.Config) (*APIGateway, error) {
 
 	// Initialize messaging manager (handles RabbitMQ client, consumers, and publishers)
 	messagingManager, err := messaging.NewMessagingManager(cfg.RabbitMQURI)
+	log.Println("RabbitMQ URI:", cfg.RabbitMQURI)
 	if err != nil {
 		grpcClients.Close()
 		return nil, err
@@ -52,7 +55,7 @@ func NewAPIGateway(cfg *config.Config) (*APIGateway, error) {
 	app.Use(cors.New())
 
 	// Initialize router
-	router := gw_router.NewRouter(app, grpcClients)
+	router := gw_router.NewRouter(app, grpcClients,messagingManager.RabbitMQ())
 
 	return &APIGateway{
 		app:              app,
@@ -60,17 +63,16 @@ func NewAPIGateway(cfg *config.Config) (*APIGateway, error) {
 		messagingManager: messagingManager,
 		router:           router,
 		port:             cfg.Port,
+		cfg:              cfg,
 	}, nil
 }
 
 func (gw *APIGateway) Start() error {
 	// Setup all routes
 	gw.router.SetupRoutes()
+	hub := gw.router.GetHub()
 
-	// Start all message consumers
-	if err := gw.messagingManager.StartConsumers(); err != nil {
-		return err
-	}
+	gw.messagingManager.StartChatConsumer(hub)
 
 	log.Printf("Starting API Gateway on port %s", gw.port)
 	return gw.app.Listen(":" + gw.port)

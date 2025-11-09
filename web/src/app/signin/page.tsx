@@ -1,50 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-} from "firebase/auth";
-import { auth } from "@/firebase/firebase";
+  doSignInWithEmailAndPassword,
+  doSignInWithGoogle,
+} from "../../firebase/auth";
 import Card from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import axios from "axios";
+import { jwtDecode } from "jwt-decode";
+import { FirebaseClaims } from "@/types/auth";
 
 export default function SignInPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const backendurl = process.env.NEXT_PUBLIC_APIGATEWAY;
+  const [mounted, setMounted] = useState(false);
 
-  const saveUserToLocal = (user: any, role: string, token: string) => {
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        email: user.email,
-        uid: user.uid,
-        role: role,
-        token: token,
-      })
-    );
-  };
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const userCred = await signInWithEmailAndPassword(auth, email, password);
-      const token = await userCred.user.getIdToken();
-
-      const res = await axios.get(`${backendurl}/api/users/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const role = res.data.role;
-      saveUserToLocal(userCred.user, role, token);
-      router.push("/")
-      // redirect based on role
+      await doSignInWithEmailAndPassword(email, password);
+      router.push("/"); // redirect after successful login
     } catch (err: any) {
       setError(err.message);
       console.error(err);
@@ -53,21 +34,19 @@ export default function SignInPage() {
 
   const handleGoogleSignIn = async () => {
     try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const token = await result.user.getIdToken();
+      const { token, isNewUser } = await doSignInWithGoogle();
+      const claims = jwtDecode<FirebaseClaims>(token);
+      const hasRole = !!claims.role && claims.role.trim() !== "";
 
-      const res = await axios.get(`${backendurl}/api/users/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const role = res.data.role;
-      saveUserToLocal(result.user, role, token);
-      router.push("/")
-
-    } catch (err) {
-      console.error("Google sign-in failed:", err);
-      setError("Google sign-in failed");
+      if (isNewUser || !hasRole) {
+        router.push(`/profile?token=${encodeURIComponent(token)}`);
+      } else {
+        router.push("/");
+      }
+      router.push("/");
+    } catch (err: any) {
+      setError(err.message);
+      console.error(err);
     }
   };
 
