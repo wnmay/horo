@@ -25,7 +25,7 @@ export default function SignInPage() {
     e.preventDefault();
     try {
       await doSignInWithEmailAndPassword(email, password);
-      router.push("/"); // redirect after successful login
+      router.replace("/");
     } catch (err: any) {
       setError(err.message);
       console.error(err);
