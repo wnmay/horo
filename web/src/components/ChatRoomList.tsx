@@ -1,0 +1,113 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import LeftChat, { ChatRoom } from './LeftChat';
+import api from "@/lib/api/api-client";
+import { auth } from '@/firebase/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+
+const ChatRoomList = () => {
+  const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+
+  // Wait for Firebase Auth to be ready
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setAuthReady(true);
+      if (!user) {
+        setLoading(false);
+        setError('Please login to view chat rooms');
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const fetchChatRooms = async () => {
+    try {
+      setLoading(true);
+      
+      const response = await api.get('/api/chat/user/rooms');
+      console.log('API Response:', response.data); // Debug log
+      
+      const rooms = response.data?.data || [];
+      
+      // Fetch course names for all rooms
+      const roomsWithCourseNames = await Promise.all(
+        rooms.map(async (room: ChatRoom) => {
+          try {
+            const courseResponse = await api.get(`/api/courses/${room.CourseID}`);
+            return {
+              ...room,
+              courseName: courseResponse.data.data.coursename || 'Unknown Course'
+            };
+          } catch (error) {
+            console.error(`Error fetching course name for ${room.CourseID}:`, error);
+            return {
+              ...room,
+              courseName: 'Unknown Course'
+            };
+          }
+        })
+      );
+      
+      setChatRooms(roomsWithCourseNames);
+    } catch (err: any) {
+      // Check if it's a 401 Unauthorized error
+      if (err?.response?.status === 401 || err?.status === 401) {
+        setError('Please login to view chat rooms');
+      } else {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      }
+      console.error('Error fetching chat rooms:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (authReady && auth.currentUser) {
+      fetchChatRooms();
+    }
+  }, [authReady]);
+
+  const handleRoomClick = (roomId: string) => {
+    console.log('Room clicked:', roomId);
+    // Add your navigation or room selection logic here
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-gray-500">Loading chat rooms...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-red-500">Error: {error}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full overflow-y-auto">
+      {chatRooms.length === 0 ? (
+        <p className="text-gray-500 text-center p-4">No chat rooms found</p>
+      ) : (
+        chatRooms.map((room) => (
+          <LeftChat
+            key={room.ID}
+            room={room}
+            onClick={() => handleRoomClick(room.ID)}
+          />
+        ))
+      )}
+    </div>
+  );
+};
+
+export default ChatRoomList;
