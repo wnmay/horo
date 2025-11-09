@@ -52,39 +52,50 @@ export default function SignInPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center relative">
-      <Card>
+      <Card className="w-full max-w-md p-6">
         <h1 className="text-3xl font-bold mb-6 text-center">Sign In</h1>
-        <form onSubmit={handleSignIn} className="flex flex-col gap-4 w-80">
-          <input
-            type="email"
-            placeholder="Email"
-            className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+        <form onSubmit={handleSignIn} className="flex flex-col gap-4">
+          {/* Email */}
+          <div className="flex flex-col">
+            <label className="text-sm text-gray-500 mb-1">Email Address</label>
+            <input
+              type="email"
+              placeholder="Email"
+              className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          {/* Password */}
+          <div className="flex flex-col">
+            <label className="text-sm text-gray-500 mb-1">Password</label>
+            <input
+              type="password"
+              placeholder="Password"
+              className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
 
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
+          {/* Sign In Button */}
           <Button
             type="submit"
-            className="w-full bg-green-500 hover:bg-green-600 text-white rounded py-2"
+            className="w-full bg-green-500 hover:bg-green-600 text-white rounded py-2 mt-2"
           >
             Sign In
           </Button>
 
+          {/* Google Sign In */}
           <Button
             type="button"
             onClick={handleGoogleSignIn}
-            className="w-full bg-red-500 hover:bg-red-600 text-white rounded py-2"
+            className="w-full bg-red-500 hover:bg-red-600 text-white rounded py-2 mt-2"
           >
             Sign in with Google
           </Button>

@@ -8,4 +8,5 @@ import (
 
 type UserRepositoryPort interface {
 	Save(ctx context.Context, user domain.User) error
+	FindById(ctx context.Context, userId string) (*domain.User, error)
 }
