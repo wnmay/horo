@@ -39,11 +39,11 @@ export default function SignInPage() {
       const hasRole = !!claims.role && claims.role.trim() !== "";
 
       if (isNewUser || !hasRole) {
-        router.push(`/profile?token=${encodeURIComponent(token)}`);
-      } else {
-        router.push("/");
+        router.replace(`/profile?token=${encodeURIComponent(token)}`); // go set name/role
+        return;
       }
-      router.push("/");
+
+      router.replace("/");
     } catch (err: any) {
       setError(err.message);
       console.error(err);

@@ -49,7 +49,7 @@ export default function RegisterPage() {
 
       // Call API Gateway to register user
       await axios.post(
-        `http://localhost:3000/api/users/register`,
+        `http://localhost:8080/api/users/register`,
         { idToken: tokenId, fullname, role },
         { headers: { Authorization: `Bearer ${tokenId}` } }
       );
