@@ -38,6 +38,7 @@ export default function RegisterPage() {
       const userCredential = await doCreateUserWithEmailAndPassword(email, password);
       const user = userCredential.user;
       const tokenId = await user.getIdToken();
+      const backendurl = process.env.NEXT_PUBLIC_APIGATEWAY
 
       // Save user info in Firestore
       await setDoc(doc(db, "users", user.uid), {
@@ -49,7 +50,7 @@ export default function RegisterPage() {
 
       // Call API Gateway to register user
       await axios.post(
-        `http://localhost:3000/api/users/register`,
+        `${backendurl}/api/users/register`,
         { idToken: tokenId, fullname, role },
         { headers: { Authorization: `Bearer ${tokenId}` } }
       );
