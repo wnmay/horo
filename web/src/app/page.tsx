@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import CourseCard from "@/components/course-card";
+import FetchRoomsButton from "@/components/testFetch";
 
 export default function HomePage() {
   const router = useRouter();
@@ -39,8 +40,7 @@ export default function HomePage() {
     {
       id: 4,
       title: "Zodiac Compatibility Secrets",
-      description:
-        "Understand the relationship dynamics between zodiac signs.",
+      description: "Understand the relationship dynamics between zodiac signs.",
       prophet: "Prophet Atlas",
       price: "$59",
     },
@@ -63,16 +63,14 @@ export default function HomePage() {
     {
       id: 7,
       title: "Dream Interpretation Basics",
-      description:
-        "Understand the spiritual meaning behind common dreams.",
+      description: "Understand the spiritual meaning behind common dreams.",
       prophet: "Prophet Luna",
       price: "$45",
     },
     {
       id: 8,
       title: "Numerology for Beginners",
-      description:
-        "Discover how numbers shape your destiny and personality.",
+      description: "Discover how numbers shape your destiny and personality.",
       prophet: "Prophet Orion",
       price: "$55",
     },
@@ -91,7 +89,6 @@ export default function HomePage() {
 
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-white to-zinc-100 dark:from-zinc-900 dark:to-zinc-950">
-
       {/* Fixed header buttons */}
       <div className="fixed top-4 right-4 p-4 flex gap-4 z-50">
         <Button
@@ -115,52 +112,53 @@ export default function HomePage() {
             Welcome to Horo
           </h1>
           <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-md mx-auto">
-            Your personalized horoscope app. Get started by signing in or creating an account.
+            Your personalized horoscope app. Get started by signing in or
+            creating an account.
           </p>
         </Card>
+        <FetchRoomsButton />
       </div>
 
       {/* Featured Courses */}
-<div className="px-6 py-12 bg-white dark:bg-zinc-900">
-  <h2 className="text-3xl font-semibold text-center text-zinc-800 dark:text-zinc-100 mb-8">
-    Featured Courses
-  </h2>
+      <div className="px-6 py-12 bg-white dark:bg-zinc-900">
+        <h2 className="text-3xl font-semibold text-center text-zinc-800 dark:text-zinc-100 mb-8">
+          Featured Courses
+        </h2>
 
-  {/* Horizontal scroll container */}
-  <div className="max-w-6xl mx-auto overflow-x-auto">
-    <div className="flex gap-6 min-w-max px-2">
-      {visibleCourses.map((course) => (
-        <div key={course.id} className="w-[240px] flex-shrink-0">
-          <CourseCard course={course} />
+        {/* Horizontal scroll container */}
+        <div className="max-w-6xl mx-auto overflow-x-auto">
+          <div className="flex gap-6 min-w-max px-2">
+            {visibleCourses.map((course) => (
+              <div key={course.id} className="w-[240px] flex-shrink-0">
+                <CourseCard course={course} />
+              </div>
+            ))}
+          </div>
         </div>
-      ))}
-    </div>
-  </div>
 
-  {/* Pagination Controls */}
-  <div className="flex justify-center gap-4 mt-8">
-    <Button
-      variant="outline"
-      disabled={!hasPrev}
-      onClick={() => setPage((p) => p - 1)}
-    >
-      ← Previous
-    </Button>
-    <Button
-      variant="outline"
-      disabled={!hasNext}
-      onClick={() => setPage((p) => p + 1)}
-    >
-      Next →
-    </Button>
-  </div>
+        {/* Pagination Controls */}
+        <div className="flex justify-center gap-4 mt-8">
+          <Button
+            variant="outline"
+            disabled={!hasPrev}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            ← Previous
+          </Button>
+          <Button
+            variant="outline"
+            disabled={!hasNext}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next →
+          </Button>
+        </div>
 
-  {/* Optional: page indicator */}
-  <p className="text-center text-sm text-zinc-500 mt-4">
-    Page {page + 1} of {Math.ceil(mockCourses.length / COURSES_PER_PAGE)}
-  </p>
-</div>
-
+        {/* Optional: page indicator */}
+        <p className="text-center text-sm text-zinc-500 mt-4">
+          Page {page + 1} of {Math.ceil(mockCourses.length / COURSES_PER_PAGE)}
+        </p>
+      </div>
     </div>
   );
 }
