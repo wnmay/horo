@@ -15,6 +15,9 @@ type CourseService interface {
 	UpdateCourse(id string, input *domain.UpdateCourseInput) (*domain.Course, error)
 	DeleteCourse(id string) error
 	FindCoursesByFilter(filter map[string]interface{}) ([]*domain.Course, error)
+	CreateReview(input CreateReviewInput) (*domain.Review, error)
+	GetReviewByID(id string) (*domain.Review, error)
+	ListReviewsByCourse(courseId string) ([]*domain.Review, error)
 }
 
 type courseService struct {
@@ -22,11 +25,11 @@ type courseService struct {
 }
 
 func (s courseService) GetCourseByID(id string) (*domain.Course, error) {
-	return s.repo.FindByID(id)
+	return s.repo.FindCourseByID(id)
 }
 
 func (s courseService) ListCoursesByProphet(prophetID string) ([]*domain.Course, error) {
-	return s.repo.FindAllByProphet(prophetID)
+	return s.repo.FindCoursesByProphet(prophetID)
 }
 
 func NewCourseService(r outbound.CourseRepository) CourseService {
@@ -35,10 +38,11 @@ func NewCourseService(r outbound.CourseRepository) CourseService {
 
 func (s *courseService) CreateCourse(input CreateCourseInput) (*domain.Course, error) {
 	c := &domain.Course{
-		ID:          generateID(),
+		ID:          generateID("COURSE"),
 		ProphetID:   input.ProphetID,
 		ProphetName: input.ProphetName,
 		CourseName:  input.CourseName,
+		CourseType:  input.CourseType,
 		Description: input.Description,
 		Price:       input.Price,
 		Duration:    input.Duration,
@@ -46,7 +50,7 @@ func (s *courseService) CreateCourse(input CreateCourseInput) (*domain.Course, e
 		DeletedAt:   false,
 	}
 
-	if err := s.repo.Save(c); err != nil {
+	if err := s.repo.SaveCourse(c); err != nil {
 		return nil, err
 	}
 	return c, nil
@@ -77,8 +81,35 @@ func (s *courseService) FindCoursesByFilter(filter map[string]interface{}) ([]*d
 	return s.repo.FindByFilter(filter)
 }
 
-func generateID() string {
-	return "COURSE-" + uuid.New().String()
+func (s *courseService) CreateReview(input CreateReviewInput) (*domain.Review, error) {
+	c := &domain.Review{
+		ID:           generateID("REVIEW"),
+		CourseId:     input.CourseId,
+		CustomerId:   input.CustomerId,
+		CustomerName: input.CustomerName,
+		Score:        input.Score,
+		Title:        input.Title,
+		Description:  input.Description,
+		CreatedAt:    time.Now(),
+		DeletedAt:    false,
+	}
+
+	if err := s.repo.SaveReview(c); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+func (s courseService) GetReviewByID(id string) (*domain.Review, error) {
+	return s.repo.FindReviewByID(id)
+}
+
+func (s courseService) ListReviewsByCourse(courseId string) ([]*domain.Review, error) {
+	return s.repo.FindReviewsByCourse(courseId)
+}
+
+func generateID(objType string) string {
+	return objType + "-" + uuid.New().String()
 }
 
 type CreateCourseInput struct {
@@ -86,9 +117,22 @@ type CreateCourseInput struct {
 	ProphetID   string
 	ProphetName string
 	CourseName  string
+	CourseType  domain.CourseType
 	Description string
 	Price       float64
 	Duration    domain.DurationEnum
 	CreatedAt   time.Time
 	DeletedAt   bool
+}
+
+type CreateReviewInput struct {
+	ID           string
+	CourseId     string
+	CustomerId   string
+	CustomerName string
+	Score        float64
+	Title        string
+	Description  string
+	CreatedAt    time.Time
+	DeletedAt    bool
 }

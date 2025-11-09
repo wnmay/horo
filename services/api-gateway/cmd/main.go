@@ -17,7 +17,6 @@ import (
 
 type APIGateway struct {
 	app              *fiber.App
-	grpcClients      *client.GrpcClients
 	messagingManager *messaging.MessagingManager
 	router           *gw_router.Router
 	port             string
@@ -55,11 +54,10 @@ func NewAPIGateway(cfg *config.Config) (*APIGateway, error) {
 	app.Use(cors.New())
 
 	// Initialize router
-	router := gw_router.NewRouter(app, grpcClients,messagingManager.RabbitMQ())
+	router := gw_router.NewRouter(app, cfg, messagingManager.RabbitMQ())
 
 	return &APIGateway{
 		app:              app,
-		grpcClients:      grpcClients,
 		messagingManager: messagingManager,
 		router:           router,
 		port:             cfg.Port,
@@ -81,7 +79,6 @@ func (gw *APIGateway) Start() error {
 func (gw *APIGateway) Shutdown() error {
 	log.Println("Shutting down API Gateway...")
 
-	gw.grpcClients.Close()
 	gw.messagingManager.Close()
 
 	return gw.app.Shutdown()

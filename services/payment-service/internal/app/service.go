@@ -99,14 +99,14 @@ func (s *Service) CompletePayment(ctx context.Context, paymentID string) error {
 	return nil
 }
 
-func (s *Service) SettlePayment(ctx context.Context, orderID string) error {
+func (s *Service) SettlePayment(ctx context.Context, orderID string, prophetID string) error {
 	payment, err := s.paymentRepo.GetByOrderID(ctx, orderID)
 	if err != nil {
 		return fmt.Errorf("failed to get payment: %w", err)
 	}
 
 	prev := payment.Status
-	if err := payment.Settle(); err != nil {
+	if err := payment.Settle(prophetID); err != nil {
 		return fmt.Errorf("failed to settle payment: %w", err)
 	}
 
@@ -122,4 +122,12 @@ func (s *Service) SettlePayment(ctx context.Context, orderID string) error {
 
 	log.Printf("Payment %s settled successfully", payment.PaymentID)
 	return nil
+}
+
+
+func (s *Service) GetProphetBalance(ctx context.Context, prophetID string) (float64, error) {
+    if prophetID == "" {
+        return 0, fmt.Errorf("prophet id is required")
+    }
+    return s.paymentRepo.GetProphetSettledBalance(ctx, prophetID)
 }

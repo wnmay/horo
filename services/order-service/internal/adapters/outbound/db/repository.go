@@ -26,6 +26,7 @@ type Order struct {
 	CustomerID  string      `gorm:"type:varchar(255);not null"`
 	CourseID    string      `gorm:"type:varchar(255);not null"`
 	PaymentID   uuid.UUID   `gorm:"type:uuid"` 
+	RoomID      string      `gorm:"type:varchar(255)"`
 	Status      OrderStatus `gorm:"type:varchar(20);not null"`
 	OrderDate   time.Time   `gorm:"not null"`
 	IsCustomerCompleted  bool        `gorm:"default:false;not null"`
@@ -102,6 +103,22 @@ func (r *Repository) GetByCustomerID(ctx context.Context, customerID string) ([]
 	return orders, nil
 }
 
+func (r *Repository) GetByRoomID(ctx context.Context, roomID string) ([]*domain.Order, error) {
+	var orderModels []Order
+	result := r.db.WithContext(ctx).Where("room_id = ?", roomID).Find(&orderModels)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	orders := make([]*domain.Order, len(orderModels))
+	for i, model := range orderModels {
+		orders[i] = toOrderEntity(&model)
+	}
+
+	return orders, nil
+}
+
 // Update saves changes to an existing order
 func (r *Repository) Update(ctx context.Context, order *domain.Order) error {
 	orderModel := toOrderModel(order)
@@ -132,6 +149,7 @@ func toOrderModel(order *domain.Order) *Order {
 		OrderID:    order.OrderID,
 		CustomerID: order.CustomerID,
 		CourseID:   order.CourseID,
+		RoomID:     order.RoomID,
 		Status:     OrderStatus(order.Status),
 		OrderDate:  order.OrderDate,
 		IsCustomerCompleted: order.IsCustomerCompleted,
@@ -152,6 +170,7 @@ func toOrderEntity(model *Order) *domain.Order {
 		OrderID:    model.OrderID,
 		CustomerID: model.CustomerID,
 		CourseID:   model.CourseID,
+		RoomID:     model.RoomID,
 		Status:     domain.OrderStatus(model.Status),
 		OrderDate:  model.OrderDate,
 		IsCustomerCompleted: model.IsCustomerCompleted,

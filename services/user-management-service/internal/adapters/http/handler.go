@@ -16,6 +16,12 @@ type HTTPHandler struct {
 	authService ports.AuthService
 }
 
+type VerifyTokenResponse struct {
+	UserID string `json:"user_id"`
+	Email  string `json:"email"`
+	Role   string `json:"role"`
+}
+
 func NewHTTPHandler(userService ports.UserManagementService, authService ports.AuthService) *HTTPHandler {
 	return &HTTPHandler{
 		userService: userService,
@@ -51,11 +57,13 @@ func (h *HTTPHandler) SetupRoutes(app *fiber.App) {
 			"service": "user-management-service",
 		})
 	})
+	api := app.Group("/api")
 
 	// User routes
-	users := app.Group("/users")
+	users := api.Group("/users")
 	users.Post("/register", h.Register)
-	users.Get("/me", h.GetMe)
+	auth := api.Group("/auth")
+	auth.Get("/verify-token", h.VerifyToken)
 }
 
 func (h *HTTPHandler) Register(c *fiber.Ctx) error {
@@ -90,6 +98,29 @@ func (h *HTTPHandler) Register(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(RegisterResponse{
 		Success: true,
 		Message: "User registered successfully",
+	})
+}
+
+func (h *HTTPHandler) VerifyToken(c *fiber.Ctx) error {
+	token := c.Query("token")
+	log.Println("token", token)
+	if token == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "token is required",
+		})
+	}
+
+	claims, err := h.authService.GetClaims(c.Context(), token)
+	if err != nil {
+		log.Println("error", err)
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "invalid token",
+		})
+	}
+	return c.Status(fiber.StatusOK).JSON(VerifyTokenResponse{
+		UserID: claims.UserID,
+		Email:  claims.Email,
+		Role:   claims.Role,
 	})
 }
 

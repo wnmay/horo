@@ -9,3 +9,4 @@ data:
   db-port: "5432"
   db-name: "orderdb"
   db-sslmode: "disable"
+  course-service-addr: "course-service:50052"

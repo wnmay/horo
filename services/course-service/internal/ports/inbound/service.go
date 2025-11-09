@@ -9,4 +9,7 @@ type CourseServicePort interface {
 	UpdateCourse(id string, input *domain.UpdateCourseInput) (*domain.Course, error)
 	DeleteCourse(id string) error
 	FindCoursesByFilter(filter map[string]interface{}) ([]*domain.Course, error)
+	CreateReview(review domain.Review) (*domain.Review, error)
+	GetReviewByID(id string) (*domain.Review, error)
+	ListReviewsByCourse(courseId string) ([]*domain.Review, error)
 }

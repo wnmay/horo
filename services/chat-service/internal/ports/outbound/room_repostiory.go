@@ -12,4 +12,6 @@ type RoomRepositoryPort interface {
 	GetChatRoomsByProphetID(ctx context.Context, prophetID string) ([]*domain.Room, error)
 	RoomExists(ctx context.Context, roomID string) (bool, error)
 	IsUserInRoom(ctx context.Context, roomID string, userID string) (bool, error)
+	GetChatRoomsByUserID(ctx context.Context, userID string) ([]*domain.Room, error)
+	UpdateRoomIsDoneByRoomID(ctx context.Context, roomID string, isDone bool) error
 }

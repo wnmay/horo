@@ -13,6 +13,7 @@ type OrderRepository interface {
 	GetAll(ctx context.Context) ([]*domain.Order, error)
 	GetByID(ctx context.Context, orderID uuid.UUID) (*domain.Order, error)
 	GetByCustomerID(ctx context.Context, customerID string) ([]*domain.Order, error)
+	GetByRoomID(ctx context.Context, roomID string) ([]*domain.Order, error)
 	Update(ctx context.Context, order *domain.Order) error
 	Delete(ctx context.Context, orderID uuid.UUID) error
 }
@@ -20,6 +21,9 @@ type OrderRepository interface {
 // EventPublisher defines the interface for publishing domain events
 type EventPublisher interface {
 	PublishOrderCreated(ctx context.Context, order *domain.Order) error
+	PublishOrderCompleted(ctx context.Context, order *domain.Order) error
+	PublishOrderPaid(ctx context.Context, order *domain.Order) error
+	PublishOrderPaymentBound(ctx context.Context, order *domain.Order) error
 }
 
 // PaymentService defines the interface for payment operations

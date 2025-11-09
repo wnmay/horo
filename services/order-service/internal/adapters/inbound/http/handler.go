@@ -27,6 +27,7 @@ func (h *Handler) Register(app *fiber.App) {
 	// Public routes
 	orders.Get("/", h.GetOrders)
 	orders.Get("/:id", h.GetOrderByID)
+	orders.Get("/room/:roomID", h.AuthMiddleware, h.GetOrdersByRoom)
 
 	// require authentication
 	orders.Post("/", h.AuthMiddleware, h.CreateOrder)
@@ -39,7 +40,7 @@ func (h *Handler) Register(app *fiber.App) {
 // AuthMiddleware validates user identity from headers injected by API Gateway
 func (h *Handler) AuthMiddleware(c *fiber.Ctx) error {
 	// Read user ID from header injected by API Gateway
-	userID := c.Get("X-User-Uid")
+	userID := c.Get("X-User-Id")
 	
 	// If header is missing, try to extract from Bearer token (for direct testing)
 	if userID == "" {
@@ -70,6 +71,7 @@ func (h *Handler) AuthMiddleware(c *fiber.Ctx) error {
 
 type CreateOrderRequest struct {
 	CourseID string `json:"courseId" validate:"required"`
+	RoomID   string `json:"roomId" validate:"required"`
 }
 
 type UpdateOrderStatusRequest struct {
@@ -98,10 +100,17 @@ func (h *Handler) CreateOrder(c *fiber.Ctx) error {
 		})
 	}
 
+	if req.RoomID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Room ID is required",
+		})
+	}
+
 	// Create command with authenticated user ID
 	cmd := inbound.CreateOrderCommand{
 		CustomerID: userID, // From JWT token
 		CourseID:   req.CourseID,
+		RoomID:     req.RoomID,
 	}
 
 	// Call service
@@ -167,6 +176,20 @@ func (h *Handler) GetOrdersByCustomer(c *fiber.Ctx) error {
 	}
 
 	orders, err := h.orderService.GetOrdersByCustomer(c.Context(), customerID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(orders)
+}
+
+func (h *Handler) GetOrdersByRoom(c *fiber.Ctx) error {
+	// Get room ID from params
+	roomID := c.Params("roomID")
+
+	orders, err := h.orderService.GetOrdersByRoom(c.Context(), roomID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),

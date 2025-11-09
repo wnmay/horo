@@ -15,7 +15,7 @@ type Config struct {
 
 func LoadConfig() *Config {
 	return &Config{
-		Port:                     env.GetString("PORT", "3000"),
+		Port:                     env.GetString("PORT", "8080"),
 		UserManagementAddr:       env.GetString("USER_MANAGEMENT_ADDR", "localhost:50051"),
 		UserManagementServiceURL: env.GetString("USER_MANAGEMENT_SERVICE_URL", "http://localhost:3003"),
 		OrderServiceURL:          env.GetString("ORDER_SERVICE_URL", "http://localhost:3002"),

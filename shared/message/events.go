@@ -9,15 +9,49 @@ const (
 	DeadLetterQueue          = "dead_letter_queue"
 	SettlePaymentQueue       = "settle_payment_queue"
 	NotifyCreatePayment      = "notify_create_payment"
+	NotifyOrderCompleted     = "notify_order_completed"
 )
 
 // ---- DATA STRUCTURES ----
 
 type OrderData struct {
-	OrderID    string  `json:"order_id"`
-	CustomerID string  `json:"customer_id"`
+	OrderID    string  `json:"orderId"`
+	CustomerID string  `json:"customerId"`
 	Status     string  `json:"status"`
 	Amount     float64 `json:"amount"`
+}
+
+type OrderCompletedData struct {
+	OrderID    string `json:"orderId"`
+	CourseID   string `json:"courseId"`
+	CourseName string `json:"courseName"`
+	OrderStatus string `json:"orderStatus"`
+	ProphetID  string `json:"prophetId"`
+	RoomID     string `json:"roomId"`
+}
+
+type OrderPaymentBoundData struct {
+	OrderID       string  `json:"orderId"`
+	PaymentID     string  `json:"paymentId"`
+	RoomID        string  `json:"roomId"`
+	CustomerID    string  `json:"customerId"`
+	OrderStatus   string  `json:"orderStatus"`
+	CourseID      string  `json:"courseId"`
+	CourseName    string  `json:"courseName"`
+	Amount        float64 `json:"amount"`
+	PaymentStatus string  `json:"paymentStatus"`
+}
+
+type OrderPaidData struct {
+	OrderID       string  `json:"orderId"`
+	PaymentID     string  `json:"paymentId"`
+	RoomID        string  `json:"roomId"`
+	CustomerID    string  `json:"customerId"`
+	CourseID      string  `json:"courseId"`
+	OrderStatus   string  `json:"orderStatus"`
+	CourseName    string  `json:"courseName"`
+	Amount        float64 `json:"amount"`
+	PaymentStatus string  `json:"paymentStatus"`
 }
 
 type PaymentSuccessData struct {
@@ -50,4 +84,45 @@ type ChatMessageOutgoingData struct {
 	Content   string `json:"content"`
 	Type      string `json:"type"` // text | notification
 	CreatedAt string `json:"createdAt"`
+}
+
+type ChatNotificationOutgoingData[T any] struct {
+	MessageID     string `json:"messageId"`
+	RoomID        string `json:"roomId"`
+	SenderID      string `json:"senderId"`
+	Type          string `json:"type"` // text | notification
+	CreatedAt     string `json:"createdAt"`
+	MessageDetail *T     `json:"messageDetail"`
+	Trigger       string `json:"trigger"`
+}
+
+type OrderCompletedNotificationData struct {
+	OrderID     string `json:"orderId"`
+	CourseID    string `json:"courseId"`
+	OrderStatus string `json:"orderStatus"`
+	CourseName  string `json:"courseName"`
+}
+
+type OrderPaymentBoundNotificationData struct {
+	OrderID       string  `json:"orderId"`
+	PaymentID     string  `json:"paymentId"`
+	RoomID        string  `json:"roomId"`
+	CustomerID    string  `json:"customerId"`
+	CourseID      string  `json:"courseId"`
+	OrderStatus   string  `json:"orderStatus"`
+	CourseName    string  `json:"courseName"`
+	Amount        float64 `json:"amount"`
+	PaymentStatus string  `json:"paymentStatus"`
+}
+
+type OrderPaidNotificationData struct {
+	OrderID       string  `json:"orderId"`
+	PaymentID     string  `json:"paymentId"`
+	RoomID        string  `json:"roomId"`
+	CustomerID    string  `json:"customerId"`
+	CourseID      string  `json:"courseId"`
+	OrderStatus   string  `json:"orderStatus"`
+	CourseName    string  `json:"courseName"`
+	Amount        float64 `json:"amount"`
+	PaymentStatus string  `json:"paymentStatus"`
 }

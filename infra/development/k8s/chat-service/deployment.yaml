@@ -17,6 +17,9 @@ spec:
           image: horo/chat-service
           ports:
             - containerPort: 3004
+              name: http
+            - containerPort: 50053 # gRPC port
+              name: grpc
           resources:
             requests:
               memory: "64Mi"
@@ -42,6 +45,11 @@ spec:
                 secretKeyRef:
                   name: rabbitmq-credentials
                   key: uri
+            - name: GRPC_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: chat-service-config
+                  key: grpc-port
 ---
 apiVersion: v1
 kind: Service
@@ -54,4 +62,7 @@ spec:
     - port: 3004
       name: http
       targetPort: 3004
+    - port: 50053
+      name: grpc
+      targetPort: 50053
   type: ClusterIP
