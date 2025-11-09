@@ -35,3 +35,7 @@ func (h *ChatHandler) GetChatRoomsByCustomerID(c *fiber.Ctx) error {
 func (h *ChatHandler) GetChatRoomsByProphetID(c *fiber.Ctx) error {
 	return ProxyRequest(c, h.client, "GET", h.chatServiceURL, "/api/chat/prophet/rooms")
 }
+
+func (h *ChatHandler) GetChatRoomsByUserID(c *fiber.Ctx) error {
+	return ProxyRequest(c, h.client, "GET", h.chatServiceURL, "/api/chat/user/rooms")
+}

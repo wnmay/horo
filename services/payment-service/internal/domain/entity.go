@@ -17,13 +17,15 @@ const (
 )
 
 type Payment struct {
-	PaymentID string    `json:"payment_id"`
-	OrderID   string    `json:"order_id"`
-	Amount    float64   `json:"amount"`
-	Status    PaymentStatus    `json:"status"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	PaymentID  string        `json:"payment_id"`
+	OrderID    string        `json:"order_id"`
+	Amount     float64       `json:"amount"`
+	Status     PaymentStatus `json:"status"`
+	CreatedAt  time.Time     `json:"created_at"`
+	UpdatedAt  time.Time     `json:"updated_at"`
+	ProphetID  string        `json:"prophet_id"`
 }
+
 
 var (
 	ErrInvalidTransition = errors.New("invalid payment status transition")
@@ -53,7 +55,7 @@ func (p *Payment) Complete() error {
 	return nil
 }
 
-func (p *Payment) Settle() error {
+func (p *Payment) Settle(prophetID string) error {
 	if p.Status == PaymentStatusSettled {
 		return nil
 	}
@@ -62,6 +64,7 @@ func (p *Payment) Settle() error {
 	}
 	p.Status = PaymentStatusSettled
 	p.UpdatedAt = time.Now()
+	p.ProphetID = prophetID
 	return nil
 }
 

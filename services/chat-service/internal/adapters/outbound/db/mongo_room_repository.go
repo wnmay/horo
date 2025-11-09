@@ -44,12 +44,16 @@ func (r *mongoRoomRepository) CreateRoom(ctx context.Context, room *domain.Room)
 		ProphetID:  room.ProphetID,
 		CustomerID: room.CustomerID,
 		CourseID:   room.CourseID,
+		IsDone:     room.IsDone,
 		CreatedAt:  time.Now(),
 	}
 	res, err := r.collection.InsertOne(ctx, model)
-	roomIDStr := res.InsertedID.(primitive.ObjectID).Hex()
+	if err != nil {
+		return "", err
+	}
 
-	return roomIDStr, err
+	roomIDStr := res.InsertedID.(primitive.ObjectID).Hex()
+	return roomIDStr, nil
 }
 
 func (r *mongoRoomRepository) GetChatRoomsByCustomerID(ctx context.Context, customerID string) ([]*domain.Room, error) {
@@ -59,11 +63,15 @@ func (r *mongoRoomRepository) GetChatRoomsByCustomerID(ctx context.Context, cust
 		return nil, err
 	}
 	defer cursor.Close(ctx)
-	var rooms []*domain.Room
+	var rooms []*RoomModel
 	if err := cursor.All(ctx, &rooms); err != nil {
 		return nil, err
 	}
-	return rooms, nil
+	var domainRooms []*domain.Room
+	for _, rm := range rooms {
+		domainRooms = append(domainRooms, rm.ToDomain())
+	}
+	return domainRooms, nil
 }
 
 func (r *mongoRoomRepository) GetChatRoomsByProphetID(ctx context.Context, prophetID string) ([]*domain.Room, error) {
@@ -73,9 +81,80 @@ func (r *mongoRoomRepository) GetChatRoomsByProphetID(ctx context.Context, proph
 		return nil, err
 	}
 	defer cursor.Close(ctx)
-	var rooms []*domain.Room
+	var rooms []*RoomModel
+
 	if err := cursor.All(ctx, &rooms); err != nil {
 		return nil, err
 	}
-	return rooms, nil
+	var domainRooms []*domain.Room
+	for _, rm := range rooms {
+		domainRooms = append(domainRooms, rm.ToDomain())
+	}
+	return domainRooms, nil
+}
+
+func (r *mongoRoomRepository) RoomExists(ctx context.Context, roomID string) (bool, error) {
+	objID, err := primitive.ObjectIDFromHex(roomID)
+	if err != nil {
+		return false, err
+	}
+
+	count, err := r.collection.CountDocuments(ctx, bson.M{"_id": objID})
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func (r *mongoRoomRepository) IsUserInRoom(ctx context.Context, userID string, roomID string) (bool, error) {
+	objID, err := primitive.ObjectIDFromHex(roomID)
+	if err != nil {
+		return false, err
+	}
+
+	filter := bson.M{
+		"_id": objID,
+		"$or": []bson.M{
+			{"prophet_id": userID},
+			{"customer_id": userID},
+		},
+	}
+
+	count, err := r.collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+func (r *mongoRoomRepository) GetChatRoomsByUserID(ctx context.Context, userID string) ([]*domain.Room, error) {
+	filter := bson.M{"$or": []bson.M{
+		{"prophet_id": userID},
+		{"customer_id": userID},
+	}}
+	cursor, err := r.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+	var rooms []*RoomModel
+	if err := cursor.All(ctx, &rooms); err != nil {
+		return nil, err
+	}
+	var domainRooms []*domain.Room
+	for _, rm := range rooms {
+		domainRooms = append(domainRooms, rm.ToDomain())
+	}
+	return domainRooms, nil
+}
+
+func (r *mongoRoomRepository) UpdateRoomIsDoneByRoomID(ctx context.Context, roomID string, isDone bool) error {
+	objID, err := primitive.ObjectIDFromHex(roomID)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.collection.UpdateOne(ctx, bson.M{"_id": objID}, bson.M{"$set": bson.M{"is_done": isDone}})
+	return err
 }

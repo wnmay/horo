@@ -1,26 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface Course {
   id: string;
   title: string;
-  prophet: string;
+  description: string;
+  price: string;
   status: "active" | "inactive";
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [courses, setCourses] = useState<Course[]>([]);
-  const [showModal, setShowModal] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
+  const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editPrice, setEditPrice] = useState("");
 
   useEffect(() => {
     async function fetchCourses() {
       const mockCourses: Course[] = [
-        { id: "1", title: "How to Read the Stars", prophet: "Flook", status: "active" },
-        { id: "2", title: "Dream Interpretation 101", prophet: "Flook", status: "active" },
-        { id: "3", title: "Life Path Guidance", prophet: "Flook", status: "inactive" },
+        { id: "1", title: "How to Read the Stars", description: "Learn the basics of astrology.", price: "$49", status: "active" },
+        { id: "2", title: "Dream Interpretation 101", description: "Understand the meaning of dreams.", price: "$59", status: "active" },
+        { id: "3", title: "Life Path Guidance", description: "Discover your life path.", price: "$69", status: "inactive" },
       ];
       await new Promise((resolve) => setTimeout(resolve, 300));
       setCourses(mockCourses);
@@ -28,18 +32,28 @@ export default function DashboardPage() {
     fetchCourses();
   }, []);
 
-  // handle adding new course
-  const handleCreateCourse = () => {
-    if (!newTitle.trim()) return;
-    const newCourse: Course = {
-      id: String(Date.now()),
-      title: newTitle,
-      prophet: "Flook",
-      status: "active",
-    };
-    setCourses((prev) => [newCourse, ...prev]);
-    setNewTitle("");
-    setShowModal(false);
+  const startEditing = (course: Course) => {
+    setEditingCourseId(course.id);
+    setEditTitle(course.title);
+    setEditDescription(course.description);
+    setEditPrice(course.price);
+  };
+
+  const saveEdit = (id: string) => {
+    setCourses((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, title: editTitle, description: editDescription, price: editPrice } : c))
+    );
+    setEditingCourseId(null);
+  };
+
+  const toggleStatus = (id: string) => {
+    setCourses((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, status: c.status === "active" ? "inactive" : "active" } : c))
+    );
+  };
+
+  const deleteCourse = (id: string) => {
+    setCourses((prev) => prev.filter((c) => c.id !== id));
   };
 
   return (
@@ -48,76 +62,99 @@ export default function DashboardPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">My Courses</h1>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => router.push("/prophet/dashboard/createCourse")}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow transition"
         >
           + Create Course
         </button>
       </div>
 
-      {/* Course List */}
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Courses Grid */}
+      <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {courses.map((course) => (
           <li
             key={course.id}
-            className={`relative group rounded-xl border shadow-sm overflow-hidden transition-all duration-200 hover:shadow-lg hover:scale-[1.02] ${
+            className={`relative rounded-xl border shadow-sm overflow-hidden transition-all duration-200 hover:shadow-lg hover:scale-[1.02] ${
               course.status === "inactive" ? "opacity-70" : ""
             }`}
           >
-            <Link href={`/prophet/courses/${course.id}`} className="block h-full">
-              <div className="absolute inset-0 bg-white group-hover:bg-gray-100 transition-colors duration-300" />
-              <div className="relative p-5 flex flex-col justify-between h-full">
-                <div>
+            <div className="p-5 flex flex-col justify-between h-full">
+              {editingCourseId === course.id ? (
+                <>
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="w-full border px-3 py-1 rounded mb-2"
+                    placeholder="Course Title"
+                  />
+                  <textarea
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    className="w-full border px-3 py-1 rounded mb-2"
+                    placeholder="Course Description"
+                  />
+                  <input
+                    type="text"
+                    value={editPrice}
+                    onChange={(e) => setEditPrice(e.target.value)}
+                    className="w-full border px-3 py-1 rounded mb-2"
+                    placeholder="Price"
+                  />
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={() => saveEdit(course.id)}
+                      className="px-3 py-1 text-sm rounded bg-green-100 text-green-700 hover:bg-green-200"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingCourseId(null)}
+                      className="px-3 py-1 text-sm rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
                   <h2 className="text-xl font-semibold mb-1">{course.title}</h2>
-                  <p className="text-gray-600 text-sm">By: {course.prophet}</p>
-                </div>
+                  <p className="text-gray-600 mb-2">{course.description}</p>
+                  <p className="text-gray-800 font-medium mb-4">Price: {course.price}</p>
 
-                <div className="flex gap-2 mt-4">
-                  <button className="px-3 py-1 text-sm rounded bg-green-100 text-green-700 hover:bg-green-200">
-                    Edit
-                  </button>
-                  <button className="px-3 py-1 text-sm rounded bg-yellow-100 text-yellow-700 hover:bg-yellow-200">
-                    {course.status === "active" ? "Deactivate" : "Activate"}
-                  </button>
-                  <button className="px-3 py-1 text-sm rounded bg-red-100 text-red-700 hover:bg-red-200">
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </Link>
+                  {/* Action buttons row */}
+                  <div className="flex gap-2 mt-auto">
+                    <button
+                      onClick={() => startEditing(course)}
+                      className="flex-1 px-3 py-1 text-sm rounded bg-green-100 text-green-700 hover:bg-green-200"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => deleteCourse(course.id)}
+                      className="flex-1 px-3 py-1 text-sm rounded bg-red-100 text-red-700 hover:bg-red-200"
+                    >
+                      Delete
+                    </button>
+                    <button
+                      onClick={() => toggleStatus(course.id)}
+                      className={`relative w-14 h-7 rounded-full transition-colors duration-300 ${
+                        course.status === "active" ? "bg-blue-600" : "bg-gray-300"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transform transition-transform duration-300 ${
+                          course.status === "active" ? "translate-x-7" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </li>
         ))}
       </ul>
-
-      {/* Modal for creating new course */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl relative">
-            <h2 className="text-xl font-semibold mb-4">Create New Course</h2>
-            <input
-              type="text"
-              placeholder="Enter course title..."
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateCourse}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Create
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

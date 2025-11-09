@@ -30,9 +30,13 @@ func (h *OrderHandler) CreateOrder(c *fiber.Ctx) error {
 	return ProxyRequest(c, h.client, "POST", h.orderServiceURL, "/api/orders/")
 }
 
-func (h *OrderHandler) GetOrder(c *fiber.Ctx) error {
+func (h *OrderHandler) GetOrderByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 	return ProxyRequest(c, h.client, "GET", h.orderServiceURL, fmt.Sprintf("/api/orders/%s", id))
+}
+
+func (h *OrderHandler) GetOrders(c *fiber.Ctx) error {
+	return ProxyRequest(c, h.client, "GET", h.orderServiceURL, "/api/orders/")
 }
 
 // TO DO: change cust id to user id
@@ -41,7 +45,22 @@ func (h *OrderHandler) GetOrdersByCustomer(c *fiber.Ctx) error {
 	return ProxyRequest(c, h.client, "GET", h.orderServiceURL, fmt.Sprintf("/api/orders/customer/%s", customerID))
 }
 
+func (h *OrderHandler) GetOrdersByRoom(c *fiber.Ctx) error {
+	roomID := c.Params("roomID")
+	return ProxyRequest(c, h.client, "GET", h.orderServiceURL, fmt.Sprintf("/api/orders/room/%s", roomID))
+}
+
 func (h *OrderHandler) UpdateOrderStatus(c *fiber.Ctx) error {
 	id := c.Params("id")
 	return ProxyRequest(c, h.client, "PUT", h.orderServiceURL, fmt.Sprintf("/api/orders/%s/status", id))
+}
+
+func (h *OrderHandler) MarkCustomerCompleted(c *fiber.Ctx) error {
+	id := c.Params("id")
+	return ProxyRequest(c, h.client, "PATCH", h.orderServiceURL, fmt.Sprintf("/api/orders/customer/%s", id))
+}
+
+func (h *OrderHandler) MarkProphetCompleted(c *fiber.Ctx) error {
+	id := c.Params("id")
+	return ProxyRequest(c, h.client, "PATCH", h.orderServiceURL, fmt.Sprintf("/api/orders/prophet/%s", id))
 }

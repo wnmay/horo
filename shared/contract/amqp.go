@@ -10,6 +10,8 @@ type AmqpMessage struct {
 const (
 	OrderCreatedEvent  = "order.created"
 	OrderCompletedEvent = "order.completed"
+	OrderPaymentBoundEvent = "order.payment.bound"
+	OrderPaidEvent = "order.paid"
 	PaymentSuccessEvent = "payment.completed"
 	PaymentCreatedEvent = "payment.created"
 	PaymentSettledEvent = "payment.settled"

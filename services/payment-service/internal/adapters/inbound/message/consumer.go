@@ -94,20 +94,20 @@ func (c *Consumer) handleOrderCompleted(ctx context.Context, delivery amqp.Deliv
         return err
     }
 
-    var orderData message.OrderData
-    if err := json.Unmarshal(amqpMessage.Data, &orderData); err != nil {
+    var orderCompletedData message.OrderCompletedData
+    if err := json.Unmarshal(amqpMessage.Data, &orderCompletedData); err != nil {
         log.Printf("Failed to unmarshal order data: %v", err)
         return err
     }
 
-    log.Printf("Processing order completed event for order: %s",orderData.OrderID)
+    log.Printf("Processing order completed event for order: %s", orderCompletedData.OrderID)
 
-    if err := c.paymentService.SettlePayment(ctx, orderData.OrderID); err != nil {
+    if err := c.paymentService.SettlePayment(ctx, orderCompletedData.OrderID, orderCompletedData.ProphetID); err != nil {
         log.Printf("Failed to complete payment %s for order %s: %v",
-            orderData.OrderID, orderData.OrderID, err)
+            orderCompletedData.OrderID, orderCompletedData.OrderID, err)
         return err
     }
 
-    log.Printf("Successfully completed payment for order %s", orderData.OrderID)
+    log.Printf("Successfully completed payment for order %s", orderCompletedData.OrderID)
     return nil
 }

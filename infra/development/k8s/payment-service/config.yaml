@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payment-service-config
+data:
+  rest-port: "3001"
+  db-host: "host.docker.internal"
+  db-port: "5432"
+  db-name: "paymentdb"
+  db-sslmode: "disable"
