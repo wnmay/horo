@@ -53,3 +53,19 @@ func (s *UserManagementService) GetMe(ctx context.Context, userID string) (*doma
 
 	return user, nil
 }
+
+func (s *UserManagementService) GetProphetNames(ctx context.Context, userIDs []string) ([]*domain.ProphetName, error) {
+	prophetNames, err := s.repo.FindProphetNames(ctx, userIDs)
+	if err != nil {
+		return nil, err
+	}
+	return prophetNames, nil
+}
+
+func (s *UserManagementService) GetProphetName(ctx context.Context, userID string) (string, error) {
+	prophet, err := s.repo.FindById(ctx, userID)
+	if err != nil {
+		return "", err
+	}
+	return prophet.FullName, nil
+}

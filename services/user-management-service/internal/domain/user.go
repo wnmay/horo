@@ -7,3 +7,8 @@ type User struct {
 	Email    string
 	Role     string
 }
+
+type ProphetName struct {
+	UserID   string
+	ProphetName string
+}

@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -71,4 +72,35 @@ func (r *MongoUserRepository) FindById(ctx context.Context, userId string) (*dom
 	}
 
 	return user, nil
+}
+
+func (r *MongoUserRepository) FindProphetNames(ctx context.Context, userIDs []string) ([]*domain.ProphetName, error) {
+	filter := bson.M{"user_id": bson.M{"$in": userIDs}}
+
+	cursor, err := r.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find prophets: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var prophetNames []*domain.ProphetName
+
+	for cursor.Next(ctx) {
+		var user UserModel
+		if err := cursor.Decode(&user); err != nil {
+			return nil, fmt.Errorf("failed to decode user: %w", err)
+		}
+
+		prophetNames = append(prophetNames, &domain.ProphetName{
+			UserID:      user.UserID,
+			ProphetName: user.FullName,
+		})
+	}
+
+	// check for cursor-level errors
+	if err := cursor.Err(); err != nil {
+		return nil, fmt.Errorf("cursor error: %w", err)
+	}
+
+	return prophetNames, nil
 }
