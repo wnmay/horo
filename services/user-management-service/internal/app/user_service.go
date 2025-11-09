@@ -12,12 +12,13 @@ import (
 )
 
 type UserManagementService struct {
-	authClient ports.AuthPort
-	repo       ports.UserRepositoryPort
+	authClient  ports.AuthPort
+	repo        ports.UserRepositoryPort
+	prophetRepo ports.ProphetRepoPort
 }
 
-func NewUserManagementService(authCleint ports.AuthPort, repo ports.UserRepositoryPort) *UserManagementService {
-	return &UserManagementService{authClient: authCleint, repo: repo}
+func NewUserManagementService(authClient ports.AuthPort, repo ports.UserRepositoryPort, prophetRepo ports.ProphetRepoPort) *UserManagementService {
+	return &UserManagementService{authClient: authClient, repo: repo, prophetRepo: prophetRepo}
 }
 
 func (s *UserManagementService) Register(ctx context.Context, idToken, fullName, role string) error {
@@ -42,5 +43,13 @@ func (s *UserManagementService) Register(ctx context.Context, idToken, fullName,
 		Role:     role,
 	}
 
-	return s.repo.Save(ctx, user)
+	if user.Role == "customer" {
+		return s.repo.Save(ctx, user)
+	}
+
+	prophet := domain.Prophet{
+		User:    &user,
+		Balance: 0,
+	}
+	return s.prophetRepo.Save(ctx, prophet)
 }

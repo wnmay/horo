@@ -7,3 +7,8 @@ type User struct {
 	Email    string
 	Role     string
 }
+
+type Prophet struct {
+	User    *User
+	Balance float64
+}
