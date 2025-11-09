@@ -134,3 +134,37 @@ func StartHTTPServer(handler *HTTPHandler, port string) error {
 	log.Printf("HTTP server starting on port %s", port)
 	return app.Listen(":" + port)
 }
+
+func (h *HTTPHandler) GetMe(c *fiber.Ctx) error {
+	authHeader := c.Get("Authorization")
+	if authHeader == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "missing authorization header",
+		})
+	}
+
+	// Extract token from header
+	const prefix = "Bearer "
+	if len(authHeader) <= len(prefix) || authHeader[:len(prefix)] != prefix {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "invalid authorization header format",
+		})
+	}
+	token := authHeader[len(prefix):]
+
+	// Verify and extract claims
+	claims, err := h.authService.GetClaims(c.Context(), token)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error":   "invalid or expired token",
+			"details": err.Error(),
+		})
+	}
+
+	// Return claims as JSON
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"uid":   claims.UserID,
+		"email": claims.Email,
+		"role":  claims.Role,
+	})
+}
