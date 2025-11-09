@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.33.0
-// source: user_management.proto
+// source: proto/user_management.proto
 
 package usermanagement
 
@@ -19,103 +19,141 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_GetClaims_FullMethodName = "/usermanagement.AuthService/GetClaims"
+	UserService_MapProphetNames_FullMethodName = "/usermanagement.UserService/MapProphetNames"
+	UserService_GetProphetName_FullMethodName  = "/usermanagement.UserService/GetProphetName"
 )
 
-// AuthServiceClient is the client API for AuthService service.
+// UserServiceClient is the client API for UserService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type AuthServiceClient interface {
-	GetClaims(ctx context.Context, in *GetClaimsRequest, opts ...grpc.CallOption) (*GetClaimsResponse, error)
+type UserServiceClient interface {
+	MapProphetNames(ctx context.Context, in *MapProphetNamesRequest, opts ...grpc.CallOption) (*MapProphetNamesResponse, error)
+	GetProphetName(ctx context.Context, in *GetProphetNameRequest, opts ...grpc.CallOption) (*GetProphetNameResponse, error)
 }
 
-type authServiceClient struct {
+type userServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewAuthServiceClient(cc grpc.ClientConnInterface) AuthServiceClient {
-	return &authServiceClient{cc}
+func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
+	return &userServiceClient{cc}
 }
 
-func (c *authServiceClient) GetClaims(ctx context.Context, in *GetClaimsRequest, opts ...grpc.CallOption) (*GetClaimsResponse, error) {
+func (c *userServiceClient) MapProphetNames(ctx context.Context, in *MapProphetNamesRequest, opts ...grpc.CallOption) (*MapProphetNamesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetClaimsResponse)
-	err := c.cc.Invoke(ctx, AuthService_GetClaims_FullMethodName, in, out, cOpts...)
+	out := new(MapProphetNamesResponse)
+	err := c.cc.Invoke(ctx, UserService_MapProphetNames_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// AuthServiceServer is the server API for AuthService service.
-// All implementations must embed UnimplementedAuthServiceServer
-// for forward compatibility.
-type AuthServiceServer interface {
-	GetClaims(context.Context, *GetClaimsRequest) (*GetClaimsResponse, error)
-	mustEmbedUnimplementedAuthServiceServer()
+func (c *userServiceClient) GetProphetName(ctx context.Context, in *GetProphetNameRequest, opts ...grpc.CallOption) (*GetProphetNameResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetProphetNameResponse)
+	err := c.cc.Invoke(ctx, UserService_GetProphetName_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
-// UnimplementedAuthServiceServer must be embedded to have
+// UserServiceServer is the server API for UserService service.
+// All implementations must embed UnimplementedUserServiceServer
+// for forward compatibility.
+type UserServiceServer interface {
+	MapProphetNames(context.Context, *MapProphetNamesRequest) (*MapProphetNamesResponse, error)
+	GetProphetName(context.Context, *GetProphetNameRequest) (*GetProphetNameResponse, error)
+	mustEmbedUnimplementedUserServiceServer()
+}
+
+// UnimplementedUserServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedAuthServiceServer struct{}
+type UnimplementedUserServiceServer struct{}
 
-func (UnimplementedAuthServiceServer) GetClaims(context.Context, *GetClaimsRequest) (*GetClaimsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetClaims not implemented")
+func (UnimplementedUserServiceServer) MapProphetNames(context.Context, *MapProphetNamesRequest) (*MapProphetNamesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MapProphetNames not implemented")
 }
-func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
-func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
+func (UnimplementedUserServiceServer) GetProphetName(context.Context, *GetProphetNameRequest) (*GetProphetNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProphetName not implemented")
+}
+func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
+func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
 
-// UnsafeAuthServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to AuthServiceServer will
+// UnsafeUserServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to UserServiceServer will
 // result in compilation errors.
-type UnsafeAuthServiceServer interface {
-	mustEmbedUnimplementedAuthServiceServer()
+type UnsafeUserServiceServer interface {
+	mustEmbedUnimplementedUserServiceServer()
 }
 
-func RegisterAuthServiceServer(s grpc.ServiceRegistrar, srv AuthServiceServer) {
-	// If the following call pancis, it indicates UnimplementedAuthServiceServer was
+func RegisterUserServiceServer(s grpc.ServiceRegistrar, srv UserServiceServer) {
+	// If the following call pancis, it indicates UnimplementedUserServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&AuthService_ServiceDesc, srv)
+	s.RegisterService(&UserService_ServiceDesc, srv)
 }
 
-func _AuthService_GetClaims_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetClaimsRequest)
+func _UserService_MapProphetNames_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MapProphetNamesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).GetClaims(ctx, in)
+		return srv.(UserServiceServer).MapProphetNames(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_GetClaims_FullMethodName,
+		FullMethod: UserService_MapProphetNames_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).GetClaims(ctx, req.(*GetClaimsRequest))
+		return srv.(UserServiceServer).MapProphetNames(ctx, req.(*MapProphetNamesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
+func _UserService_GetProphetName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProphetNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetProphetName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetProphetName_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetProphetName(ctx, req.(*GetProphetNameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var AuthService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "usermanagement.AuthService",
-	HandlerType: (*AuthServiceServer)(nil),
+var UserService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "usermanagement.UserService",
+	HandlerType: (*UserServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetClaims",
-			Handler:    _AuthService_GetClaims_Handler,
+			MethodName: "MapProphetNames",
+			Handler:    _UserService_MapProphetNames_Handler,
+		},
+		{
+			MethodName: "GetProphetName",
+			Handler:    _UserService_GetProphetName_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "user_management.proto",
+	Metadata: "proto/user_management.proto",
 }

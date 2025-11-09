@@ -4,16 +4,28 @@ package usermanagement;
 
 option go_package = "github.com/wnmay/horo/shared/proto/usermanagement;usermanagement";
 
-service AuthService {
-  rpc GetClaims(GetClaimsRequest) returns (GetClaimsResponse);
+service UserService {
+  rpc MapProphetNames(MapProphetNamesRequest) returns (MapProphetNamesResponse);
+  rpc GetProphetName(GetProphetNameRequest) returns (GetProphetNameResponse);
 }
 
-message GetClaimsRequest {
-  string id_token = 1;
+message MapProphetNamesRequest {
+  repeated string user_ids = 1; // IDs of users to map
 }
 
-message GetClaimsResponse {
+message MapProphetNamesResponse {
+  repeated ProphetData mappings = 1; // List of (user_id, prophet_name) pairs
+}
+
+message ProphetData {
   string user_id = 1;
-  string email = 2;
-  string role = 3;
+  string prophet_name = 2;
+}
+
+message GetProphetNameRequest {
+  string user_id = 1;
+}
+
+message GetProphetNameResponse {
+  string prophet_name = 1;
 }
