@@ -35,10 +35,13 @@ export default function RegisterPage() {
 
     try {
       // Firebase registration
-      const userCredential = await doCreateUserWithEmailAndPassword(email, password);
+      const userCredential = await doCreateUserWithEmailAndPassword(
+        email,
+        password
+      );
       const user = userCredential.user;
       const tokenId = await user.getIdToken();
-      const backendurl = process.env.NEXT_PUBLIC_APIGATEWAY
+      const backendurl = process.env.NEXT_PUBLIC_APIGATEWAY;
 
       // Save user info in Firestore
       await setDoc(doc(db, "users", user.uid), {
@@ -58,7 +61,10 @@ export default function RegisterPage() {
       alert("Registration successful!");
       router.push("/signin");
     } catch (error: any) {
-      console.error("Error registering:", error.response?.data || error.message);
+      console.error(
+        "Error registering:",
+        error.response?.data || error.message
+      );
       alert(error.response?.data?.message || error.message);
     } finally {
       setLoading(false);
@@ -70,7 +76,6 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md p-6">
         <h1 className="text-3xl font-bold mb-6 text-center">Register</h1>
         <form onSubmit={handleRegister} className="flex flex-col gap-4">
-          
           {/* Full Name */}
           <div className="flex flex-col">
             <label className="text-sm text-gray-500 mb-1">Full Name</label>
@@ -112,7 +117,9 @@ export default function RegisterPage() {
 
           {/* Confirm Password */}
           <div className="flex flex-col">
-            <label className="text-sm text-gray-500 mb-1">Confirm Password</label>
+            <label className="text-sm text-gray-500 mb-1">
+              Confirm Password
+            </label>
             <input
               type="password"
               placeholder="Confirm Password"
