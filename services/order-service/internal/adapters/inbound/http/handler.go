@@ -27,6 +27,7 @@ func (h *Handler) Register(app *fiber.App) {
 	// Public routes
 	orders.Get("/", h.GetOrders)
 	orders.Get("/:id", h.GetOrderByID)
+	orders.Get("/room/:roomID", h.AuthMiddleware, h.GetOrdersByRoom)
 
 	// require authentication
 	orders.Post("/", h.AuthMiddleware, h.CreateOrder)
@@ -175,6 +176,20 @@ func (h *Handler) GetOrdersByCustomer(c *fiber.Ctx) error {
 	}
 
 	orders, err := h.orderService.GetOrdersByCustomer(c.Context(), customerID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(orders)
+}
+
+func (h *Handler) GetOrdersByRoom(c *fiber.Ctx) error {
+	// Get room ID from params
+	roomID := c.Params("roomID")
+
+	orders, err := h.orderService.GetOrdersByRoom(c.Context(), roomID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),

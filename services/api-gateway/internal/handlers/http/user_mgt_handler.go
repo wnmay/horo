@@ -67,7 +67,7 @@ func (h *UserHandler) Register(c *fiber.Ctx) error {
 	}
 
 	// Make HTTP POST request
-	url := fmt.Sprintf("%s/users/register", h.userManagementURL)
+	url := fmt.Sprintf("%s/api/users/register", h.userManagementURL)
 	resp, err := h.httpClient.Post(url, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -104,4 +104,63 @@ func (h *UserHandler) Register(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message": "user registered successfully",
 	})
+}
+
+func (h *UserHandler) GetMe(c *fiber.Ctx) error {
+	// Get the Authorization header
+	authHeader := c.Get("Authorization")
+	if authHeader == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "missing authorization header",
+		})
+	}
+
+	// Forward the request to the user management service
+	url := fmt.Sprintf("%s/users/me", h.userManagementURL)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "failed to create request",
+			"details": err.Error(),
+		})
+	}
+
+	// Set the Authorization header
+	req.Header.Set("Authorization", authHeader)
+
+	// Perform the HTTP request
+	resp, err := h.httpClient.Do(req)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "failed to fetch user info",
+			"details": err.Error(),
+		})
+	}
+	defer resp.Body.Close()
+
+	// Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to read response",
+		})
+	}
+
+	// Handle non-success status codes
+	if resp.StatusCode != http.StatusOK {
+		return c.Status(resp.StatusCode).JSON(fiber.Map{
+			"error":   "failed to fetch user info",
+			"details": string(body),
+		})
+	}
+
+	// Return the response body as JSON
+	var userData map[string]interface{}
+	if err := json.Unmarshal(body, &userData); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to parse user info",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(userData)
 }

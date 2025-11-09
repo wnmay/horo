@@ -57,6 +57,7 @@ func (r *Router) setupUserRoutes(api fiber.Router) {
 
 	users := api.Group("/users")
 	users.Post("/register", userHandler.Register)
+	users.Get("/me", userHandler.GetMe)
 }
 
 func (r *Router) setupOrderRoutes(api fiber.Router) {
@@ -67,6 +68,7 @@ func (r *Router) setupOrderRoutes(api fiber.Router) {
 	orders.Post("/", r.authMiddleware.AddClaims, orderHandler.CreateOrder)
 	orders.Get("/:id", r.authMiddleware.AddClaims, orderHandler.GetOrderByID)
 	orders.Get("/customer/:customerID", r.authMiddleware.AddClaims, orderHandler.GetOrdersByCustomer)
+	orders.Get("/room/:roomID", r.authMiddleware.AddClaims, orderHandler.GetOrdersByRoom)
 	orders.Patch("/:id/status", r.authMiddleware.AddClaims, orderHandler.UpdateOrderStatus)
 	orders.Patch("/customer/:id", r.authMiddleware.AddClaims, orderHandler.MarkCustomerCompleted)
 	orders.Patch("/prophet/:id", r.authMiddleware.AddClaims, orderHandler.MarkProphetCompleted)
