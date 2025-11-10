@@ -1,14 +1,13 @@
 "use client";
+
 import Card from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import CourseCard from "@/components/course-card";
 import CourseFilter from "../components/CourseFilter";
 import api from "@/lib/api/api-client";
 
 export default function HomePage() {
-  const router = useRouter();
   const [page, setPage] = useState(0);
   const [adIndex, setAdIndex] = useState(0);
   const [coursesPerPage, setCoursesPerPage] = useState(6);
@@ -21,17 +20,13 @@ export default function HomePage() {
 
   // Courses
   const [courses, setCourses] = useState<any[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<any[]>([]);
 
   // --- Fetch courses from backend ---
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const params = new URLSearchParams();
-        if (searchQuery.trim()) {
-          params.append("coursename", searchQuery);
-          params.append("prophetname", searchQuery);
-        }
-        const res = await api.get(`/api/courses?${params.toString()}`);
+        const res = await api.get("/api/courses");
         if (Array.isArray(res.data.data)) {
           const mapped = res.data.data.map((c: any) => ({
             id: c.id,
@@ -43,16 +38,19 @@ export default function HomePage() {
             tags: c.coursetype ? [c.coursetype] : [],
           }));
           setCourses(mapped);
+          setFilteredCourses(mapped); // initially show all
         } else {
           setCourses([]);
+          setFilteredCourses([]);
         }
       } catch (err) {
         console.error("Error fetching courses:", err);
         setCourses([]);
+        setFilteredCourses([]);
       }
     };
     fetchCourses();
-  }, [searchQuery]);
+  }, []);
 
   // --- Ads ---
   const ads = [
@@ -65,18 +63,40 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
-  // --- Filter courses (frontend) ---
-  let filteredCourses = [...courses];
-  if (selectedTag) filteredCourses = filteredCourses.filter((c) => c.tags.includes(selectedTag));
-  if (durationFilter !== null) filteredCourses = filteredCourses.filter((c) => c.duration === durationFilter);
-  if (sortOption === "title") filteredCourses.sort((a, b) => a.title.localeCompare(b.title));
-  if (sortOption === "price") filteredCourses.sort((a, b) => a.price - b.price);
+  // --- Apply Handler ---
+  const handleApply = () => {
+    let filtered = [...courses];
+
+    if (selectedTag) filtered = filtered.filter((c) => c.tags.includes(selectedTag));
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (c) => c.title.toLowerCase().includes(q) || c.prophet.toLowerCase().includes(q)
+      );
+    }
+    if (durationFilter !== null) filtered = filtered.filter((c) => c.duration === durationFilter);
+    if (sortOption === "title") filtered.sort((a, b) => a.title.localeCompare(b.title));
+    if (sortOption === "price") filtered.sort((a, b) => a.price - b.price);
+
+    setFilteredCourses(filtered);
+    setPage(0); // reset pagination
+  };
+
+  // --- Handle Enter key ---
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleApply();
+      }
+    };
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [searchQuery, selectedTag, durationFilter, sortOption, courses]);
 
   // --- Pagination ---
   const startIndex = page * coursesPerPage;
   const visibleCourses = filteredCourses.slice(startIndex, startIndex + coursesPerPage);
-  const hasNext = startIndex + coursesPerPage < filteredCourses.length;
-  const hasPrev = page > 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-zinc-100 dark:from-zinc-900 dark:to-zinc-950">
@@ -99,19 +119,21 @@ export default function HomePage() {
           Finance: "/images/Finance.jpg",
           Personal_Growth: "/images/Personal_Growth.jpg",
         }}
-        onApply={({ tag, search, sort, duration }) => {
-          setSelectedTag(tag);
-          setSearchQuery(search);
-          setSortOption(sort);
-          setDurationFilter(duration);
-          setPage(0);
-        }}
+        selectedTag={selectedTag}
+        searchQuery={searchQuery}
+        sortOption={sortOption}
+        durationFilter={durationFilter}
+        onTagChange={setSelectedTag}
+        onSearchChange={setSearchQuery}
+        onSortChange={setSortOption}
+        onDurationChange={setDurationFilter}
+        onApply={handleApply}
       />
 
-      {/* Courses */}
+      {/* Suggested Courses */}
       <div className="px-6 py-12 to-zinc-100 dark:bg-zinc-900">
         <h2 className="text-3xl font-semibold text-center text-zinc-800 dark:text-zinc-100 mb-8">
-          {selectedTag ? `${selectedTag} Courses` : "Featured Courses"}
+          Suggested Courses
         </h2>
 
         <div className="max-w-full mx-auto overflow-x-auto">
@@ -122,23 +144,19 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Pagination */}
+        {/* Pagination Buttons */}
         <div className="flex items-center justify-between mt-8 max-w-6xl mx-auto px-2">
           <div className="w-1/3"></div>
-          <div className="flex gap-4 justify-center w-1/3">
-            <Button variant="outline" disabled={!hasPrev} onClick={() => setPage(p => p - 1)}>← Previous</Button>
-            <Button variant="outline" disabled={!hasNext} onClick={() => setPage(p => p + 1)}>Next →</Button>
-          </div>
+
           <div className="w-1/3 flex justify-end">
-            <Button className="bg-blue-600 text-white hover:bg-blue-700 px-6 py-3 rounded-lg" onClick={() => router.push("/courses")}>
+            <Button
+              className="bg-blue-600 text-white hover:bg-blue-700 px-6 py-3 rounded-lg"
+              onClick={handleApply}
+            >
               See More Courses →
             </Button>
           </div>
         </div>
-
-        <p className="text-center text-sm text-zinc-500 mt-4">
-          Page {page + 1} of {Math.ceil(filteredCourses.length / coursesPerPage)}
-        </p>
       </div>
     </div>
   );
