@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useWebSocket } from "@/lib/ws/useWebSocket";
 import api from "@/lib/api/api-client";
 import { ChatMessage } from "@/types/ws_message";
 import { Trigger } from "@/types/contracts";
 import { auth } from "@/firebase/firebase";
+import ReviewBox from "./ReviewBox";
 
 type Role = "customer" | "prophet";
 
@@ -46,7 +46,6 @@ export default function RightPanel({
   role: Role;
   courseId: string;
 }) {
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -274,14 +273,7 @@ export default function RightPanel({
     }
 
     if (s === "COMPLETED" && role === "customer") {
-      return (
-        <button
-          onClick={onWriteReview}
-          className="w-full rounded-xl px-4 py-3 font-semibold bg-violet-600 text-white hover:bg-violet-700"
-        >
-          Write a review
-        </button>
-      );
+      return <ReviewBox courseId={courseId} onSubmitted={refreshOrder} />;
     }
 
     if (s === "PROPHET_DONE" && role === "customer") {
@@ -312,14 +304,10 @@ export default function RightPanel({
   return (
     <aside className="w-full lg:w-80 xl:w-96 shrink-0 border-l border-gray-200 bg-white">
       <div className="p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-700">Order panel</h3>
-          <div className="text-xs text-gray-500">
-            WS:{" "}
-            <span className={connected ? "text-emerald-600" : "text-gray-400"}>
-              {connected ? "connected" : "offline"}
-            </span>
-          </div>
+        <div className="flex items-center justify-center">
+          <h3 className="text-sm font-semibold text-gray-700 text-center">
+            Order Status
+          </h3>
         </div>
 
         {loading && (
