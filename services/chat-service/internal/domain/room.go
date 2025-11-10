@@ -14,6 +14,18 @@ type Room struct {
 	IsDone      bool
 }
 
+type RoomWithName struct {
+	ID           string
+	ProphetID    string
+	CustomerID   string
+	CourseID     string
+	CreatedAt    time.Time
+	LastMessage  string
+	IsDone       bool
+	ProphetName  string
+	CustomerName string
+}
+
 func CreateRoom(prophetID, customerID, courseID string, isDone bool) *Room {
 	return &Room{
 		ProphetID:  prophetID,

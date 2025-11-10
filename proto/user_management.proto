@@ -45,13 +45,12 @@ message MapUserNamesRequest {
 }
 
 message MapUserNamesResponse {
-  repeated UserData users = 1; // List of user info
+  map<string, UserData> users = 1;
 }
 
 message UserData {
-  string user_id = 1;
-  string name = 2;
-  UserRole role = 3;
+  string name = 1;
+  UserRole role = 2;
 }
 
 enum UserRole {

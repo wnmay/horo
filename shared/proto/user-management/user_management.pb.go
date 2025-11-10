@@ -432,7 +432,7 @@ func (x *MapUserNamesRequest) GetUserIds() []string {
 
 type MapUserNamesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Users         []*UserData            `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"` // List of user info
+	Users         map[string]*UserData   `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -467,7 +467,7 @@ func (*MapUserNamesResponse) Descriptor() ([]byte, []int) {
 	return file_user_management_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *MapUserNamesResponse) GetUsers() []*UserData {
+func (x *MapUserNamesResponse) GetUsers() map[string]*UserData {
 	if x != nil {
 		return x.Users
 	}
@@ -476,9 +476,8 @@ func (x *MapUserNamesResponse) GetUsers() []*UserData {
 
 type UserData struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Role          UserRole               `protobuf:"varint,3,opt,name=role,proto3,enum=usermanagement.UserRole" json:"role,omitempty"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Role          UserRole               `protobuf:"varint,2,opt,name=role,proto3,enum=usermanagement.UserRole" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -511,13 +510,6 @@ func (x *UserData) ProtoReflect() protoreflect.Message {
 // Deprecated: Use UserData.ProtoReflect.Descriptor instead.
 func (*UserData) Descriptor() ([]byte, []int) {
 	return file_user_management_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *UserData) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
 }
 
 func (x *UserData) GetName() string {
@@ -555,13 +547,16 @@ const file_user_management_proto_rawDesc = "" +
 	"\x1cGetProphetIdsByNamesResponse\x12>\n" +
 	"\fprophet_data\x18\x01 \x03(\v2\x1b.usermanagement.ProphetDataR\vprophetData\"0\n" +
 	"\x13MapUserNamesRequest\x12\x19\n" +
-	"\buser_ids\x18\x01 \x03(\tR\auserIds\"F\n" +
-	"\x14MapUserNamesResponse\x12.\n" +
-	"\x05users\x18\x01 \x03(\v2\x18.usermanagement.UserDataR\x05users\"e\n" +
-	"\bUserData\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12,\n" +
-	"\x04role\x18\x03 \x01(\x0e2\x18.usermanagement.UserRoleR\x04role*P\n" +
+	"\buser_ids\x18\x01 \x03(\tR\auserIds\"\xb1\x01\n" +
+	"\x14MapUserNamesResponse\x12E\n" +
+	"\x05users\x18\x01 \x03(\v2/.usermanagement.MapUserNamesResponse.UsersEntryR\x05users\x1aR\n" +
+	"\n" +
+	"UsersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12.\n" +
+	"\x05value\x18\x02 \x01(\v2\x18.usermanagement.UserDataR\x05value:\x028\x01\"L\n" +
+	"\bUserData\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12,\n" +
+	"\x04role\x18\x02 \x01(\x0e2\x18.usermanagement.UserRoleR\x04role*P\n" +
 	"\bUserRole\x12\x15\n" +
 	"\x11USER_ROLE_UNKNOWN\x10\x00\x12\x15\n" +
 	"\x11USER_ROLE_PROPHET\x10\x01\x12\x16\n" +
@@ -585,7 +580,7 @@ func file_user_management_proto_rawDescGZIP() []byte {
 }
 
 var file_user_management_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_user_management_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_user_management_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_user_management_proto_goTypes = []any{
 	(UserRole)(0),                        // 0: usermanagement.UserRole
 	(*MapProphetNamesRequest)(nil),       // 1: usermanagement.MapProphetNamesRequest
@@ -598,25 +593,27 @@ var file_user_management_proto_goTypes = []any{
 	(*MapUserNamesRequest)(nil),          // 8: usermanagement.MapUserNamesRequest
 	(*MapUserNamesResponse)(nil),         // 9: usermanagement.MapUserNamesResponse
 	(*UserData)(nil),                     // 10: usermanagement.UserData
+	nil,                                  // 11: usermanagement.MapUserNamesResponse.UsersEntry
 }
 var file_user_management_proto_depIdxs = []int32{
 	3,  // 0: usermanagement.MapProphetNamesResponse.mappings:type_name -> usermanagement.ProphetData
 	3,  // 1: usermanagement.GetProphetIdsByNamesResponse.prophet_data:type_name -> usermanagement.ProphetData
-	10, // 2: usermanagement.MapUserNamesResponse.users:type_name -> usermanagement.UserData
+	11, // 2: usermanagement.MapUserNamesResponse.users:type_name -> usermanagement.MapUserNamesResponse.UsersEntry
 	0,  // 3: usermanagement.UserData.role:type_name -> usermanagement.UserRole
-	1,  // 4: usermanagement.UserService.MapProphetNames:input_type -> usermanagement.MapProphetNamesRequest
-	4,  // 5: usermanagement.UserService.GetProphetName:input_type -> usermanagement.GetProphetNameRequest
-	6,  // 6: usermanagement.UserService.GetProphetIdsByNames:input_type -> usermanagement.GetProphetIdsByNamesRequest
-	8,  // 7: usermanagement.UserService.MapUserNames:input_type -> usermanagement.MapUserNamesRequest
-	2,  // 8: usermanagement.UserService.MapProphetNames:output_type -> usermanagement.MapProphetNamesResponse
-	5,  // 9: usermanagement.UserService.GetProphetName:output_type -> usermanagement.GetProphetNameResponse
-	7,  // 10: usermanagement.UserService.GetProphetIdsByNames:output_type -> usermanagement.GetProphetIdsByNamesResponse
-	9,  // 11: usermanagement.UserService.MapUserNames:output_type -> usermanagement.MapUserNamesResponse
-	8,  // [8:12] is the sub-list for method output_type
-	4,  // [4:8] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	10, // 4: usermanagement.MapUserNamesResponse.UsersEntry.value:type_name -> usermanagement.UserData
+	1,  // 5: usermanagement.UserService.MapProphetNames:input_type -> usermanagement.MapProphetNamesRequest
+	4,  // 6: usermanagement.UserService.GetProphetName:input_type -> usermanagement.GetProphetNameRequest
+	6,  // 7: usermanagement.UserService.GetProphetIdsByNames:input_type -> usermanagement.GetProphetIdsByNamesRequest
+	8,  // 8: usermanagement.UserService.MapUserNames:input_type -> usermanagement.MapUserNamesRequest
+	2,  // 9: usermanagement.UserService.MapProphetNames:output_type -> usermanagement.MapProphetNamesResponse
+	5,  // 10: usermanagement.UserService.GetProphetName:output_type -> usermanagement.GetProphetNameResponse
+	7,  // 11: usermanagement.UserService.GetProphetIdsByNames:output_type -> usermanagement.GetProphetIdsByNamesResponse
+	9,  // 12: usermanagement.UserService.MapUserNames:output_type -> usermanagement.MapUserNamesResponse
+	9,  // [9:13] is the sub-list for method output_type
+	5,  // [5:9] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_user_management_proto_init() }
@@ -630,7 +627,7 @@ func file_user_management_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_user_management_proto_rawDesc), len(file_user_management_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   10,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
