@@ -82,14 +82,14 @@ func (h *Handler) GetCourseByID(c *fiber.Ctx) error {
 func (h *Handler) ListCoursesByProphet(c *fiber.Ctx) error {
 	prophetID := c.Params("prophetId")
 
-	courses, err := h.service.ListCoursesByProphet(prophetID)
+	courses, err := h.service.ListCoursesByProphet(c.Context(), prophetID)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
 	response := struct {
 		Timestamp time.Time        `json:"timestamp"`
-		Data      []*domain.Course `json:"courses"`
+		Data      []*domain.CourseWithProphetName `json:"courses"`
 	}{
 		Timestamp: time.Now(),
 		Data:      courses,
@@ -128,18 +128,18 @@ func (h *Handler) FindCoursesByFilter(c *fiber.Ctx) error {
 	prophetName := c.Query("prophetname")
 	duration := c.Query("duration")
 
-	filter := map[string]interface{}{}
+	var filter app.CourseFilter
 	if courseName != "" {
-		filter["coursename"] = courseName
+		filter.CourseName = courseName
 	}
 	if prophetName != "" {
-		filter["prophetname"] = prophetName
+		filter.ProphetName = prophetName
 	}
 	if duration != "" {
-		filter["duration"] = duration
+		filter.Duration = duration
 	}
 
-	courses, err := h.service.FindCoursesByFilter(filter)
+	courses, err := h.service.FindCoursesByFilter(c.Context(), filter)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
@@ -235,7 +235,7 @@ func (h *Handler) GetReviewByCourseID(c *fiber.Ctx) error {
 func (h *Handler) ListCurrentProphetCourses(c *fiber.Ctx) error {
 	prophetID := c.Get("X-User-Id")
 
-	courses, err := h.service.ListCoursesByProphet(prophetID)
+	courses, err := h.service.ListCoursesByProphet(c.Context(), prophetID)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}

@@ -2,9 +2,11 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/wnmay/horo/services/course-service/internal/adapters/outbound/db"
 	"github.com/wnmay/horo/services/course-service/internal/domain"
 	"github.com/wnmay/horo/services/course-service/internal/ports/outbound"
 )
@@ -12,10 +14,11 @@ import (
 type CourseService interface {
 	CreateCourse(input CreateCourseInput) (*domain.Course, error)
 	GetCourseByID(ctx context.Context, id string) (*domain.Course, error)
-	ListCoursesByProphet(prophetID string) ([]*domain.Course, error)
+	GetCourseByIDWithProphetName(ctx context.Context, id string) (*domain.CourseWithProphetName, error)
+	ListCoursesByProphet(ctx context.Context, prophetID string) ([]*domain.CourseWithProphetName, error)
 	UpdateCourse(id string, input *domain.UpdateCourseInput) (*domain.Course, error)
 	DeleteCourse(id string) error
-	FindCoursesByFilter(filter map[string]interface{}) ([]*domain.Course, error)
+	FindCoursesByFilter(ctx context.Context, filter CourseFilter) ([]*domain.Course, error)
 	CreateReview(input CreateReviewInput) (*domain.Review, error)
 	GetReviewByID(id string) (*domain.Review, error)
 	ListReviewsByCourse(courseId string) ([]*domain.Review, error)
@@ -27,13 +30,17 @@ type courseService struct {
 }
 
 func (s courseService) GetCourseByID(ctx context.Context, id string) (*domain.Course, error) {
+	return s.repo.FindCourseByID(id)
+}
+
+func (s courseService) GetCourseByIDWithProphetName(ctx context.Context, id string) (*domain.CourseWithProphetName, error) {
 	course, err := s.repo.FindCourseByID(id)
 	if err != nil {
 		return nil, err
 	}
 
 	if course == nil {
-		return nil, nil
+		return nil, fmt.Errorf("course not found")
 	}
 
 	prophetID := course.ProphetID
@@ -41,12 +48,47 @@ func (s courseService) GetCourseByID(ctx context.Context, id string) (*domain.Co
 	if err != nil {
 		return nil, err
 	}
-	course.ProphetName = prophetName
-	return course, nil
+	courseWithProphetName := &domain.CourseWithProphetName{
+		ID:          course.ID,
+		ProphetID:   course.ProphetID,
+		ProphetName: prophetName,
+		CourseName:  course.CourseName,
+		CourseType:  course.CourseType,
+		Description: course.Description,
+		Price:       course.Price,
+		Duration:    course.Duration,
+		CreatedAt:   course.CreatedAt,
+		DeletedAt:   course.DeletedAt,
+	}
+	return courseWithProphetName, nil
 }
 
-func (s courseService) ListCoursesByProphet(prophetID string) ([]*domain.Course, error) {
-	return s.repo.FindCoursesByProphet(prophetID)
+func (s courseService) ListCoursesByProphet(ctx context.Context, prophetID string) ([]*domain.CourseWithProphetName, error) {
+	prophetName, err := s.user_provider.GetProphetName(ctx, prophetID)
+	if err != nil {
+		return nil, err
+	}
+	courses, err := s.repo.FindCoursesByProphet(prophetID)
+	if err != nil {
+		return nil, err
+	}
+	courseWithProphetNames := make([]*domain.CourseWithProphetName, 0)
+	for _, course := range courses {
+		courseWithProphetName := &domain.CourseWithProphetName{
+			ID:          course.ID,
+			ProphetID:   course.ProphetID,
+			ProphetName: prophetName,
+			CourseName:  course.CourseName,
+			CourseType:  course.CourseType,
+			Description: course.Description,
+			Price:       course.Price,
+			Duration:    course.Duration,
+			CreatedAt:   course.CreatedAt,
+			DeletedAt:   course.DeletedAt,
+		}
+		courseWithProphetNames = append(courseWithProphetNames, courseWithProphetName)
+	}
+	return courseWithProphetNames, nil
 }
 
 func NewCourseService(r outbound.CourseRepository, u outbound.UserProvider) CourseService {
@@ -96,8 +138,21 @@ func (s *courseService) DeleteCourse(id string) error {
 	return s.repo.Delete(id)
 }
 
-func (s *courseService) FindCoursesByFilter(filter map[string]interface{}) ([]*domain.Course, error) {
-	return s.repo.FindByFilter(filter)
+func (s courseService) FindCoursesByFilter(ctx context.Context, filter CourseFilter) ([]*domain.Course, error) {
+	prophetNames, err := s.user_provider.GetProphetIDsByNames(ctx, filter.ProphetName)
+	if err != nil {
+		return nil, err
+	}
+	prophetIDs := make([]string, 0)
+	for _, prophetName := range prophetNames {
+		prophetIDs = append(prophetIDs, prophetName.UserID)
+	}
+	repoFilter := db.CourseFilter{
+		CourseName: filter.CourseName,
+		ProphetIDs:  prophetIDs,
+		Duration:   filter.Duration,
+	}
+	return s.repo.FindByFilter(ctx, repoFilter)
 }
 
 func (s *courseService) CreateReview(input CreateReviewInput) (*domain.Review, error) {

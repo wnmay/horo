@@ -81,6 +81,28 @@ func (c *UserClient) GetProphetName(ctx context.Context, userID string) (string,
 	return prophetName, nil
 }
 
+func (c *UserClient) GetProphetIDsByNames(ctx context.Context, prophetName string) ([]domain.ProphetName, error) {
+	req := &pb.GetProphetIdsByNamesRequest{
+		ProphetName: prophetName,
+	}
+	resp, err := c.client.GetProphetIdsByNames(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get prophet IDs: %w", err)
+	}
+	if resp == nil {
+		return nil, fmt.Errorf("nil response from user service")
+	}
+
+	var prophetNames []domain.ProphetName
+	for _, p := range resp.ProphetData {
+		prophetNames = append(prophetNames, domain.ProphetName{
+			UserID: p.UserId,
+			Name:   p.ProphetName,
+		})
+	}
+	return prophetNames, nil
+}
+
 // Close closes the gRPC connection
 func (c *UserClient) Close() error {
 	if c.conn != nil {
