@@ -3,7 +3,9 @@ package http
 import (
 	"context"
 	"log"
+	"strings"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -62,6 +64,7 @@ func (h *HTTPHandler) SetupRoutes(app *fiber.App) {
 	// User routes
 	users := api.Group("/users")
 	users.Post("/register", h.Register)
+	users.Patch("/update-name", h.UpdateUsername)
 	auth := api.Group("/auth")
 	auth.Get("/verify-token", h.VerifyToken)
 }
@@ -166,5 +169,74 @@ func (h *HTTPHandler) GetMe(c *fiber.Ctx) error {
 		"uid":   claims.UserID,
 		"email": claims.Email,
 		"role":  claims.Role,
+	})
+}
+
+type updateUsernameReq struct {
+	FullName string `json:"fullname" validate:"required,min=2,max=80"`
+}
+
+type updateUsernameResponse struct {
+	Success     bool   `json:"success"`
+	NewUsername string `json:"new_username,omitempty"`
+	Message     string `json:"message,omitempty"`
+}
+
+func (h *HTTPHandler) UpdateUsername(c *fiber.Ctx) error {
+	authHeader := c.Get("Authorization")
+	if authHeader == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "missing authorization header",
+		})
+	}
+
+	// Extract token from header
+	const prefix = "Bearer "
+	if len(authHeader) <= len(prefix) || authHeader[:len(prefix)] != prefix {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "invalid authorization header format",
+		})
+	}
+	token := authHeader[len(prefix):]
+
+	// Verify and extract claims
+	claims, err := h.authService.GetClaims(c.Context(), token)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error":   "invalid or expired token",
+			"details": err.Error(),
+		})
+	}
+
+	uid := claims.UserID
+
+	// parse body
+	var req updateUsernameReq
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid json body")
+	}
+	req.FullName = strings.TrimSpace(req.FullName)
+
+	// validate
+	v := validator.New(validator.WithRequiredStructEnabled())
+	if err := v.Struct(req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "fullname is required (2-80 chars)")
+	}
+
+	// call service
+	u, err := h.userService.UpdateFullName(c.Context(), uid, req.FullName)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "unable to update name")
+	}
+	if u == nil {
+		log.Println(uid)
+		return fiber.NewError(fiber.StatusNotFound, "user not found")
+	}
+
+	// response
+	return c.Status(fiber.StatusOK).JSON(updateUsernameResponse{
+		Success:     true,
+		NewUsername: u.FullName,
+		Message:     "Username updated successfully.",
 	})
 }

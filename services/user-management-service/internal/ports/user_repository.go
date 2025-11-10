@@ -9,4 +9,5 @@ import (
 type UserRepositoryPort interface {
 	Save(ctx context.Context, user domain.User) error
 	FindById(ctx context.Context, userId string) (*domain.User, error)
+	Update(ctx context.Context, userID string, update map[string]interface{}) (*domain.User, error)
 }

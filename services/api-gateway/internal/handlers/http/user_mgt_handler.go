@@ -164,3 +164,77 @@ func (h *UserHandler) GetMe(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(userData)
 }
+
+func (h *UserHandler) UpdateUsername(c *fiber.Ctx) error {
+	authHeader := c.Get("Authorization")
+	if authHeader == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "missing authorization header",
+		})
+	}
+
+	var req map[string]interface{}
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	fullName, ok := req["fullname"].(string)
+	if !ok || fullName == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "fullname is required",
+		})
+	}
+
+	url := fmt.Sprintf("%s/api/users/update-name", h.userManagementURL)
+
+	jsonData, err := json.Marshal(req)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to marshal request",
+		})
+	}
+
+	httpReq, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "failed to create request",
+			"details": err.Error(),
+		})
+	}
+	httpReq.Header.Set("Authorization", authHeader)
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	resp, err := h.httpClient.Do(httpReq)
+	if err != nil {
+		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{
+			"error":   "failed to contact user management service",
+			"details": err.Error(),
+		})
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to read response",
+		})
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return c.Status(resp.StatusCode).JSON(fiber.Map{
+			"error":   "failed to update username",
+			"details": string(body),
+		})
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to parse response",
+		})
+	}
+
+	return c.Status(http.StatusOK).JSON(result)
+}

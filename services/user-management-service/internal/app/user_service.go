@@ -53,3 +53,9 @@ func (s *UserManagementService) GetMe(ctx context.Context, userID string) (*doma
 
 	return user, nil
 }
+
+func (s *UserManagementService) UpdateFullName(ctx context.Context, userID string, newUsername string) (*domain.User, error) {
+	update := map[string]interface{}{"fullname": newUsername}
+
+	return s.repo.Update(ctx, userID, update)
+}

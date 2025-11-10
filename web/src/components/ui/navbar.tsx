@@ -54,14 +54,21 @@ export function Navbar({
     }, []);
 
     return (
-        <header className="fixed top-4 right-4 z-50 flex items-center space-x-3">
+        <header className="fixed w-full h-16 z-50 p-4 flex items-center border-b-2 border-black shadow-md bg-white">
+          <h2 className="fixed left-10 text-3xl text-center font-bold">Horo</h2>
+          
           {true ? (
-            <div className="flex items-center relative" ref={menuRef}>
+            <div className="fixed right-4 flex items-center" ref={menuRef}>
+              {/* Home button */}
+              <button 
+                onClick={() => router.push("/")}
+                className="px-4 py-2 bg-white rounded-lg hover:text-gray-500">Home</button>
+
               {/* Dashboard button (always visible for prophet) */}
               {role === "prophet" && (
                 <button
                   onClick={() => router.push("/prophet/dashboard")}
-                  className="px-4 py-2 bg-white text-blue-600 rounded-lg shadow-md hover:shadow-lg transition"
+                  className="px-4 py-2 bg-white rounded-lg hover:text-gray-400 transition"
                 >
                   Dashboard
                 </button>
@@ -87,15 +94,15 @@ export function Navbar({
                 {/* Dropdown menu */}
                 {showMenu && (
                   <div className="absolute top-full right-0 mt-2 w-56 flex flex-col bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 z-50 overflow-hidden">
-                    {role == "customer" && <button
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setChangeName(true)}}
                       className="block w-full text-left px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition"
                     >
                       Change Full Name
-                    </button>}
-                    {role == "customer" && changeName && 
+                    </button>
+                    {changeName && 
                     <form 
                         onClick={(e) => e.stopPropagation()} 
                         onSubmit={(e) => {
