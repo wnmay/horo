@@ -1,7 +1,6 @@
 package http
 
 import (
-	"log"
 	"time"
 
 	"github.com/wnmay/horo/services/course-service/internal/app"
@@ -24,20 +23,20 @@ func (h *Handler) Register(router fiber.Router) {
 	group := router.Group("/api")
 	group.Post("/courses", h.CreateCourse)
 	group.Get("/courses/:id", h.GetCourseByID)
-	group.Get("/prophets/:prophetId/courses", h.ListCoursesByProphet)
+	group.Get("/prophets/:prophetID/courses", h.ListCoursesByProphet)
 	group.Patch("/courses/:id", h.UpdateCourse)
 	group.Patch("/courses/delete/:id", h.DeleteCourse)
 	group.Get("/courses", h.FindCoursesByFilter)
 	group.Get("/courses/prophet/courses", h.ListCurrentProphetCourses)
 	// Review
-	group.Post("/courses/:courseId/review", h.CreateReview)
+	group.Post("/courses/:courseID/review", h.CreateReview)
 	group.Get("/courses/review/:id", h.GetReviewByID)
-	group.Get("/courses/:courseId/reviews", h.GetReviewByCourseID)
+	group.Get("/courses/:courseID/reviews", h.GetReviewByCourseID)
 }
 
 // CreateCourse — POST /courses
 func (h *Handler) CreateCourse(c *fiber.Ctx) error {
-	prophetID := c.Get("X-User-Id")
+	prophetID := c.Get("X-User-ID")
 	var req struct {
 		CourseName  string  `json:"coursename"`
 		CourseType  string  `json:"coursetype"`
@@ -59,7 +58,7 @@ func (h *Handler) CreateCourse(c *fiber.Ctx) error {
 		Duration:    domain.DurationEnum(req.Duration),
 	}
 
-	course, err := h.service.CreateCourse(input)
+	course, err := h.service.CreateCourse(c.Context(), input)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
@@ -71,7 +70,7 @@ func (h *Handler) CreateCourse(c *fiber.Ctx) error {
 func (h *Handler) GetCourseByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	course, err := h.service.GetCourseByID(c.Context(), id)
+	course, err := h.service.GetCourseDetailByID(c.Context(), id)
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, "course not found")
 	}
@@ -79,9 +78,9 @@ func (h *Handler) GetCourseByID(c *fiber.Ctx) error {
 	return c.JSON(course)
 }
 
-// ListCoursesByProphet — GET /prophets/:prophetId/courses
+// ListCoursesByProphet — GET /prophets/:prophetID/courses
 func (h *Handler) ListCoursesByProphet(c *fiber.Ctx) error {
-	prophetID := c.Params("prophetId")
+	prophetID := c.Params("prophetID")
 
 	courses, err := h.service.ListCoursesByProphet(c.Context(), prophetID)
 	if err != nil {
@@ -106,7 +105,7 @@ func (h *Handler) UpdateCourse(c *fiber.Ctx) error {
 	if err := c.BodyParser(&in); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
 	}
-	out, err := h.service.UpdateCourse(id, &in)
+	out, err := h.service.UpdateCourse(c.Context(), id, &in)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
@@ -116,7 +115,7 @@ func (h *Handler) UpdateCourse(c *fiber.Ctx) error {
 // DeleteCourse — PATCH /courses/delete/:id
 func (h *Handler) DeleteCourse(c *fiber.Ctx) error {
 	id := c.Params("id")
-	if err := h.service.DeleteCourse(id); err != nil {
+	if err := h.service.DeleteCourse(c.Context(), id); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(fiber.Map{"message": "deleted_at"})
@@ -128,20 +127,23 @@ func (h *Handler) FindCoursesByFilter(c *fiber.Ctx) error {
 	courseName := c.Query("coursename")
 	prophetName := c.Query("prophetname")
 	duration := c.Query("duration")
+	courseType := c.Query("coursetype")
+	sortBy := c.Query("sortby")
+	order := c.Query("order")
 
-	var filter app.CourseFilter
-	if courseName != "" {
-		filter.CourseName = courseName
+	filter := app.CourseFilter{
+		CourseName:  courseName,
+		ProphetName: prophetName,
+		Duration:    duration,
+		CourseType:  app.ParseCourseType(courseType),
 	}
-	if prophetName != "" {
-		filter.ProphetName = prophetName
-	}
-	if duration != "" {
-		filter.Duration = duration
-	}
-	log.Println("Filter", filter.ProphetName)
 
-	courses, err := h.service.FindCoursesByFilter(c.Context(), filter)
+	sort := app.CourseSort{
+		SortBy: app.ParseSortType(sortBy),
+		Order:  order,
+	}
+
+	courses, err := h.service.FindCoursesByFilter(c.Context(), filter, sort)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
@@ -159,10 +161,10 @@ func (h *Handler) FindCoursesByFilter(c *fiber.Ctx) error {
 	})
 }
 
-// CreateReview — POST /courses/:courseId/review
+// CreateReview — POST /courses/:courseID/review
 func (h *Handler) CreateReview(c *fiber.Ctx) error {
 	var req struct {
-		CustomerId   string  `json:"customer_id"`
+		CustomerID   string  `json:"customer_id"`
 		CustomerName string  `json:"customername"`
 		Score        float64 `json:"score"`
 		Title        string  `json:"title"`
@@ -174,7 +176,7 @@ func (h *Handler) CreateReview(c *fiber.Ctx) error {
 	}
 
 	// Validation
-	if req.CustomerId == "" {
+	if req.CustomerID == "" {
 		return fiber.NewError(fiber.StatusBadRequest, "customer_id is required")
 	}
 	if req.CustomerName == "" {
@@ -185,8 +187,8 @@ func (h *Handler) CreateReview(c *fiber.Ctx) error {
 	}
 
 	input := app.CreateReviewInput{
-		CourseId:     c.Params("courseId"),
-		CustomerId:   req.CustomerId,
+		CourseID:     c.Params("courseId"),
+		CustomerID:   req.CustomerID,
 		CustomerName: req.CustomerName,
 		Score:        req.Score,
 		Title:        req.Title,
@@ -194,7 +196,7 @@ func (h *Handler) CreateReview(c *fiber.Ctx) error {
 		DeletedAt:    false,
 	}
 
-	review, err := h.service.CreateReview(input)
+	review, err := h.service.CreateReview(c.Context(), input)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
@@ -206,7 +208,7 @@ func (h *Handler) CreateReview(c *fiber.Ctx) error {
 func (h *Handler) GetReviewByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	review, err := h.service.GetReviewByID(id)
+	review, err := h.service.GetReviewByID(c.Context(), id)
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, "review not found")
 	}
@@ -218,7 +220,7 @@ func (h *Handler) GetReviewByID(c *fiber.Ctx) error {
 func (h *Handler) GetReviewByCourseID(c *fiber.Ctx) error {
 	courseId := c.Params("courseId")
 
-	reviews, err := h.service.ListReviewsByCourse(courseId)
+	reviews, err := h.service.ListReviewsByCourse(c.Context(), courseId)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
