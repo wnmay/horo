@@ -2,18 +2,41 @@
 
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import api from "@/lib/api/api-client";
+import { TagImages } from "@/types/common-type";
 
 interface Course {
   id: string;
-  name: string;
+  courseName: string;
+  courseType: string;
+  description: string;
+  duration: number;
   price: number;
   rating: number;
-  prophet: string;
-  experience: string;
-  specialties: string[];
-  description: string;
+  prophetId: string;
+  prophetName: string;
+  createdTime: string;
+  deletedAt: boolean;
   image: string;
-  reviews: { user: string; comment: string; rating: number }[];
+  reviews: {
+    id: string;
+    courseId: string;
+    customerId: string;
+    customerName: string;
+    title: string;
+    comment: string;
+    rating: number;
+    createdAt: string;
+    deletedAt: boolean;
+  }[];
+}
+
+function getImageForType(type: string): string {
+  if (!type) return "/images/default.jpg";
+  const match = Object.keys(TagImages).find(
+    (key) => key.toLowerCase() === type.toLowerCase()
+  );
+  return match ? TagImages[match] : "/images/default.jpg";
 }
 
 export default function CourseDetailPage({
@@ -21,160 +44,231 @@ export default function CourseDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = use(params); // unwrap the Promise using React.use()
+  const { id } = use(params);
   const router = useRouter();
 
   const [course, setCourse] = useState<Course | null>(null);
-  const [showChat, setShowChat] = useState(false);
-  const [chatMessages, setChatMessages] = useState<{ sender: string; text: string }[]>([]);
-  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // simulate fetching course data
-    const mockCourse: Course = {
-      id,
-      name: "Advanced Astrology Reading",
-      price: 1200,
-      rating: 4.9,
-      prophet: "Master Flook",
-      experience: "15 years of experience in astrology and tarot reading",
-      specialties: ["Love", "Career", "Destiny", "Future Prediction"],
-      description:
-        "Discover deep insights into your personal and professional life. This course covers planetary alignments, zodiac compatibility, and real-life case readings to help you master astrology interpretation.",
-      image:
-        "https://images.unsplash.com/photo-1606112219348-204d7d8b94ee?auto=format&fit=crop&w=900&q=80",
-      reviews: [
-        { user: "Anna", comment: "Truly life-changing session!", rating: 5 },
-        { user: "Mike", comment: "Accurate and insightful — highly recommend!", rating: 5 },
-        { user: "Sophie", comment: "Very professional and detailed reading.", rating: 4.5 },
-      ],
+    const fetchCourse = async () => {
+      try {
+        setIsLoading(true);
+        const response = await api.get(`/api/courses/${id}`);
+        const data = response.data.data;
+
+        const mappedCourse: Course = {
+          id: data.id,
+          courseName: data.coursename,
+          courseType: data.coursetype,
+          description: data.description,
+          duration: data.duration,
+          price: data.price,
+          rating: data.rating,
+          prophetId: data.prophet_id,
+          prophetName: data.prophetname,
+          createdTime: data.created_time,
+          deletedAt: data.deleted_at,
+          image: getImageForType(data.coursetype),
+          reviews:
+            data.reviews?.map((r: any) => ({
+              id: r.id,
+              courseId: r.course_id,
+              customerId: r.customer_id,
+              customerName: r.customername,
+              title: r.title,
+              comment: r.description,
+              rating: r.score,
+              createdAt: r.created_at,
+              deletedAt: r.deleted_at,
+            })) || [],
+        };
+
+        setCourse(mappedCourse);
+      } catch (err) {
+        console.error("Error fetching course:", err);
+        setError("Failed to load course details");
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    setCourse(mockCourse);
+    fetchCourse();
   }, [id]);
 
-  const handleSendMessage = () => {
-    if (!input.trim()) return;
-    setChatMessages((prev) => [...prev, { sender: "You", text: input }]);
-    setInput("");
+  const handleStartChat = () => {
+    if (course) {
+      console.log("Starting chat with prophet:", course.prophetId);
+      // Add your chat navigation logic here
+      // router.push(`/chat/${course.prophetId}`);
+    }
   };
 
-  if (!course)
+  if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen text-gray-600">
-        Loading course details...
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading course details...</p>
+        </div>
       </div>
     );
+  }
+
+  if (error || !course) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error || "Course not found"}</p>
+          <button
+            onClick={() => router.back()}
+            className="text-indigo-600 hover:text-indigo-700 font-medium"
+          >
+            ← Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4">
-      <div className="max-w-5xl w-full bg-white shadow-xl rounded-2xl overflow-hidden">
-        {/* Top section with image */}
-        <div className="relative h-64 w-full">
-          <img src={course.image} alt={course.name} className="object-cover w-full h-full" />
-        </div>
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto">
+        {/* Back Button */}
+        <button
+          onClick={() => router.back()}
+          className="mb-6 text-gray-600 hover:text-gray-900 flex items-center gap-2 transition-colors"
+        >
+          <span>←</span>
+          <span>Back to Courses</span>
+        </button>
 
-        {/* Details */}
-        <div className="p-8">
-          <h1 className="text-4xl font-bold mb-2">{course.name}</h1>
-          <p className="text-gray-600 mb-1">By {course.prophet}</p>
-          <p className="text-sm text-gray-500 mb-4">{course.experience}</p>
+        {/* Main Card */}
+        <div className="bg-white shadow-lg rounded-2xl overflow-hidden">
+          {/* Hero Image */}
+          <div className="relative h-80 w-full bg-gradient-to-br from-indigo-500 to-purple-600">
+            <img
+              src={course.image}
+              alt={course.courseName}
+              className="object-cover w-full h-full"
+            />
+            <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+          </div>
 
-          <p className="text-lg text-gray-700 leading-relaxed mb-6">{course.description}</p>
-
-          <div className="mb-6">
-            <h3 className="font-semibold text-lg mb-2">Specialties:</h3>
-            <div className="flex flex-wrap gap-2">
-              {course.specialties.map((spec, idx) => (
-                <span
-                  key={idx}
-                  className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm"
-                >
-                  {spec}
+          {/* Course Details */}
+          <div className="p-8">
+            {/* Header */}
+            <div className="mb-6">
+              <div className="flex items-start justify-between gap-4 mb-3">
+                <h1 className="text-4xl font-bold text-gray-900 leading-tight">
+                  {course.courseName}
+                </h1>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800 whitespace-nowrap">
+                  {course.courseType}
                 </span>
-              ))}
+              </div>
+
+              <div className="flex items-center gap-4 text-sm text-gray-600">
+                <span className="flex items-center gap-1">
+                  <span className="font-medium">By</span> {course.prophetName}
+                </span>
+                <span>•</span>
+                <span>{course.duration} minutes</span>
+                <span>•</span>
+                <span className="flex items-center gap-1">
+                  <span className="text-yellow-500">⭐</span>
+                  <span className="font-medium">
+                    {course.rating.toFixed(1)}
+                  </span>
+                </span>
+              </div>
             </div>
-          </div>
 
-          <div className="flex justify-between items-center border-t pt-4">
-            <div>
-              <p className="text-2xl font-semibold text-green-600">฿{course.price}</p>
-              <p className="text-yellow-500 mt-1">⭐ {course.rating} / 5</p>
+            {/* Description */}
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-3">
+                About This Course
+              </h2>
+              <p className="text-gray-700 leading-relaxed">
+                {course.description}
+              </p>
             </div>
 
-            <button
-              onClick={() =>
-                router.push(`/chat/${course.prophet.toLowerCase().replace(/\s+/g, "-")}`)
-              }
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium"
-            >
-              Start Chat
-            </button>
-          </div>
+            {/* Price and CTA */}
+            <div className="flex items-center justify-between p-6 bg-gray-50 rounded-xl border border-gray-200">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Course Price</p>
+                <p className="text-3xl font-bold text-indigo-600">
+                  ฿{course.price.toLocaleString()}
+                </p>
+              </div>
+              <button
+                onClick={handleStartChat}
+                className="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-8 py-3 rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg"
+              >
+                Start Chat with Prophet
+              </button>
+            </div>
 
-          {/* Reviews Section */}
-          <div className="mt-8 border-t pt-6">
-            <h3 className="text-xl font-semibold mb-4">Customer Reviews</h3>
-            <div className="space-y-3">
-              {course.reviews.map((r, i) => (
-                <div key={i} className="border rounded-lg p-4 bg-gray-50 hover:shadow-sm">
-                  <div className="flex justify-between">
-                    <span className="font-medium text-gray-800">{r.user}</span>
-                    <span className="text-yellow-500">⭐ {r.rating}</span>
-                  </div>
-                  <p className="text-gray-600 mt-2">{r.comment}</p>
+            {/* Reviews Section */}
+            {course.reviews.length > 0 && (
+              <div className="mt-10 pt-8 border-t border-gray-200">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Customer Reviews
+                  </h2>
+                  <span className="text-sm text-gray-600">
+                    {course.reviews.length}{" "}
+                    {course.reviews.length === 1 ? "review" : "reviews"}
+                  </span>
                 </div>
-              ))}
-            </div>
+
+                <div className="space-y-4">
+                  {course.reviews.map((review) => (
+                    <div
+                      key={review.id}
+                      className="p-5 bg-white border border-gray-200 rounded-lg hover:border-indigo-200 hover:shadow-sm transition-all"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-semibold text-gray-900">
+                            {review.customerName}
+                          </h3>
+                          {review.title && (
+                            <p className="text-sm text-gray-600 mt-1">
+                              {review.title}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded">
+                          <span className="text-yellow-500">⭐</span>
+                          <span className="font-semibold text-gray-900">
+                            {review.rating.toFixed(1)}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-gray-700 leading-relaxed">
+                        {review.comment}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-3">
+                        {new Date(review.createdAt).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          }
+                        )}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
-
-      {/* Optional Chat Box */}
-      {showChat && (
-        <div className="fixed bottom-6 right-6 w-80 bg-white rounded-xl shadow-2xl border flex flex-col overflow-hidden">
-          <div className="bg-indigo-600 text-white px-4 py-3 flex justify-between items-center">
-            <span className="font-semibold">Chat with {course.prophet}</span>
-            <button onClick={() => setShowChat(false)} className="text-white">
-              ✖
-            </button>
-          </div>
-          <div className="flex-1 p-3 space-y-2 overflow-y-auto max-h-64">
-            {chatMessages.length === 0 ? (
-              <p className="text-gray-500 text-sm text-center mt-4">
-                No messages yet. Start the conversation!
-              </p>
-            ) : (
-              chatMessages.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`p-2 rounded-lg text-sm ${
-                    msg.sender === "You"
-                      ? "bg-indigo-100 text-indigo-900 self-end"
-                      : "bg-gray-100 text-gray-800"
-                  }`}
-                >
-                  <strong>{msg.sender}:</strong> {msg.text}
-                </div>
-              ))
-            )}
-          </div>
-          <div className="border-t flex">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1 px-3 py-2 text-sm outline-none"
-            />
-            <button
-              onClick={handleSendMessage}
-              className="bg-indigo-600 text-white px-4 hover:bg-indigo-700"
-            >
-              Send
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

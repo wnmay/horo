@@ -15,15 +15,7 @@ import {
 import Card from "@/components/ui/card";
 import { toast } from "sonner";
 import api from "@/lib/api/api-client";
-
-const courseTypes = [
-  "Love",
-  "Study",
-  "Work",
-  "Health",
-  "Finance",
-  "Personal Growth",
-];
+import { courseTypes } from "@/types/common-type";
 
 export default function CreateCoursePage() {
   const [form, setForm] = useState({
@@ -176,25 +168,13 @@ export default function CreateCoursePage() {
                   <SelectValue placeholder="Select course type" />
                 </SelectTrigger>
                 <SelectContent className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-md">
-                  {courseTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
+                  {Object.keys(courseTypes).map((type) => (
+                    <SelectItem key={type} value={courseTypes[type]}>
                       {type}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                Prophet Name
-              </label>
-              <Input
-                name="prophetname"
-                placeholder="Enter prophet name"
-                value={form.prophetname}
-                onChange={handleChange}
-                className="focus:ring-2 focus:ring-blue-400"
-              />
             </div>
           </div>
 
