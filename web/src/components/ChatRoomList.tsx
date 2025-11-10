@@ -5,9 +5,14 @@ import LeftChat, { ChatRoom } from './LeftChat';
 import api from "@/lib/api/api-client";
 import { auth } from '@/firebase/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { ChatRoomProps } from './chat-middle/ChatRoomMiddle';
 
-const ChatRoomList = () => {
-  const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
+interface ChatRoomListProps {
+  setCurrentChatRoom: (data: ChatRoomProps) => void;
+}
+
+const ChatRoomList = ({ setCurrentChatRoom }: ChatRoomListProps) => {
+  const [chatRooms, setChatRooms] = useState<ChatRoomProps[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
@@ -35,7 +40,8 @@ const ChatRoomList = () => {
       
       // Fetch course names for all rooms
       const roomsWithCourseNames = await Promise.all(
-        rooms.map(async (room: ChatRoom) => {
+        // rooms.map(async (room: ChatRoom) => {
+        rooms.map(async (room: ChatRoomProps) => {
           try {
             const courseResponse = await api.get(`/api/courses/${room.CourseID}`);
             return {
@@ -72,9 +78,10 @@ const ChatRoomList = () => {
     }
   }, [authReady]);
 
-  const handleRoomClick = (roomId: string) => {
+  const handleRoomClick = (room: ChatRoomProps, roomId: string) => {
     console.log('Room clicked:', roomId);
     // Add your navigation or room selection logic here
+    setCurrentChatRoom(room);
   };
 
   if (loading) {
@@ -102,7 +109,7 @@ const ChatRoomList = () => {
           <LeftChat
             key={room.ID}
             room={room}
-            onClick={() => handleRoomClick(room.ID)}
+            onClick={() => handleRoomClick(room, room.ID)}
           />
         ))
       )}
