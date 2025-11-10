@@ -9,9 +9,10 @@ import (
 	"syscall"
 
 	"github.com/gofiber/fiber/v2"
-	grpcadapter "github.com/wnmay/horo/services/course-service/internal/adapters/inbound/grpc"
+	grpcin "github.com/wnmay/horo/services/course-service/internal/adapters/inbound/grpc"
 	httpadapter "github.com/wnmay/horo/services/course-service/internal/adapters/inbound/http"
 	dbout "github.com/wnmay/horo/services/course-service/internal/adapters/outbound/db"
+	grpcout "github.com/wnmay/horo/services/course-service/internal/adapters/outbound/grpc"
 	"github.com/wnmay/horo/services/course-service/internal/app"
 	"github.com/wnmay/horo/shared/db"
 	"github.com/wnmay/horo/shared/env"
@@ -26,7 +27,7 @@ func main() {
 	_ = env.LoadEnv("course-service")
 	restPort := env.GetString("REST_PORT", "3005")
 	grpcPort := env.GetString("GRPC_PORT", "50052")
-
+	userAddr := env.GetString(("USER_MANAGEMENT_SERVICE_ADDR"), "localhost:50051")
 	dbName := env.GetString("DB_NAME", "coursedb")
 	cfg := db.NewMongoDefaultConfig(dbName)
 	client, err := db.NewMongoClient(context.Background(), cfg)
@@ -38,7 +39,8 @@ func main() {
 
 	// === 2. Setup domain & service ===
 	repo := dbout.NewMongoCourseRepo(database)
-	svc := app.NewCourseService(repo)
+	userProvider, err := grpcout.NewUserClient(userAddr)
+	svc := app.NewCourseService(repo, userProvider)
 
 	// === 3. Setup Fiber (REST API) ===
 	appFiber := fiber.New()
@@ -52,7 +54,7 @@ func main() {
 		}
 
 		grpcServer := grpc.NewServer()
-		pb.RegisterCourseServiceServer(grpcServer, grpcadapter.NewCourseGRPCServer(svc))
+		pb.RegisterCourseServiceServer(grpcServer, grpcin.NewCourseGRPCServer(svc))
 		reflection.Register(grpcServer) // enable reflection for grpcurl testing
 
 		log.Printf("🚀 gRPC CourseService running on :%s\n", grpcPort)

@@ -8,7 +8,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	client "github.com/wnmay/horo/services/api-gateway/internal/clients"
 	"github.com/wnmay/horo/services/api-gateway/internal/config"
 	"github.com/wnmay/horo/services/api-gateway/internal/messaging"
 	gw_router "github.com/wnmay/horo/services/api-gateway/internal/router"
@@ -28,20 +27,10 @@ const (
 )
 
 func NewAPIGateway(cfg *config.Config) (*APIGateway, error) {
-	// Initialize gRPC clients with all service addresses
-	grpcClients, err := client.NewGrpcClients(
-		cfg.UserManagementAddr,
-		cfg.ChatAddr,
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	// Initialize messaging manager (handles RabbitMQ client, consumers, and publishers)
 	messagingManager, err := messaging.NewMessagingManager(cfg.RabbitMQURI)
 	log.Println("RabbitMQ URI:", cfg.RabbitMQURI)
 	if err != nil {
-		grpcClients.Close()
 		return nil, err
 	}
 
