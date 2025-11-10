@@ -104,3 +104,56 @@ func (r *MongoUserRepository) FindProphetNames(ctx context.Context, userIDs []st
 
 	return prophetNames, nil
 }
+
+func (r *MongoUserRepository) SearchProphetIdsByName(ctx context.Context, prophetName string) ([]*domain.ProphetName, error) {
+	filter := bson.M{"full_name": prophetName}
+
+	cursor, err := r.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search prophets: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var prophetNames []*domain.ProphetName
+
+	for cursor.Next(ctx) {
+		var user UserModel
+		if err := cursor.Decode(&user); err != nil {
+			return nil, fmt.Errorf("failed to decode user: %w", err)
+		}
+	}
+
+	return prophetNames, nil
+}
+
+func (r *MongoUserRepository) MapUserNames(ctx context.Context, userIDs []string) ([]*domain.UserName, error) {
+	filter := bson.M{"user_id": bson.M{"$in": userIDs}}
+
+	cursor, err := r.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to map users: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var userNames []*domain.UserName
+
+	for cursor.Next(ctx) {
+		var user UserModel
+		if err := cursor.Decode(&user); err != nil {
+			return nil, fmt.Errorf("failed to decode user: %w", err)
+		}
+
+		userNames = append(userNames, &domain.UserName{
+			UserID:   user.UserID,
+			UserName: user.FullName,
+			UserRole: domain.UserRole(user.Role),
+		})
+	}
+
+	// check for cursor-level errors
+	if err := cursor.Err(); err != nil {
+		return nil, fmt.Errorf("cursor error: %w", err)
+	}
+
+	return userNames, nil
+}

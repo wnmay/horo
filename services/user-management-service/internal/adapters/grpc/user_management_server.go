@@ -42,9 +42,45 @@ func (s *UserServer) GetProphetName(ctx context.Context, req *proto.GetProphetNa
 	}, nil
 }
 
+func (s *UserServer) GetProphetIdsByNames(ctx context.Context, req *proto.GetProphetIdsByNamesRequest) (*proto.GetProphetIdsByNamesResponse, error) {
+	prophetIds, err := s.userManagementService.SearchProphetIdsByName(ctx, req.ProphetName)
+	if err != nil {
+		return nil, err
+	}
+	protoProphetData := make([]*proto.ProphetData, len(prophetIds))
+	for i, prophetId := range prophetIds {
+		protoProphetData[i] = toProtoProphetName(prophetId)
+	}
+	return &proto.GetProphetIdsByNamesResponse{
+		ProphetData: protoProphetData,
+	}, nil
+}
+
+func (s *UserServer) MapUserNames(ctx context.Context, req *proto.MapUserNamesRequest) (*proto.MapUserNamesResponse, error) {
+	userNames, err := s.userManagementService.MapUserNames(ctx, req.UserIds)
+	if err != nil {
+		return nil, err
+	}
+	protoUserNames := make([]*proto.UserData, len(userNames))
+	for i, userName := range userNames {
+		protoUserNames[i] = toProtoUserName(userName)
+	}
+	return &proto.MapUserNamesResponse{
+		Users: protoUserNames,
+	}, nil
+}
+
 func toProtoProphetName(prophetName *domain.ProphetName) *proto.ProphetData {
 	return &proto.ProphetData{
 		UserId:      prophetName.UserID,
 		ProphetName: prophetName.ProphetName,
+	}
+}
+
+func toProtoUserName(userName *domain.UserName) *proto.UserData {
+	return &proto.UserData{
+		UserId: userName.UserID,
+		Name:   userName.UserName,
+		Role:   proto.UserRole(proto.UserRole_value[string(userName.UserRole)]),
 	}
 }

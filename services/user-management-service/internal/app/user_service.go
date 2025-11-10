@@ -69,3 +69,19 @@ func (s *UserManagementService) GetProphetName(ctx context.Context, userID strin
 	}
 	return prophet.FullName, nil
 }
+
+func (s *UserManagementService) SearchProphetIdsByName(ctx context.Context, prophetName string) ([]*domain.ProphetName, error) {
+	prophetIds, err := s.repo.SearchProphetIdsByName(ctx, prophetName)
+	if err != nil {
+		return nil, err
+	}
+	return prophetIds, nil
+}
+
+func (s *UserManagementService) MapUserNames(ctx context.Context, userIDs []string) ([]*domain.UserName, error) {
+	userNames, err := s.repo.MapUserNames(ctx, userIDs)
+	if err != nil {
+		return nil, err
+	}
+	return userNames, nil
+}

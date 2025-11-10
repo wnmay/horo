@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.33.0
-// source: proto/user_management.proto
+// source: user_management.proto
 
 package usermanagement
 
@@ -19,8 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserService_MapProphetNames_FullMethodName = "/usermanagement.UserService/MapProphetNames"
-	UserService_GetProphetName_FullMethodName  = "/usermanagement.UserService/GetProphetName"
+	UserService_MapProphetNames_FullMethodName      = "/usermanagement.UserService/MapProphetNames"
+	UserService_GetProphetName_FullMethodName       = "/usermanagement.UserService/GetProphetName"
+	UserService_GetProphetIdsByNames_FullMethodName = "/usermanagement.UserService/GetProphetIdsByNames"
+	UserService_MapUserNames_FullMethodName         = "/usermanagement.UserService/MapUserNames"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -29,6 +31,8 @@ const (
 type UserServiceClient interface {
 	MapProphetNames(ctx context.Context, in *MapProphetNamesRequest, opts ...grpc.CallOption) (*MapProphetNamesResponse, error)
 	GetProphetName(ctx context.Context, in *GetProphetNameRequest, opts ...grpc.CallOption) (*GetProphetNameResponse, error)
+	GetProphetIdsByNames(ctx context.Context, in *GetProphetIdsByNamesRequest, opts ...grpc.CallOption) (*GetProphetIdsByNamesResponse, error)
+	MapUserNames(ctx context.Context, in *MapUserNamesRequest, opts ...grpc.CallOption) (*MapUserNamesResponse, error)
 }
 
 type userServiceClient struct {
@@ -59,12 +63,34 @@ func (c *userServiceClient) GetProphetName(ctx context.Context, in *GetProphetNa
 	return out, nil
 }
 
+func (c *userServiceClient) GetProphetIdsByNames(ctx context.Context, in *GetProphetIdsByNamesRequest, opts ...grpc.CallOption) (*GetProphetIdsByNamesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetProphetIdsByNamesResponse)
+	err := c.cc.Invoke(ctx, UserService_GetProphetIdsByNames_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) MapUserNames(ctx context.Context, in *MapUserNamesRequest, opts ...grpc.CallOption) (*MapUserNamesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MapUserNamesResponse)
+	err := c.cc.Invoke(ctx, UserService_MapUserNames_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
 type UserServiceServer interface {
 	MapProphetNames(context.Context, *MapProphetNamesRequest) (*MapProphetNamesResponse, error)
 	GetProphetName(context.Context, *GetProphetNameRequest) (*GetProphetNameResponse, error)
+	GetProphetIdsByNames(context.Context, *GetProphetIdsByNamesRequest) (*GetProphetIdsByNamesResponse, error)
+	MapUserNames(context.Context, *MapUserNamesRequest) (*MapUserNamesResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -80,6 +106,12 @@ func (UnimplementedUserServiceServer) MapProphetNames(context.Context, *MapProph
 }
 func (UnimplementedUserServiceServer) GetProphetName(context.Context, *GetProphetNameRequest) (*GetProphetNameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProphetName not implemented")
+}
+func (UnimplementedUserServiceServer) GetProphetIdsByNames(context.Context, *GetProphetIdsByNamesRequest) (*GetProphetIdsByNamesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProphetIdsByNames not implemented")
+}
+func (UnimplementedUserServiceServer) MapUserNames(context.Context, *MapUserNamesRequest) (*MapUserNamesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MapUserNames not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -138,6 +170,42 @@ func _UserService_GetProphetName_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_GetProphetIdsByNames_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProphetIdsByNamesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetProphetIdsByNames(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetProphetIdsByNames_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetProphetIdsByNames(ctx, req.(*GetProphetIdsByNamesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_MapUserNames_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MapUserNamesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).MapUserNames(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_MapUserNames_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).MapUserNames(ctx, req.(*MapUserNamesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -153,7 +221,15 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetProphetName",
 			Handler:    _UserService_GetProphetName_Handler,
 		},
+		{
+			MethodName: "GetProphetIdsByNames",
+			Handler:    _UserService_GetProphetIdsByNames_Handler,
+		},
+		{
+			MethodName: "MapUserNames",
+			Handler:    _UserService_MapUserNames_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/user_management.proto",
+	Metadata: "user_management.proto",
 }
