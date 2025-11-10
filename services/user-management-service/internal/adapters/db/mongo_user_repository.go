@@ -106,7 +106,13 @@ func (r *MongoUserRepository) FindProphetNames(ctx context.Context, userIDs []st
 }
 
 func (r *MongoUserRepository) SearchProphetIdsByName(ctx context.Context, prophetName string) ([]*domain.ProphetName, error) {
-	filter := bson.M{"full_name": prophetName}
+	// Use case-insensitive, partial match (substring search)
+	filter := bson.M{
+		"fullname": bson.M{
+			"$regex":   prophetName,
+			"$options": "i",
+		},
+	}
 
 	cursor, err := r.collection.Find(ctx, filter)
 	if err != nil {
@@ -121,6 +127,15 @@ func (r *MongoUserRepository) SearchProphetIdsByName(ctx context.Context, prophe
 		if err := cursor.Decode(&user); err != nil {
 			return nil, fmt.Errorf("failed to decode user: %w", err)
 		}
+
+		prophetNames = append(prophetNames, &domain.ProphetName{
+			UserID:      user.UserID,
+			ProphetName: user.FullName,
+		})
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, fmt.Errorf("cursor error: %w", err)
 	}
 
 	return prophetNames, nil

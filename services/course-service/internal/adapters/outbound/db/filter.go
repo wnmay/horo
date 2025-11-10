@@ -1,5 +1,7 @@
 package db
+
 import (
+	"log"
 	"strconv"
 	"strings"
 
@@ -24,6 +26,8 @@ func (f CourseFilter) BuildMongoFilter() (bson.M, error) {
 	}
 
 	// Prophet ID: field in Mongo is prophet_id, filter values are ProphetIDs
+	log.Println("ProphetIDs", f.ProphetIDs)
+	
 	if len(f.ProphetIDs) > 0 {
 		filter["prophet_id"] = bson.M{"$in": f.ProphetIDs}
 	}

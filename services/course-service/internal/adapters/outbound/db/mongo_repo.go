@@ -64,11 +64,14 @@ func (r *MongoCourseRepo) Delete(id string) error {
 }
 
 func (r *MongoCourseRepo) FindByFilter(ctx context.Context, filter CourseFilter) ([]*domain.Course, error) {
+	if len(filter.ProphetIDs) == 0 {
+		return []*domain.Course{}, nil
+	}
+
 	filterMongo, err := filter.BuildMongoFilter()
 	if err != nil {
 		return nil, err
 	}
-
 	cursor, err := r.col.Find(ctx, filterMongo)
 	if err != nil {
 		return nil, err
@@ -106,9 +109,7 @@ func (r *MongoCourseRepo) FindReviewsByCourse(courseId string) ([]*domain.Review
 	if err != nil {
 		return nil, err
 	}
-	if err != nil {
-		return nil, err
-	}
+
 	defer cur.Close(context.TODO())
 
 	var reviews []*domain.Review

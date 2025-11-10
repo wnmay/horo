@@ -2,6 +2,7 @@ package grpcadapter
 
 import (
 	"context"
+	"log"
 
 	"github.com/wnmay/horo/services/user-management-service/internal/domain"
 	"github.com/wnmay/horo/services/user-management-service/internal/ports"
@@ -44,6 +45,7 @@ func (s *UserServer) GetProphetName(ctx context.Context, req *proto.GetProphetNa
 
 func (s *UserServer) GetProphetIdsByNames(ctx context.Context, req *proto.GetProphetIdsByNamesRequest) (*proto.GetProphetIdsByNamesResponse, error) {
 	prophetIds, err := s.userManagementService.SearchProphetIdsByName(ctx, req.ProphetName)
+	log.Println("ProphetIds", prophetIds)
 	if err != nil {
 		return nil, err
 	}

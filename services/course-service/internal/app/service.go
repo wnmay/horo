@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -139,6 +140,7 @@ func (s *courseService) DeleteCourse(id string) error {
 }
 
 func (s courseService) FindCoursesByFilter(ctx context.Context, filter CourseFilter) ([]*domain.Course, error) {
+	log.Println("Filter", filter.ProphetName)
 	prophetNames, err := s.user_provider.GetProphetIDsByNames(ctx, filter.ProphetName)
 	if err != nil {
 		return nil, err
@@ -149,7 +151,7 @@ func (s courseService) FindCoursesByFilter(ctx context.Context, filter CourseFil
 	}
 	repoFilter := db.CourseFilter{
 		CourseName: filter.CourseName,
-		ProphetIDs:  prophetIDs,
+		ProphetIDs: prophetIDs,
 		Duration:   filter.Duration,
 	}
 	return s.repo.FindByFilter(ctx, repoFilter)

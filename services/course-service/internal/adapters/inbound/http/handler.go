@@ -1,6 +1,7 @@
 package http
 
 import (
+	"log"
 	"time"
 
 	"github.com/wnmay/horo/services/course-service/internal/app"
@@ -88,7 +89,7 @@ func (h *Handler) ListCoursesByProphet(c *fiber.Ctx) error {
 	}
 
 	response := struct {
-		Timestamp time.Time        `json:"timestamp"`
+		Timestamp time.Time                       `json:"timestamp"`
 		Data      []*domain.CourseWithProphetName `json:"courses"`
 	}{
 		Timestamp: time.Now(),
@@ -138,6 +139,7 @@ func (h *Handler) FindCoursesByFilter(c *fiber.Ctx) error {
 	if duration != "" {
 		filter.Duration = duration
 	}
+	log.Println("Filter", filter.ProphetName)
 
 	courses, err := h.service.FindCoursesByFilter(c.Context(), filter)
 	if err != nil {
