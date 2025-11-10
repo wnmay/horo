@@ -16,7 +16,7 @@ type ChatService interface {
 	GetChatRoomsByProphetID(ctx context.Context, prophetID string) ([]*domain.Room, error)
 	PublishOutgoingMessage(ctx context.Context, message *domain.Message) error
 	ValidateRoomAccess(ctx context.Context, userID, roomID string) (allowed bool, reason string, err error)
-	GetChatRoomsByUserID(ctx context.Context, userID string) ([]*domain.Room, error)
+	GetChatRoomsByUserID(ctx context.Context, userID string) ([]*domain.RoomWithName, error)
 	PublishOrderCompletedNotification(ctx context.Context, notificationData message.ChatNotificationOutgoingData[message.OrderCompletedNotificationData]) error
 	PublishOrderPaymentBoundNotification(ctx context.Context, notificationData message.ChatNotificationOutgoingData[message.OrderPaymentBoundNotificationData]) error
 	PublishOrderPaidNotification(ctx context.Context, notificationData message.ChatNotificationOutgoingData[message.OrderPaidNotificationData]) error

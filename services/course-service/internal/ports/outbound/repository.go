@@ -17,4 +17,5 @@ type CourseRepository interface {
 	SaveReview(review *domain.Review) error
 	FindReviewByID(id string) (*domain.Review, error)
 	FindReviewsByCourse(courseId string) ([]*domain.Review, error)
+	FindCourseDetailByID(id string) (*domain.CourseDetail, error)
 }

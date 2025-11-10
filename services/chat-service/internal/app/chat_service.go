@@ -18,6 +18,7 @@ type chatService struct {
 	messageRepo      outbound_port.MessageRepository
 	roomRepo         outbound_port.RoomRepositoryPort
 	messagePublisher outbound_port.MessagePublisher
+	userProvider     outbound_port.UserProvider
 }
 
 type paymentCreatedChatMessage struct {
@@ -31,11 +32,12 @@ type paymentCreatedChatMessage struct {
 	MessageType string  `json:"messageType"`
 }
 
-func NewChatService(messageRepo outbound_port.MessageRepository, roomRepo outbound_port.RoomRepositoryPort, messagePublisher outbound_port.MessagePublisher) inbound_port.ChatService {
+func NewChatService(messageRepo outbound_port.MessageRepository, roomRepo outbound_port.RoomRepositoryPort, messagePublisher outbound_port.MessagePublisher, userProvider outbound_port.UserProvider) inbound_port.ChatService {
 	return &chatService{
 		messageRepo:      messageRepo,
 		roomRepo:         roomRepo,
 		messagePublisher: messagePublisher,
+		userProvider:     userProvider,
 	}
 }
 
@@ -146,8 +148,38 @@ func (s *chatService) ValidateRoomAccess(ctx context.Context, userID string, roo
 	return true, "", nil
 }
 
-func (s *chatService) GetChatRoomsByUserID(ctx context.Context, userID string) ([]*domain.Room, error) {
-	return s.roomRepo.GetChatRoomsByUserID(ctx, userID)
+func (s *chatService) GetChatRoomsByUserID(ctx context.Context, userID string) ([]*domain.RoomWithName, error) {
+	rooms, err := s.roomRepo.GetChatRoomsByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	var userIDs []string
+	for _, r := range rooms {
+		userIDs = append(userIDs, r.CustomerID)
+		userIDs = append(userIDs, r.ProphetID)
+	}
+	users, err := s.userProvider.MapUserNamesByIDs(ctx, userIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	var roomWithNames []*domain.RoomWithName
+
+	for _, r := range rooms {
+		roomWithNames = append(roomWithNames, &domain.RoomWithName{
+			ID:           r.ID,
+			ProphetID:    r.ProphetID,
+			CustomerID:   r.CustomerID,
+			CourseID:     r.CourseID,
+			CreatedAt:    r.CreatedAt,
+			LastMessage:  r.LastMessage,
+			IsDone:       r.IsDone,
+			ProphetName:  users[r.ProphetID].Name,
+			CustomerName: users[r.CustomerID].Name,
+		})
+	}
+	return roomWithNames, nil
+
 }
 
 func (s *chatService) PublishOrderCompletedNotification(ctx context.Context, notificationData message.ChatNotificationOutgoingData[message.OrderCompletedNotificationData]) error {

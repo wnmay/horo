@@ -63,9 +63,9 @@ func (s *UserServer) MapUserNames(ctx context.Context, req *proto.MapUserNamesRe
 	if err != nil {
 		return nil, err
 	}
-	protoUserNames := make([]*proto.UserData, len(userNames))
-	for i, userName := range userNames {
-		protoUserNames[i] = toProtoUserName(userName)
+	protoUserNames := make(map[string]*proto.UserData, len(userNames))
+	for _, user := range userNames {
+		protoUserNames[user.UserID] = toProtoUserName(user)
 	}
 	return &proto.MapUserNamesResponse{
 		Users: protoUserNames,
@@ -81,8 +81,7 @@ func toProtoProphetName(prophetName *domain.ProphetName) *proto.ProphetData {
 
 func toProtoUserName(userName *domain.UserName) *proto.UserData {
 	return &proto.UserData{
-		UserId: userName.UserID,
-		Name:   userName.UserName,
-		Role:   proto.UserRole(proto.UserRole_value[string(userName.UserRole)]),
+		Name: userName.UserName,
+		Role: proto.UserRole(proto.UserRole_value[string(userName.UserRole)]),
 	}
 }
