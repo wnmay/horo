@@ -71,7 +71,7 @@ func (h *Handler) CreateCourse(c *fiber.Ctx) error {
 func (h *Handler) GetCourseByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	course, err := h.service.GetCourseByID(c.Context(), id)
+	course, err := h.service.GetCourseDetailByID(c.Context(), id)
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, "course not found")
 	}

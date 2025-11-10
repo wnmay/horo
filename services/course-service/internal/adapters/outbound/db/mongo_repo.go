@@ -122,3 +122,12 @@ func (r *MongoCourseRepo) FindReviewsByCourse(courseId string) ([]*domain.Review
 	}
 	return reviews, nil
 }
+
+func (r *MongoCourseRepo) FindCourseDetailByID(id string) (*domain.CourseDetail, error) {
+	var cd domain.CourseDetail
+	err := r.col.FindOne(context.TODO(), bson.M{"id": id, "deleted_at": false}).Decode(&cd)
+	if err != nil {
+		return nil, err
+	}
+	return &cd, nil
+}

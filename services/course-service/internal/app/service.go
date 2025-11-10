@@ -15,6 +15,7 @@ import (
 type CourseService interface {
 	CreateCourse(input CreateCourseInput) (*domain.Course, error)
 	GetCourseByID(ctx context.Context, id string) (*domain.Course, error)
+	GetCourseDetailByID(ctx context.Context, id string) (*domain.CourseDetail, error)
 	GetCourseByIDWithProphetName(ctx context.Context, id string) (*domain.CourseWithProphetName, error)
 	ListCoursesByProphet(ctx context.Context, prophetID string) ([]*domain.CourseWithProphetName, error)
 	UpdateCourse(id string, input *domain.UpdateCourseInput) (*domain.Course, error)
@@ -32,6 +33,33 @@ type courseService struct {
 
 func (s courseService) GetCourseByID(ctx context.Context, id string) (*domain.Course, error) {
 	return s.repo.FindCourseByID(id)
+}
+
+func (s courseService) GetCourseDetailByID(ctx context.Context, id string) (*domain.CourseDetail, error) {
+	courseDetail, err := s.repo.FindCourseDetailByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if courseDetail == nil {
+		return nil, fmt.Errorf("course not found")
+	}
+	prophetID := courseDetail.ProphetID
+	prophetName, err := s.user_provider.GetProphetName(ctx, prophetID)
+	if err != nil {
+		return nil, err
+	}
+	courseDetail.ProphetName = prophetName
+	reviews, err := s.repo.FindReviewsByCourse(id)
+	if err != nil {
+		return nil, err
+	}
+	courseDetail.Reviews = reviews
+	rating := 0.0
+	for _, review := range reviews {
+		rating += review.Score
+	}
+	courseDetail.Rating = rating / float64(len(reviews))
+	return courseDetail, nil
 }
 
 func (s courseService) GetCourseByIDWithProphetName(ctx context.Context, id string) (*domain.CourseWithProphetName, error) {
