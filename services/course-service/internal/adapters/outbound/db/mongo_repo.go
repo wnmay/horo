@@ -39,14 +39,15 @@ func (r *MongoCourseRepo) FindCourseDetailByID(ctx context.Context, id string) (
 	pipeline := mongo.Pipeline{
 		{{Key: "$match", Value: bson.M{"id": id, "deleted_at": false}}},
 		{{Key: "$lookup", Value: bson.M{
-			"from":         "reviews",   // the reviews collection
-			"localField":   "id",        // field in courses
-			"foreignField": "course_id", // field in reviews
-			"as":           "reviews",   // alias field in the output
+			"from":         "reviews",
+			"localField":   "id",
+			"foreignField": "course_id",
+			"as":           "reviews",
 		}}},
+		// Optional: ensure fields exist, but don’t recalc
 		{{Key: "$addFields", Value: bson.M{
-			"review_count": bson.M{"$size": bson.M{"$ifNull": []interface{}{"$reviews", []interface{}{}}}},
-			"review_score": bson.M{"$avg": "$review.score"},
+			"review_count": bson.M{"$ifNull": []interface{}{"$review_count", 0}},
+			"review_score": bson.M{"$ifNull": []interface{}{"$review_score", 0.0}},
 		}}},
 	}
 

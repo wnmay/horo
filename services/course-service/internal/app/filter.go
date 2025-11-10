@@ -22,7 +22,7 @@ type SortType string
 
 const (
 	SortBy_Price  SortType = "price"
-	SortBy_Rating SortType = "rating"
+	SortBy_Score SortType = "score"
 )
 
 // Map plain string to domain.CourseType
@@ -50,8 +50,8 @@ func ParseSortType(input string) SortType {
 	switch strings.ToLower(input) {
 	case string(SortBy_Price):
 		return SortBy_Price
-	case string(SortBy_Rating):
-		return SortBy_Rating
+	case string(SortBy_Score):
+		return SortBy_Score
 	default:
 		return ""
 	}

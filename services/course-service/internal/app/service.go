@@ -152,7 +152,7 @@ func (s courseService) FindCoursesByFilter(ctx context.Context, filter CourseFil
 	return s.repo.FindByFilter(ctx, repoFilter, repoSort)
 }
 
-// Create a new review and automatically update course’s denormalized rating
+// Create a new review and automatically update course’s denormalized score
 func (s *courseService) CreateReview(ctx context.Context, input CreateReviewInput) (*domain.Review, error) {
 	review := &domain.Review{
 		ID:           generateID("REVIEW"),
