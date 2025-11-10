@@ -8,14 +8,21 @@ import (
 )
 
 type CourseRepository interface {
-	SaveCourse(course *domain.Course) error
-	FindCourseByID(id string) (*domain.Course, error)
-	FindCoursesByProphet(prophetID string) ([]*domain.Course, error)
-	Update(id string, updates map[string]interface{}) (*domain.Course, error)
-	Delete(id string) error
-	FindByFilter(ctx context.Context, filter db.CourseFilter) ([]*domain.Course, error)
-	SaveReview(review *domain.Review) error
-	FindReviewByID(id string) (*domain.Review, error)
-	FindReviewsByCourse(courseId string) ([]*domain.Review, error)
-	FindCourseDetailByID(id string) (*domain.CourseDetail, error)
+	//Course
+	SaveCourse(ctx context.Context, course *domain.Course) error
+	FindCourseByID(ctx context.Context, id string) (*domain.Course, error)
+	FindCoursesByProphet(ctx context.Context, prophetID string) ([]*domain.Course, error)
+	UpdateCourse(ctx context.Context, id string, updates map[string]interface{}) (*domain.Course, error)
+	DeleteCourse(ctx context.Context, id string) error
+	
+	//Filter, sort
+	FindByFilter(ctx context.Context, filter db.CourseFilter, sort db.CourseSort) ([]*domain.Course, error)
+
+	//Review
+	SaveReview(ctx context.Context, review *domain.Review) error
+	FindReviewByID(ctx context.Context, id string) (*domain.Review, error)
+	FindReviewsByCourse(ctx context.Context, courseID string) ([]*domain.Review, error)
+
+	//Course with review
+	FindCourseDetailByID(ctx context.Context, id string) (*domain.CourseDetail, error)
 }
