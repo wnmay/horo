@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import CourseCard from "@/components/course-card";
-import Image from "next/image";
+import CourseFilter from "../components/CourseFilter";
 
 export default function HomePage() {
   const router = useRouter();
@@ -142,43 +142,18 @@ export default function HomePage() {
           <p className="text-lg md:text-xl mt-2">{ads[adIndex].description}</p>
         </Card>
       </div>
-      {/* Search + Sort + Apply */}
-      <div className="max-w-6xl mx-auto px-4 mb-10">
-        {/* Added max-w-lg to the container to ensure it doesn't stretch infinitely on large screens */}
-        <div className="flex flex-col md:flex-row justify-center md:justify-between items-center gap-2 bg-white dark:bg-zinc-800 p-4 rounded-xl shadow max-w-lg mx-auto">
-          <input
-            type="text"
-            placeholder="Search courses or prophets..."
-            value={tempSearch}
-            onChange={(e) => setTempSearch(e.target.value)}
-            // Added md:w-[50%] back for desktop, but kept w-full for mobile flexibility
-            className="w-full md:w-[50%] border border-zinc-300 dark:border-zinc-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-zinc-900"
-          />
 
-          <select
-            value={tempSort}
-            onChange={(e) => setTempSort(e.target.value as "title" | "price" | "none")}
-            // Added md:w-[25%] back for desktop, but kept w-full for mobile flexibility
-            className="w-full md:w-[25%] border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-zinc-900"
-          >
-            <option value="none">Sort by</option>
-            <option value="title">Title (A–Z)</option>
-            <option value="price">Price (Low → High)</option>
-          </select>
+      <CourseFilter
+        courseTags={courseTags}
+        tagImages={tagImages}
+        onApply={({ tag, search, sort }) => {
+          setSelectedTag(tag);
+          setSearchQuery(search);
+          setSortOption(sort);
+          setPage(0);
+        }}
+      />
 
-          <Button
-            onClick={() => {
-              setSearchQuery(tempSearch);
-              setSelectedTag(tempTag);
-              setSortOption(tempSort);
-              setPage(0);
-            }}
-            className="bg-blue-600 text-white hover:bg-blue-700 px-6 py-2 rounded-lg"
-          >
-            Apply
-          </Button>
-        </div>
-      </div>
 
       {/* Courses */}
       <div className="px-6 py-12 bg-white dark:bg-zinc-900">

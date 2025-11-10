@@ -8,12 +8,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [showMenu, setShowMenu] = useState(false);
-  const [mounted, setMounted] = useState(false); // track client mount
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Only run on client
+  // Load user from localStorage
   useEffect(() => {
-    setMounted(true);
     const storedUser = localStorage.getItem("user");
     if (storedUser) setUser(JSON.parse(storedUser));
   }, []);
@@ -29,8 +27,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  if (!mounted) return null; // wait until client to render
-
   return (
     <html lang="en">
       <body className="font-sans antialiased bg-white dark:bg-black min-h-screen flex flex-col">
@@ -38,6 +34,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <header className="fixed top-4 right-4 z-50 flex items-center space-x-3">
           {user ? (
             <div className="flex items-center relative" ref={menuRef}>
+              {/* Dashboard button - outside user icon */}
+              {user.role === "prophet" && (
+                <button
+                  onClick={() => router.push("/prophet/dashboard")}
+                  className="mr-3 px-4 py-2 bg-white dark:bg-zinc-800 rounded-lg shadow-md hover:shadow-lg transition text-sm font-medium"
+                >
+                  Dashboard
+                </button>
+              )}
+
               {/* Profile icon */}
               <div
                 className="relative flex items-center bg-white dark:bg-zinc-800 rounded-full px-3 py-1 hover:shadow-lg transition cursor-pointer"
@@ -58,17 +64,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               {/* Dropdown menu */}
               {showMenu && (
                 <div className="absolute top-full right-0 mt-2 w-56 flex flex-col bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 z-50 overflow-hidden">
-                  {user.role === "prophet" && (
-                    <button
-                      onClick={() => {
-                        router.push("/prophet/dashboard");
-                        setShowMenu(false);
-                      }}
-                      className="block w-full text-left px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition"
-                    >
-                      Dashboard
-                    </button>
-                  )}
                   <button
                     onClick={() => {
                       const newName = prompt("Enter your full name", user.name || "");
