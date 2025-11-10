@@ -32,21 +32,9 @@ func (s *CourseGRPCServer) CreateCourse(ctx context.Context, req *pb.CreateCours
 }
 
 func (s *CourseGRPCServer) GetCourseByID(ctx context.Context, req *pb.GetCourseByIDRequest) (*pb.GetCourseByIDResponse, error) {
-	c, err := s.svc.GetCourseByID(req.GetId())
+	c, err := s.svc.GetCourseByID(ctx, req.GetId())
 	if err != nil {
 		return nil, err
 	}
 	return &pb.GetCourseByIDResponse{Course: toPbCourse(c)}, nil
-}
-
-func (s *CourseGRPCServer) ListCoursesByProphet(ctx context.Context, req *pb.ListCoursesByProphetRequest) (*pb.ListCoursesByProphetResponse, error) {
-	list, err := s.svc.ListCoursesByProphet(req.GetProphetId())
-	if err != nil {
-		return nil, err
-	}
-	out := make([]*pb.Course, 0, len(list))
-	for _, c := range list {
-		out = append(out, toPbCourse(c))
-	}
-	return &pb.ListCoursesByProphetResponse{Courses: out}, nil
 }

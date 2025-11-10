@@ -8,5 +8,9 @@ import (
 
 type UserManagementService interface {
 	Register(ctx context.Context, idToken, fullName, role string) error
-	GetMe(ctx context.Context, userId string) (*domain.User, error)
+	GetMe(ctx context.Context, userID string) (*domain.User, error)
+	GetProphetNames(ctx context.Context, userIDs []string) ([]*domain.ProphetName, error)
+	GetProphetName(ctx context.Context, userID string) (string, error)
+	SearchProphetIdsByName(ctx context.Context, prophetName string) ([]*domain.ProphetName, error)
+	MapUserNames(ctx context.Context, userIDs []string) ([]*domain.UserName, error)
 }
