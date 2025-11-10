@@ -3,8 +3,13 @@
 import "./globals.css";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { Toaster } from "sonner";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [showMenu, setShowMenu] = useState(false);
@@ -29,12 +34,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="en">
+      <head />
       <body className="font-sans antialiased bg-white dark:bg-black min-h-screen flex flex-col">
-        {/* Header bar */}
+        {/* Header */}
         <header className="fixed top-4 right-4 z-50 flex items-center space-x-3">
           {user ? (
             <div className="flex items-center relative" ref={menuRef}>
-              {/* Dashboard button - outside user icon */}
+              {/* Dashboard button */}
               {user.role === "prophet" && (
                 <button
                   onClick={() => router.push("/prophet/dashboard")}
@@ -44,7 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </button>
               )}
 
-              {/* Profile icon */}
+              {/* Profile Icon */}
               <div
                 className="relative flex items-center bg-white dark:bg-zinc-800 rounded-full px-3 py-1 hover:shadow-lg transition cursor-pointer"
                 onClick={() => setShowMenu(!showMenu)}
@@ -61,16 +67,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </span>
               </div>
 
-              {/* Dropdown menu */}
+              {/* Dropdown Menu */}
               {showMenu && (
                 <div className="absolute top-full right-0 mt-2 w-56 flex flex-col bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 z-50 overflow-hidden">
                   <button
                     onClick={() => {
-                      const newName = prompt("Enter your full name", user.name || "");
+                      const newName = prompt(
+                        "Enter your full name",
+                        user.name || ""
+                      );
                       if (newName) {
                         const updatedUser = { ...user, name: newName };
                         setUser(updatedUser);
-                        localStorage.setItem("user", JSON.stringify(updatedUser));
+                        localStorage.setItem(
+                          "user",
+                          JSON.stringify(updatedUser)
+                        );
                       }
                       setShowMenu(false);
                     }}
@@ -78,6 +90,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   >
                     Change Full Name
                   </button>
+
                   <button
                     onClick={() => {
                       alert("Switch account feature not implemented yet");
@@ -87,6 +100,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   >
                     Switch Account
                   </button>
+
                   <button
                     onClick={() => {
                       localStorage.removeItem("user");
@@ -118,8 +132,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           )}
         </header>
 
-        {/* Main content */}
+        {/* Main Content */}
         <main className="flex-1 mt-20">{children}</main>
+
+        {/* Toast notifications */}
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   );

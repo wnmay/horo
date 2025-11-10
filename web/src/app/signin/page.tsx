@@ -25,6 +25,7 @@ export default function SignInPage() {
     e.preventDefault();
     try {
       const userCredential = await doSignInWithEmailAndPassword(email, password);
+      console.log(userCredential.user.getIdToken())
       
       // Example: get user info
       const user = {

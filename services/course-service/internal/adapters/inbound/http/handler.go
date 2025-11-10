@@ -1,6 +1,7 @@
 package http
 
 import (
+	"log"
 	"time"
 
 	"github.com/wnmay/horo/services/course-service/internal/app"
@@ -27,7 +28,7 @@ func (h *Handler) Register(router fiber.Router) {
 	group.Patch("/courses/:id", h.UpdateCourse)
 	group.Patch("/courses/delete/:id", h.DeleteCourse)
 	group.Get("/courses", h.FindCoursesByFilter)
-
+	group.Get("/courses/prophet/courses", h.ListCurrentProphetCourses)
 	// Review
 	group.Post("/courses/:courseId/review", h.CreateReview)
 	group.Get("/courses/review/:id", h.GetReviewByID)
@@ -36,9 +37,8 @@ func (h *Handler) Register(router fiber.Router) {
 
 // CreateCourse — POST /courses
 func (h *Handler) CreateCourse(c *fiber.Ctx) error {
+	prophetID := c.Get("X-User-Id")
 	var req struct {
-		ProphetID   string  `json:"prophet_id"`
-		ProphetName string  `json:"prophetname"`
 		CourseName  string  `json:"coursename"`
 		CourseType  string  `json:"coursetype"`
 		Description string  `json:"description"`
@@ -51,8 +51,7 @@ func (h *Handler) CreateCourse(c *fiber.Ctx) error {
 	}
 
 	input := app.CreateCourseInput{
-		ProphetID:   req.ProphetID,
-		ProphetName: req.ProphetName,
+		ProphetID:   prophetID,
 		CourseName:  req.CourseName,
 		CourseType:  domain.CourseType(req.CourseType),
 		Description: req.Description,
@@ -72,7 +71,7 @@ func (h *Handler) CreateCourse(c *fiber.Ctx) error {
 func (h *Handler) GetCourseByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	course, err := h.service.GetCourseByID(id)
+	course, err := h.service.GetCourseDetailByID(c.Context(), id)
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, "course not found")
 	}
@@ -84,14 +83,14 @@ func (h *Handler) GetCourseByID(c *fiber.Ctx) error {
 func (h *Handler) ListCoursesByProphet(c *fiber.Ctx) error {
 	prophetID := c.Params("prophetId")
 
-	courses, err := h.service.ListCoursesByProphet(prophetID)
+	courses, err := h.service.ListCoursesByProphet(c.Context(), prophetID)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
 	response := struct {
-		Timestamp time.Time        `json:"timestamp"`
-		Data      []*domain.Course `json:"courses"`
+		Timestamp time.Time                       `json:"timestamp"`
+		Data      []*domain.CourseWithProphetName `json:"courses"`
 	}{
 		Timestamp: time.Now(),
 		Data:      courses,
@@ -130,18 +129,19 @@ func (h *Handler) FindCoursesByFilter(c *fiber.Ctx) error {
 	prophetName := c.Query("prophetname")
 	duration := c.Query("duration")
 
-	filter := map[string]interface{}{}
+	var filter app.CourseFilter
 	if courseName != "" {
-		filter["coursename"] = courseName
+		filter.CourseName = courseName
 	}
 	if prophetName != "" {
-		filter["prophetname"] = prophetName
+		filter.ProphetName = prophetName
 	}
 	if duration != "" {
-		filter["duration"] = duration
+		filter.Duration = duration
 	}
+	log.Println("Filter", filter.ProphetName)
 
-	courses, err := h.service.FindCoursesByFilter(filter)
+	courses, err := h.service.FindCoursesByFilter(c.Context(), filter)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
@@ -231,4 +231,16 @@ func (h *Handler) GetReviewByCourseID(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(response)
+}
+
+// ListCurrentProphetCourses — GET /courses/prophet/courses
+func (h *Handler) ListCurrentProphetCourses(c *fiber.Ctx) error {
+	prophetID := c.Get("X-User-Id")
+
+	courses, err := h.service.ListCoursesByProphet(c.Context(), prophetID)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(courses)
 }

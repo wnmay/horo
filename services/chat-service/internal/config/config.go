@@ -16,6 +16,7 @@ type Config struct {
 	MongoConfig *ChatMongoConfig
 	RabbitURI   string
 	GRPCPort string
+	UserServiceAddr string
 }
 
 const (
@@ -36,5 +37,6 @@ func LoadConfig() *Config {
 		MongoConfig: chatMongoConfig,
 		RabbitURI:   env.GetString("RABBITMQ_URI", "amqp://guest:guest@localhost:5672/"),
 		GRPCPort: env.GetString("GRPC_PORT","50053"),
+		UserServiceAddr: env.GetString("USER_SERVICE_ADDR", "localhost:50051"),
 	}
 }

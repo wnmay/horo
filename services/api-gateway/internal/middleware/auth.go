@@ -34,7 +34,6 @@ func (a *AuthMiddleware) AddClaims(c *fiber.Ctx) error {
 			"error": "missing authorization header",
 		})
 	}
-
 	token := strings.TrimPrefix(authHeader, "Bearer ")
 	if token == authHeader || token == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{

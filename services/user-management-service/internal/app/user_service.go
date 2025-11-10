@@ -12,13 +12,12 @@ import (
 )
 
 type UserManagementService struct {
-	authClient  ports.AuthPort
-	repo        ports.UserRepositoryPort
-	prophetRepo ports.ProphetRepoPort
+	authClient ports.AuthPort
+	repo       ports.UserRepositoryPort
 }
 
-func NewUserManagementService(authClient ports.AuthPort, repo ports.UserRepositoryPort, prophetRepo ports.ProphetRepoPort) *UserManagementService {
-	return &UserManagementService{authClient: authClient, repo: repo, prophetRepo: prophetRepo}
+func NewUserManagementService(authClient ports.AuthPort, repo ports.UserRepositoryPort) *UserManagementService {
+	return &UserManagementService{authClient: authClient, repo: repo}
 }
 
 func (s *UserManagementService) Register(ctx context.Context, idToken, fullName, role string) error {
@@ -42,16 +41,8 @@ func (s *UserManagementService) Register(ctx context.Context, idToken, fullName,
 		Email:    claims.Email,
 		Role:     role,
 	}
+	return s.repo.Save(ctx, user)
 
-	if user.Role == "customer" {
-		return s.repo.Save(ctx, user)
-	}
-
-	prophet := domain.Prophet{
-		User:    &user,
-		Balance: 0,
-	}
-	return s.prophetRepo.Save(ctx, prophet)
 }
 
 func (s *UserManagementService) GetMe(ctx context.Context, userID string) (*domain.User, error) {
@@ -61,4 +52,36 @@ func (s *UserManagementService) GetMe(ctx context.Context, userID string) (*doma
 	}
 
 	return user, nil
+}
+
+func (s *UserManagementService) GetProphetNames(ctx context.Context, userIDs []string) ([]*domain.ProphetName, error) {
+	prophetNames, err := s.repo.FindProphetNames(ctx, userIDs)
+	if err != nil {
+		return nil, err
+	}
+	return prophetNames, nil
+}
+
+func (s *UserManagementService) GetProphetName(ctx context.Context, userID string) (string, error) {
+	prophet, err := s.repo.FindById(ctx, userID)
+	if err != nil {
+		return "", err
+	}
+	return prophet.FullName, nil
+}
+
+func (s *UserManagementService) SearchProphetIdsByName(ctx context.Context, prophetName string) ([]*domain.ProphetName, error) {
+	prophetIds, err := s.repo.SearchProphetIdsByName(ctx, prophetName)
+	if err != nil {
+		return nil, err
+	}
+	return prophetIds, nil
+}
+
+func (s *UserManagementService) MapUserNames(ctx context.Context, userIDs []string) ([]*domain.UserName, error) {
+	userNames, err := s.repo.MapUserNames(ctx, userIDs)
+	if err != nil {
+		return nil, err
+	}
+	return userNames, nil
 }

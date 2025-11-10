@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/wnmay/horo/services/course-service/internal/domain"
 
@@ -64,38 +63,30 @@ func (r *MongoCourseRepo) Delete(id string) error {
 	return err
 }
 
-func (r *MongoCourseRepo) FindByFilter(filter map[string]interface{}) ([]*domain.Course, error) {
-	query := bson.M{
-		"deleted_at": false,
-		"id":         bson.M{"$regex": "^COURSE-"},
-	}
-	for key, val := range filter {
-		switch key {
-		case "coursename":
-			query["coursename"] = bson.M{"$regex": val, "$options": "i"}
-		case "prophetname":
-			query["prophetname"] = bson.M{"$regex": val, "$options": "i"}
-		case "duration":
-			if valStr, ok := val.(string); ok {
-				if i, err := strconv.Atoi(valStr); err == nil {
-					query["duration"] = i
-				}
-			} else {
-				query["duration"] = val
-			}
-		}
+func (r *MongoCourseRepo) FindByFilter(ctx context.Context, filter CourseFilter) ([]*domain.Course, error) {
+	if len(filter.ProphetIDs) == 0 {
+		return []*domain.Course{}, nil
 	}
 
-	cursor, err := r.col.Find(context.TODO(), query)
+	filterMongo, err := filter.BuildMongoFilter()
 	if err != nil {
 		return nil, err
 	}
-	defer cursor.Close(context.TODO())
-
-	var courses []*domain.Course
-	if err := cursor.All(context.TODO(), &courses); err != nil {
+	cursor, err := r.col.Find(ctx, filterMongo)
+	if err != nil {
 		return nil, err
 	}
+	defer cursor.Close(ctx)
+
+	var courses []*domain.Course
+	for cursor.Next(ctx) {
+		var c domain.Course
+		if err := cursor.Decode(&c); err != nil {
+			return nil, err
+		}
+		courses = append(courses, &c)
+	}
+
 	return courses, nil
 }
 
@@ -118,9 +109,7 @@ func (r *MongoCourseRepo) FindReviewsByCourse(courseId string) ([]*domain.Review
 	if err != nil {
 		return nil, err
 	}
-	if err != nil {
-		return nil, err
-	}
+
 	defer cur.Close(context.TODO())
 
 	var reviews []*domain.Review
@@ -132,4 +121,13 @@ func (r *MongoCourseRepo) FindReviewsByCourse(courseId string) ([]*domain.Review
 		reviews = append(reviews, &rv)
 	}
 	return reviews, nil
+}
+
+func (r *MongoCourseRepo) FindCourseDetailByID(id string) (*domain.CourseDetail, error) {
+	var cd domain.CourseDetail
+	err := r.col.FindOne(context.TODO(), bson.M{"id": id, "deleted_at": false}).Decode(&cd)
+	if err != nil {
+		return nil, err
+	}
+	return &cd, nil
 }

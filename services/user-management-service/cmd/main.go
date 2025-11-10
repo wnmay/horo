@@ -32,27 +32,22 @@ func main() {
 		log.Fatalf("failed to connect: %v", err)
 	}
 
-	prophetRepo, err := db.NewMongoProphetRepository(cfg.MongoURI, cfg.MongoDBName, cfg.UserCollectionName)
-	if err != nil {
-		log.Fatalf("failed to connect: %v", err)
-	}
-
 	// Init firebase and adapter
 	ctx := context.Background()
 	firebaseClient := firebase.InitFirebase(ctx, cfg.FirebaseAccountKeyFile)
 	firebaseAdapter := firebase.NewFirebaseAuthAdapter(firebaseClient)
 
 	// Init core service
-	userApp := app.NewUserManagementService(firebaseAdapter, userRepo, prophetRepo)
+	userApp := app.NewUserManagementService(firebaseAdapter, userRepo)
 	authApp := app.NewAuthService(firebaseAdapter)
 
 	// Create grpc server
-	authServer := grpcadapter.NewAuthServer(authApp)
+	userServiceServer := grpcadapter.NewUserServer(userApp)
 
 	grpcServer := grpc.NewServer()
 
 	// Register auth service on gRPC (user registration is now HTTP)
-	proto.RegisterAuthServiceServer(grpcServer, authServer)
+	proto.RegisterUserServiceServer(grpcServer, userServiceServer)
 
 	// Create HTTP handler
 	httpHandler := httpadapter.NewHTTPHandler(userApp, authApp)

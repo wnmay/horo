@@ -8,6 +8,18 @@ import (
 type Course struct {
 	ID          string       `bson:"id" json:"id"`
 	ProphetID   string       `bson:"prophet_id" json:"prophet_id"`
+	CourseName  string       `bson:"coursename" json:"coursename"`
+	CourseType  CourseType   `bson:"coursetype" json:"coursetype"`
+	Description string       `bson:"description" json:"description"`
+	Price       float64      `bson:"price" json:"price"`
+	Duration    DurationEnum `bson:"duration" json:"duration"`
+	CreatedAt   time.Time    `bson:"created_time" json:"created_time"`
+	DeletedAt   bool         `bson:"deleted_at" json:"deleted_at"`
+}
+
+type CourseWithProphetName struct {
+	ID          string       `bson:"id" json:"id"`
+	ProphetID   string       `bson:"prophet_id" json:"prophet_id"`
 	ProphetName string       `bson:"prophetname" json:"prophetname"`
 	CourseName  string       `bson:"coursename" json:"coursename"`
 	CourseType  CourseType   `bson:"coursetype" json:"coursetype"`
@@ -16,6 +28,21 @@ type Course struct {
 	Duration    DurationEnum `bson:"duration" json:"duration"`
 	CreatedAt   time.Time    `bson:"created_time" json:"created_time"`
 	DeletedAt   bool         `bson:"deleted_at" json:"deleted_at"`
+}
+
+type CourseDetail struct {
+	ID          string       `bson:"id" json:"id"`
+	ProphetID   string       `bson:"prophet_id" json:"prophet_id"`
+	ProphetName string       `bson:"prophetname" json:"prophetname"`
+	CourseName  string       `bson:"coursename" json:"coursename"`
+	CourseType  CourseType   `bson:"coursetype" json:"coursetype"`
+	Description string       `bson:"description" json:"description"`
+	Price       float64      `bson:"price" json:"price"`
+	Duration    DurationEnum `bson:"duration" json:"duration"`
+	CreatedAt   time.Time    `bson:"created_time" json:"created_time"`
+	DeletedAt   bool         `bson:"deleted_at" json:"deleted_at"`
+	Reviews     []*Review    `bson:"reviews" json:"reviews"`
+	Rating      float64      `bson:"rating" json:"rating"`
 }
 
 type Review struct {
