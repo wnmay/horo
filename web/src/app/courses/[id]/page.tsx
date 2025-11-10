@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api/api-client";
 import { TagImages } from "@/types/common-type";
+import { toast } from "sonner";
 
 interface Course {
   id: string;
@@ -29,6 +30,10 @@ interface Course {
     createdAt: string;
     deletedAt: boolean;
   }[];
+}
+
+interface CreateChatRoomRequest {
+  courseId: string;
 }
 
 function getImageForType(type: string): string {
@@ -97,11 +102,18 @@ export default function CourseDetailPage({
     fetchCourse();
   }, [id]);
 
-  const handleStartChat = () => {
+  const handleStartChat = async () => {
     if (course) {
-      console.log("Starting chat with prophet:", course.prophetId);
-      // Add your chat navigation logic here
-      // router.push(`/chat/${course.prophetId}`);
+      const res = await api.post(`/api/chat/rooms`, { courseId: course.id });
+      if (res.status === 200 || res.status === 201) {
+        const data = res.data.data;
+        //router.push(`/chat/${data.roomID}`);
+        toast.success(
+          "Chat room created successfully, wait to sync with chat page"
+        );
+      } else {
+        throw new Error(res.data.message || "Failed to create chat room");
+      }
     }
   };
 
