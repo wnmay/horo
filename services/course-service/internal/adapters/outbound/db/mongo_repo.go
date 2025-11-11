@@ -103,16 +103,16 @@ func (r *MongoCourseRepo) DeleteCourse(ctx context.Context, id string) error {
 }
 
 func (r *MongoCourseRepo) FindByFilter(ctx context.Context, filter CourseFilter, sort CourseSort) ([]*domain.Course, error) {
-	// Only return empty if there's no search criteria at all
-	if filter.SearchTerm == "" && len(filter.ProphetIDs) == 0 && filter.Duration == "" && filter.CourseType == "" {
-		log.Printf("No search criteria provided, returning empty result")
-		return []*domain.Course{}, nil
-	}
-
 	filterMongo, sortMongo, err := BuildMongoQuery(filter, sort)
 	if err != nil {
 		log.Printf("Error building MongoDB query: %v", err)
 		return nil, err
+	}
+
+	// If no filter criteria are provided, return all active courses
+	if filter.SearchTerm == "" && len(filter.ProphetIDs) == 0 && filter.Duration == "" && filter.CourseType == "" {
+		filterMongo = bson.M{"deleted_at": false}
+		log.Println("No filters provided — returning all courses.")
 	}
 
 	opts := options.Find()

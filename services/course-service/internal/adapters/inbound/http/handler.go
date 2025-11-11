@@ -150,7 +150,7 @@ func (h *Handler) DeleteCourse(c *fiber.Ctx) error {
 // FindCoursesbyFilter — GET /courses?coursename=&prophet_name=&duration=
 // GetAllCourses — GET /courses
 func (h *Handler) FindCoursesByFilter(c *fiber.Ctx) error {
-	searchTerm := c.Query("searchTerm")
+	searchTerm := c.Query("searchterm")
 	duration := c.Query("duration")
 	courseType := c.Query("coursetype")
 	sortBy := c.Query("sortby")
@@ -158,8 +158,8 @@ func (h *Handler) FindCoursesByFilter(c *fiber.Ctx) error {
 
 	filter := app.CourseFilter{
 		SearchTerm: searchTerm,
-		Duration:    duration,
-		CourseType:  app.ParseCourseType(courseType),
+		Duration:   duration,
+		CourseType: app.ParseCourseType(courseType),
 	}
 
 	sort := app.CourseSort{
