@@ -1,3 +1,5 @@
+import { Trigger } from "./contracts";
+
 export const TagImages: Record<string, string> = {
     Love: "/images/Love.jpg",
     Study: "/images/Study.jpg",
@@ -23,5 +25,6 @@ export interface MessageProps {
 	Content:   string;
 	Type:      "text" | "notification";
 	Status:    "sent" | "delivered" | "read" | "failed";
+  Trigger:   Trigger;
 	CreatedAt: string;
 }

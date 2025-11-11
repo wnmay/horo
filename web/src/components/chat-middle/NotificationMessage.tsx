@@ -7,7 +7,7 @@ import {
   OrderCompletedNotification,
   OrderPaidNotification,
   OrderPaymentBoundNotification,
-} from "@/types/ws_message";
+} from "@/types/ws-message";
 
 export function NotificationMessage({ msg }: { msg: ChatMessage }) {
   const [time, setTime] = useState("");
@@ -29,7 +29,7 @@ export function NotificationMessage({ msg }: { msg: ChatMessage }) {
       const data = (msg as OrderPaymentBoundNotification).messageDetail;
       icon = "💰";
       title = "Payment Started";
-      desc = `Customer ${data.customerId} started payment for ${data.courseName}.`;
+      desc = `Customer ${data?.customerId ?? "Unknown"} started payment for ${data?.courseName ?? "unknown"}.`;
       color = "blue";
       break;
     }
@@ -37,7 +37,7 @@ export function NotificationMessage({ msg }: { msg: ChatMessage }) {
       const data = (msg as OrderPaidNotification).messageDetail;
       icon = "✅";
       title = "Payment Successful";
-      desc = `Order ${data.orderId} (${data.courseName}) has been paid successfully.`;
+      desc = `Order ${data?.orderId ?? "Unknown"} (${data?.courseName ?? "Unknown"}) has been paid successfully.`;
       color = "green";
       break;
     }
@@ -45,7 +45,7 @@ export function NotificationMessage({ msg }: { msg: ChatMessage }) {
       const data = (msg as OrderCompletedNotification).messageDetail;
       icon = "🎉";
       title = "Order Completed";
-      desc = `Course "${data.courseName}" has been marked completed.`;
+      desc = `Course "${data?.courseName?? "Unknown"}" has been marked completed.`;
       color = "purple";
       break;
     }

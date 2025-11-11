@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ChatTextMessage } from "@/types/ws-message";
 
 interface Props {
     connected: boolean;
@@ -12,16 +11,14 @@ interface Props {
         content: string;
     }) => void;
     roomId: string;
-    senderId: string;
-    username: string;
+    roomIsDone: boolean;
 }
 
 export default function MessagsInput ({
   connected,
   sendMessage,
   roomId,
-  senderId,
-  username,
+  roomIsDone
 }: Props) {
     const [text, setText] = useState("");
 
@@ -52,12 +49,12 @@ export default function MessagsInput ({
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                disabled={!connected}
+                disabled={!connected || roomIsDone}
                 className="flex-1 border rounded px-3 py-2 focus:ring-2 focus:ring-blue-400"
             />
             <button 
                 onClick={handleSendMessage}
-                disabled={!connected}
+                disabled={!connected || roomIsDone}
                 className={`px-4 py-2 rounded text-white ${
                     connected ? "bg-blue-500 hover:bg-blue-600" : "bg-gray-400"
                     }`}>

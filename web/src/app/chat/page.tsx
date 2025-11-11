@@ -12,6 +12,7 @@ function page() {
   const [loading, setLoading] = useState(true);
   const [selectedRoom, setSelectedRoom] = useState<ChatRoom | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [orderStatus, setOrderStatus] = useState<string>("order not started yet");
 
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (user) => {
@@ -53,7 +54,7 @@ function page() {
       </div>
 
       <div className="flex w-[50%] justify-center items-center h-full bg-gray-100">
-        <ChatRoomMiddle room={selectedRoom} userId={userId} orderStatus="PENDING"/>
+        <ChatRoomMiddle room={selectedRoom} userId={userId} orderStatus={orderStatus}/>
       </div>
       <div className="flex-1">
         {selectedRoom ? (
@@ -61,6 +62,8 @@ function page() {
             roomId={selectedRoom.ID}
             role={role}
             courseId={selectedRoom.CourseID}
+            /**TODO: get order status from right panel */
+            // setOrderStatus={setOrderStatus}
           />
         ) : (
           <div className="flex items-center justify-center h-full text-gray-500">

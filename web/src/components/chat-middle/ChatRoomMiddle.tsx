@@ -10,11 +10,9 @@ import api from "@/lib/api/api-client";
 import MessagsInput from "./MessageInput";
 import { MessageProps } from "@/types/common-type";
 
-type orderStatusType = "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
-
 interface ChatMiddleProps {
     room: ChatRoom | null;
-    orderStatus: orderStatusType;
+    orderStatus: string;
     userId: string;
 }
 
@@ -52,6 +50,7 @@ export default function ChatRoomMiddle({
                     senderId: m.SenderID,
                     content: m.Content,
                     type: m.Type,
+                    trigger: m.Trigger,
                     createdAt: m.CreatedAt
             }));
 
@@ -87,12 +86,14 @@ export default function ChatRoomMiddle({
         return (<div className="w-full h-full border-r-2 border-l-2 border-gray-300"/>);
 
     const username = room.CustomerID === userId? room.CustomerName: room.ProphetName;
+    const display_coursename = (!room.courseName? "Horoscope Session":
+                                room.courseName?.length <= 24? room.courseName: room.courseName?.slice(0,24)+"...");
     
     return (
         <div className="flex flex-col w-full h-full border-r-2 border-l-2 border-gray-300">
             <header className="flex flex-col w-full h-[10%] p-3 text-2xl font-bold bg-slate-50">
                 {/** TODO: fetch course name */}
-                🔮 Horoscope Session #{room.ID} 
+                🔮 {display_coursename} #{room.ID.slice(0, 8)} 
                 <span className="text-lg font-light ml-10">Status: {orderStatus.toLocaleLowerCase()}</span>
             </header>
 
@@ -120,7 +121,12 @@ export default function ChatRoomMiddle({
                             key={index}
                             msg={msg}
                         />)
-                ))}
+                )
+                )}
+                {room.IsDone && 
+                <div className="w-full h-6 rounded-lg bg-gray-50">
+                    Chat room ended.
+                </div>}
             </div>
             
             <div className="w-full h-[10%] flex justify-center items-center">
@@ -128,8 +134,7 @@ export default function ChatRoomMiddle({
                     connected={connected}
                     sendMessage={sendMessage}
                     roomId={room.ID}
-                    senderId={userId} 
-                    username={username}
+                    roomIsDone={room.IsDone}
                 />
             </div>
         </div>
