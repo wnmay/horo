@@ -104,11 +104,7 @@ export default function CourseDetailPage({
     if (course) {
       const res = await api.post(`/api/chat/rooms`, { courseId: course.id });
       if (res.status === 200 || res.status === 201) {
-        const data = res.data.data;
-        //router.push(`/chat/${data.roomID}`);
-        toast.success(
-          "Chat room created successfully, wait to sync with chat page"
-        );
+        router.push(`/chat`);
       } else {
         throw new Error(res.data.message || "Failed to create chat room");
       }

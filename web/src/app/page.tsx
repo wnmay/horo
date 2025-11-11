@@ -91,9 +91,13 @@ export default function HomePage() {
             <div className="max-w-6xl mx-auto overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-400 dark:scrollbar-thumb-zinc-600 scrollbar-track-transparent">
               <div className="flex gap-6 min-w-max px-2 pb-4">
                 {courses.map((course) => (
-                  <div key={course.id} className="w-[240px] flex-shrink-0">
+                  <div
+                    key={course.id || course.course_id}
+                    className="w-[240px] flex-shrink-0"
+                  >
                     <CourseCard
                       course={{
+                        id: course.id || course.course_id,
                         title: course.coursename,
                         description: course.description,
                         prophet: course.prophetname,
