@@ -43,8 +43,8 @@ func NewChatService(messageRepo outbound_port.MessageRepository, roomRepo outbou
 	}
 }
 
-func (s *chatService) SaveMessage(ctx context.Context, roomID string, senderID string, content string, trigger string) (string, error) {
-	message := domain.CreateMessage("", roomID, senderID, content, domain.MessageTypeText, domain.MessageStatusSent, trigger)
+func (s *chatService) SaveMessage(ctx context.Context, roomID string, senderID string, content string, messageType domain.MessageType, status domain.MessageStatus, trigger string) (string, error) {
+	message := domain.CreateMessage("", roomID, senderID, content, messageType, status, trigger)
 	messageID, err := s.messageRepo.SaveMessage(context.Background(), message)
 	if err != nil {
 		return "", err
@@ -80,7 +80,7 @@ func (s *chatService) PublishPaymentCreatedMessage(ctx context.Context, paymentI
 		GeneratePaymentCreatedMessage(paymentID, orderID, status, amount),
 		domain.MessageTypeNotification,
 		domain.MessageStatusSent,
-		string(contract.PaymentCreatedEvent),
+		contract.PaymentCreatedEvent,
 	)
 	messageID, err := s.messageRepo.SaveMessage(ctx, message)
 	if err != nil {
