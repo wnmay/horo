@@ -41,7 +41,7 @@ func (c *CourseClient) GetCourseByID(ctx context.Context, courseID string) (*pb.
 	}
 
 	log.Printf("Calling course service GetCourseByID for courseID: %s", courseID)
-	
+
 	resp, err := c.client.GetCourseByID(ctx, req)
 	if err != nil {
 		log.Printf("gRPC error calling GetCourseByID: %v", err)
@@ -58,9 +58,9 @@ func (c *CourseClient) GetCourseByID(ctx context.Context, courseID string) (*pb.
 		return nil, fmt.Errorf("course not found")
 	}
 
-	log.Printf("Successfully fetched course: ID=%s, Name=%s, Price=%.2f", 
+	log.Printf("Successfully fetched course: ID=%s, Name=%s, Price=%.2f",
 		resp.Course.Id, resp.Course.Coursename, resp.Course.Price)
-	
+
 	return resp.Course, nil
 }
 

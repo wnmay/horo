@@ -58,3 +58,35 @@ func (s *UserManagementService) UpdateFullName(ctx context.Context, userID strin
 	update := map[string]interface{}{"fullname": newUsername}
 	return s.repo.Update(ctx, userID, update)
 }
+
+func (s *UserManagementService) GetProphetNames(ctx context.Context, userIDs []string) ([]*domain.ProphetName, error) {
+	prophetNames, err := s.repo.FindProphetNames(ctx, userIDs)
+	if err != nil {
+		return nil, err
+	}
+	return prophetNames, nil
+}
+
+func (s *UserManagementService) GetProphetName(ctx context.Context, userID string) (string, error) {
+	prophet, err := s.repo.FindById(ctx, userID)
+	if err != nil {
+		return "", err
+	}
+	return prophet.FullName, nil
+}
+
+func (s *UserManagementService) SearchProphetIdsByName(ctx context.Context, prophetName string) ([]*domain.ProphetName, error) {
+	prophetIds, err := s.repo.SearchProphetIdsByName(ctx, prophetName)
+	if err != nil {
+		return nil, err
+	}
+	return prophetIds, nil
+}
+
+func (s *UserManagementService) MapUserNames(ctx context.Context, userIDs []string) ([]*domain.UserName, error) {
+	userNames, err := s.repo.MapUserNames(ctx, userIDs)
+	if err != nil {
+		return nil, err
+	}
+	return userNames, nil
+}

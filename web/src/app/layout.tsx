@@ -6,8 +6,13 @@ import { Navbar } from "@/components/ui/navbar";
 import {auth} from "@/firebase/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import api from "@/lib/api/api-client";
+import { Toaster } from "sonner";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [user, setUser] = useState<any>(null);
   const [fullname, setFullname] = useState<string>("");
   const [role, setRole] = useState<string>("customer");
@@ -48,6 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         {/* Main content */}
         <main className="flex-1 mt-20">{children}</main>
+        <Toaster />
       </body>
     </html>
   );

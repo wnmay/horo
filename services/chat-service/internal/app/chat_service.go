@@ -18,6 +18,8 @@ type chatService struct {
 	messageRepo      outbound_port.MessageRepository
 	roomRepo         outbound_port.RoomRepositoryPort
 	messagePublisher outbound_port.MessagePublisher
+	userProvider     outbound_port.UserProvider
+	courseProvider   outbound_port.CourseProvider
 }
 
 type paymentCreatedChatMessage struct {
@@ -31,11 +33,13 @@ type paymentCreatedChatMessage struct {
 	MessageType string  `json:"messageType"`
 }
 
-func NewChatService(messageRepo outbound_port.MessageRepository, roomRepo outbound_port.RoomRepositoryPort, messagePublisher outbound_port.MessagePublisher) inbound_port.ChatService {
+func NewChatService(messageRepo outbound_port.MessageRepository, roomRepo outbound_port.RoomRepositoryPort, messagePublisher outbound_port.MessagePublisher, userProvider outbound_port.UserProvider, courseProvider outbound_port.CourseProvider) inbound_port.ChatService {
 	return &chatService{
 		messageRepo:      messageRepo,
 		roomRepo:         roomRepo,
 		messagePublisher: messagePublisher,
+		userProvider:     userProvider,
+		courseProvider:   courseProvider,
 	}
 }
 
@@ -49,8 +53,15 @@ func (s *chatService) SaveMessage(ctx context.Context, roomID string, senderID s
 }
 
 func (s *chatService) InitiateChatRoom(ctx context.Context, courseID string, customerID string) (string, error) {
-	mockProphetID := "prophet-1234" // TO DO: Use real prophet ID from course service
-	room := domain.CreateRoom(mockProphetID, customerID, courseID, false)
+	// Fetch real prophet ID from course service
+	prophetID, err := s.courseProvider.GetProphetIDByCourseID(ctx, courseID)
+	if err != nil {
+		log.Printf("Error fetching prophet ID for course %s: %v", courseID, err)
+		return "", err
+	}
+
+	log.Printf("Creating chat room with prophetID: %s, customerID: %s, courseID: %s", prophetID, customerID, courseID)
+	room := domain.CreateRoom(prophetID, customerID, courseID, false)
 
 	roomID, err := s.roomRepo.CreateRoom(context.Background(), room)
 	if err != nil {
@@ -146,8 +157,63 @@ func (s *chatService) ValidateRoomAccess(ctx context.Context, userID string, roo
 	return true, "", nil
 }
 
-func (s *chatService) GetChatRoomsByUserID(ctx context.Context, userID string) ([]*domain.Room, error) {
-	return s.roomRepo.GetChatRoomsByUserID(ctx, userID)
+func (s *chatService) GetChatRoomsByUserID(ctx context.Context, userID string) ([]*domain.RoomWithName, error) {
+	rooms, err := s.roomRepo.GetChatRoomsByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Return empty array if no rooms found
+	if len(rooms) == 0 {
+		return []*domain.RoomWithName{}, nil
+	}
+	
+	var userIDs []string
+	for _, r := range rooms {
+		userIDs = append(userIDs, r.CustomerID)
+		userIDs = append(userIDs, r.ProphetID)
+	}
+	users, err := s.userProvider.MapUserNamesByIDs(ctx, userIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	var roomWithNames []*domain.RoomWithName
+
+	for _, r := range rooms {
+		// Check if users exist in the map to prevent nil pointer dereference
+		prophetUser, prophetExists := users[r.ProphetID]
+		customerUser, customerExists := users[r.CustomerID]
+
+		var prophetName, customerName string
+		if prophetExists && prophetUser != nil {
+			prophetName = prophetUser.Name
+		} else {
+			log.Printf("[WARNING] Prophet user not found for ID: %s in room %s", r.ProphetID, r.ID)
+			prophetName = "Unknown"
+		}
+
+		if customerExists && customerUser != nil {
+			customerName = customerUser.Name
+		} else {
+			log.Printf("[WARNING] Customer user not found for ID: %s in room %s", r.CustomerID, r.ID)
+			customerName = "Unknown"
+		}
+
+		roomWithNames = append(roomWithNames, &domain.RoomWithName{
+			ID:           r.ID,
+			ProphetID:    r.ProphetID,
+			CustomerID:   r.CustomerID,
+			CourseID:     r.CourseID,
+			CreatedAt:    r.CreatedAt,
+			LastMessage:  r.LastMessage,
+			IsDone:       r.IsDone,
+			ProphetName:  prophetName,
+			CustomerName: customerName,
+		})
+	}
+	return roomWithNames, nil
+
 }
 
 func (s *chatService) PublishOrderCompletedNotification(ctx context.Context, notificationData message.ChatNotificationOutgoingData[message.OrderCompletedNotificationData]) error {

@@ -5,3 +5,5 @@ metadata:
 data:
   http-port: "3004"
   grpc-port: "50053"
+  user-service-addr: "user-management-service:50051"
+  course-service-addr: "course-service:50052"

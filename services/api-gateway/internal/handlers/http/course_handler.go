@@ -55,3 +55,7 @@ func (h *CourseHandler) GetReviewByID(c *fiber.Ctx) error {
 func (h *CourseHandler) ListReviewsByCourse(c *fiber.Ctx) error {
 	return ProxyRequest(c, h.client, "GET", h.courseServiceURL, fmt.Sprintf("/api/courses/%s/reviews", c.Params("courseId")))
 }
+
+func (h *CourseHandler) ListCurrentProphetCourses(c *fiber.Ctx) error {
+	return ProxyRequest(c, h.client, "GET", h.courseServiceURL, "/api/courses/prophet/courses")
+}

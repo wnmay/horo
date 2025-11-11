@@ -12,10 +12,12 @@ type ChatMongoConfig struct {
 }
 
 type Config struct {
-	HTTPPort    string
-	MongoConfig *ChatMongoConfig
-	RabbitURI   string
-	GRPCPort string
+	HTTPPort          string
+	MongoConfig       *ChatMongoConfig
+	RabbitURI         string
+	GRPCPort          string
+	UserServiceAddr   string
+	CourseServiceAddr string
 }
 
 const (
@@ -32,9 +34,11 @@ func LoadConfig() *Config {
 		RoomCollectionName:    RoomCollectionName,
 	}
 	return &Config{
-		HTTPPort:    env.GetString("HTTP_PORT", "3005"),
-		MongoConfig: chatMongoConfig,
-		RabbitURI:   env.GetString("RABBITMQ_URI", "amqp://guest:guest@localhost:5672/"),
-		GRPCPort: env.GetString("GRPC_PORT","50053"),
+		HTTPPort:          env.GetString("HTTP_PORT", "3005"),
+		MongoConfig:       chatMongoConfig,
+		RabbitURI:         env.GetString("RABBITMQ_URI", "amqp://guest:guest@localhost:5672/"),
+		GRPCPort:          env.GetString("GRPC_PORT", "50053"),
+		UserServiceAddr:   env.GetString("USER_SERVICE_ADDR", "localhost:50051"),
+		CourseServiceAddr: env.GetString("COURSE_SERVICE_ADDR", "localhost:50052"),
 	}
 }

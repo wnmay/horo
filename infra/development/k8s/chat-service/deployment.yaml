@@ -50,6 +50,17 @@ spec:
                 configMapKeyRef:
                   name: chat-service-config
                   key: grpc-port
+            - name: USER_SERVICE_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: chat-service-config
+                  key: user-service-addr
+            - name: COURSE_SERVICE_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: chat-service-config
+                  key: course-service-addr
+
 ---
 apiVersion: v1
 kind: Service

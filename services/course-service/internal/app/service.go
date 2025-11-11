@@ -1,46 +1,58 @@
 package app
 
 import (
+	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/wnmay/horo/services/course-service/internal/adapters/outbound/db"
 	"github.com/wnmay/horo/services/course-service/internal/domain"
 	"github.com/wnmay/horo/services/course-service/internal/ports/outbound"
 )
 
-type CourseService interface {
-	CreateCourse(input CreateCourseInput) (*domain.Course, error)
-	GetCourseByID(id string) (*domain.Course, error)
-	ListCoursesByProphet(prophetID string) ([]*domain.Course, error)
-	UpdateCourse(id string, input *domain.UpdateCourseInput) (*domain.Course, error)
-	DeleteCourse(id string) error
-	FindCoursesByFilter(filter map[string]interface{}) ([]*domain.Course, error)
-	CreateReview(input CreateReviewInput) (*domain.Review, error)
-	GetReviewByID(id string) (*domain.Review, error)
-	ListReviewsByCourse(courseId string) ([]*domain.Review, error)
-}
-
 type courseService struct {
-	repo outbound.CourseRepository
+	repo          outbound.CourseRepository
+	user_provider outbound.UserProvider
 }
 
-func (s courseService) GetCourseByID(id string) (*domain.Course, error) {
-	return s.repo.FindCourseByID(id)
+func NewCourseService(r outbound.CourseRepository, u outbound.UserProvider) CourseService {
+	return &courseService{
+		repo:          r,
+		user_provider: u,
+	}
 }
 
-func (s courseService) ListCoursesByProphet(prophetID string) ([]*domain.Course, error) {
-	return s.repo.FindCoursesByProphet(prophetID)
+// Simple get by ID
+func (s courseService) GetCourseByID(ctx context.Context, id string) (*domain.Course, error) {
+	return s.repo.FindCourseByID(ctx, id)
 }
 
-func NewCourseService(r outbound.CourseRepository) CourseService {
-	return &courseService{repo: r}
+// Get full detailed course with prophet name and reviews
+func (s courseService) GetCourseDetailByID(ctx context.Context, id string) (*domain.CourseDetail, error) {
+	courseDetail, err := s.repo.FindCourseDetailByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if courseDetail == nil {
+		return nil, fmt.Errorf("course not found")
+	}
+
+	// Enrich with prophet name from user service
+	prophetName, err := s.user_provider.GetProphetName(ctx, courseDetail.ProphetID)
+	if err != nil {
+		return nil, err
+	}
+	courseDetail.ProphetName = prophetName
+
+	return courseDetail, nil
 }
 
-func (s *courseService) CreateCourse(input CreateCourseInput) (*domain.Course, error) {
+// Create new course
+func (s *courseService) CreateCourse(ctx context.Context, input CreateCourseInput) (*domain.Course, error) {
 	c := &domain.Course{
 		ID:          generateID("COURSE"),
 		ProphetID:   input.ProphetID,
-		ProphetName: input.ProphetName,
 		CourseName:  input.CourseName,
 		CourseType:  input.CourseType,
 		Description: input.Description,
@@ -48,15 +60,18 @@ func (s *courseService) CreateCourse(input CreateCourseInput) (*domain.Course, e
 		Duration:    input.Duration,
 		CreatedAt:   time.Now(),
 		DeletedAt:   false,
+		ReviewCount: 0,
+		ReviewScore: 0,
 	}
 
-	if err := s.repo.SaveCourse(c); err != nil {
+	if err := s.repo.SaveCourse(ctx, c); err != nil {
 		return nil, err
 	}
 	return c, nil
 }
 
-func (s *courseService) UpdateCourse(id string, input *domain.UpdateCourseInput) (*domain.Course, error) {
+// Update course
+func (s *courseService) UpdateCourse(ctx context.Context, id string, input *domain.UpdateCourseInput) (*domain.Course, error) {
 	updates := make(map[string]interface{})
 	if input.CourseName != "" {
 		updates["coursename"] = input.CourseName
@@ -65,27 +80,84 @@ func (s *courseService) UpdateCourse(id string, input *domain.UpdateCourseInput)
 		updates["description"] = input.Description
 	}
 	if input.Price != nil {
-		updates["price"] = input.Price
+		updates["price"] = *input.Price
 	}
 	if input.Duration != nil {
-		updates["duration"] = input.Duration
+		updates["duration"] = *input.Duration
 	}
-	return s.repo.Update(id, updates)
+	return s.repo.UpdateCourse(ctx, id, updates)
 }
 
-func (s *courseService) DeleteCourse(id string) error {
-	return s.repo.Delete(id)
+// Soft delete
+func (s *courseService) DeleteCourse(ctx context.Context, id string) error {
+	return s.repo.DeleteCourse(ctx, id)
 }
 
-func (s *courseService) FindCoursesByFilter(filter map[string]interface{}) ([]*domain.Course, error) {
-	return s.repo.FindByFilter(filter)
+// List all courses for a given prophet, with prophet name attached
+func (s courseService) ListCoursesByProphet(ctx context.Context, prophetID string) ([]*domain.CourseWithProphetName, error) {
+	prophetName, err := s.user_provider.GetProphetName(ctx, prophetID)
+	if err != nil {
+		return nil, err
+	}
+
+	courses, err := s.repo.FindCoursesByProphet(ctx, prophetID)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]*domain.CourseWithProphetName, 0, len(courses))
+	for _, course := range courses {
+		results = append(results, &domain.CourseWithProphetName{
+			ID:          course.ID,
+			ProphetID:   course.ProphetID,
+			ProphetName: prophetName,
+			CourseName:  course.CourseName,
+			CourseType:  course.CourseType,
+			Description: course.Description,
+			Price:       course.Price,
+			Duration:    course.Duration,
+			CreatedAt:   course.CreatedAt,
+			DeletedAt:   course.DeletedAt,
+			ReviewCount: course.ReviewCount,
+			ReviewScore: course.ReviewScore,
+		})
+	}
+	return results, nil
 }
 
-func (s *courseService) CreateReview(input CreateReviewInput) (*domain.Review, error) {
-	c := &domain.Review{
+// Find courses by filter (supports filtering and sorting)
+func (s courseService) FindCoursesByFilter(ctx context.Context, filter CourseFilter, sort CourseSort) ([]*domain.Course, error) {
+	prophets, err := s.user_provider.GetProphetIDsByNames(ctx, filter.ProphetName)
+	if err != nil {
+		return nil, err
+	}
+
+	prophetIDs := make([]string, len(prophets))
+	for i, p := range prophets {
+		prophetIDs[i] = p.UserID
+	}
+
+	repoFilter := db.CourseFilter{
+		CourseName: filter.CourseName,
+		ProphetIDs: prophetIDs,
+		Duration:   filter.Duration,
+		CourseType: string(filter.CourseType),
+	}
+
+	repoSort := db.CourseSort{
+		SortBy: string(sort.SortBy),
+		Order:  sort.Order,
+	}
+
+	return s.repo.FindByFilter(ctx, repoFilter, repoSort)
+}
+
+// Create a new review and automatically update course’s denormalized score
+func (s *courseService) CreateReview(ctx context.Context, input CreateReviewInput) (*domain.Review, error) {
+	review := &domain.Review{
 		ID:           generateID("REVIEW"),
-		CourseId:     input.CourseId,
-		CustomerId:   input.CustomerId,
+		CourseID:     input.CourseID,
+		CustomerID:   input.CustomerID,
 		CustomerName: input.CustomerName,
 		Score:        input.Score,
 		Title:        input.Title,
@@ -94,45 +166,23 @@ func (s *courseService) CreateReview(input CreateReviewInput) (*domain.Review, e
 		DeletedAt:    false,
 	}
 
-	if err := s.repo.SaveReview(c); err != nil {
+	if err := s.repo.SaveReview(ctx, review); err != nil {
 		return nil, err
 	}
-	return c, nil
+	return review, nil
 }
 
-func (s courseService) GetReviewByID(id string) (*domain.Review, error) {
-	return s.repo.FindReviewByID(id)
+// Get a single review by ID
+func (s courseService) GetReviewByID(ctx context.Context, id string) (*domain.Review, error) {
+	return s.repo.FindReviewByID(ctx, id)
 }
 
-func (s courseService) ListReviewsByCourse(courseId string) ([]*domain.Review, error) {
-	return s.repo.FindReviewsByCourse(courseId)
+// List all reviews for a given course
+func (s courseService) ListReviewsByCourse(ctx context.Context, courseID string) ([]*domain.Review, error) {
+	return s.repo.FindReviewsByCourse(ctx, courseID)
 }
 
-func generateID(objType string) string {
-	return objType + "-" + uuid.New().String()
-}
-
-type CreateCourseInput struct {
-	ID          string
-	ProphetID   string
-	ProphetName string
-	CourseName  string
-	CourseType  domain.CourseType
-	Description string
-	Price       float64
-	Duration    domain.DurationEnum
-	CreatedAt   time.Time
-	DeletedAt   bool
-}
-
-type CreateReviewInput struct {
-	ID           string
-	CourseId     string
-	CustomerId   string
-	CustomerName string
-	Score        float64
-	Title        string
-	Description  string
-	CreatedAt    time.Time
-	DeletedAt    bool
+// helper
+func generateID(prefix string) string {
+	return prefix + "-" + uuid.New().String()
 }

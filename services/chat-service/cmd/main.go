@@ -9,6 +9,7 @@ import (
 
 	http_handler "github.com/wnmay/horo/services/chat-service/internal/adapters/inbound/http"
 	repository "github.com/wnmay/horo/services/chat-service/internal/adapters/outbound/db"
+	"github.com/wnmay/horo/services/chat-service/internal/adapters/outbound/grpc"
 	service "github.com/wnmay/horo/services/chat-service/internal/app"
 	"github.com/wnmay/horo/services/chat-service/internal/config"
 	"github.com/wnmay/horo/services/chat-service/internal/infrastructure"
@@ -50,8 +51,20 @@ func main() {
 	}
 	defer messagingManager.Close()
 
+	userProvider, err := grpc.NewUserClient(config.UserServiceAddr)
+	if err != nil {
+		log.Fatalf("Failed to initialize user provider: %v", err)
+	}
+	defer userProvider.Close()
+
+	courseProvider, err := grpc.NewCourseClient(config.CourseServiceAddr)
+	if err != nil {
+		log.Fatalf("Failed to initialize course provider: %v", err)
+	}
+	defer courseProvider.Close()
+
 	// Create chat service with repositories and publisher
-	chatService := service.NewChatService(messageRepo, roomRepo, messagePublisher)
+	chatService := service.NewChatService(messageRepo, roomRepo, messagePublisher, userProvider, courseProvider)
 
 	// Initialize consumers now that chat service is ready
 	messagingManager.InitializeConsumers(chatService)

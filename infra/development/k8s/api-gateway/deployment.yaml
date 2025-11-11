@@ -55,6 +55,11 @@ spec:
                 configMapKeyRef:
                   name: api-gateway-config
                   key: chat-service-url
+            - name: COURSE_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: api-gateway-config
+                  key: course-service-url
             - name: RABBITMQ_URI
               valueFrom:
                 secretKeyRef:

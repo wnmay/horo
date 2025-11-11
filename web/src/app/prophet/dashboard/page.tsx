@@ -2,159 +2,157 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { Plus } from "lucide-react";
+import api from "@/lib/api/api-client";
+import { auth } from "@/firebase/firebase";
+import CourseCard from "@/components/courseEditCard";
+import CourseEditModal from "@/components/courseEditModal";
 
 interface Course {
   id: string;
-  title: string;
+  prophet_id: string;
+  prophetname: string;
+  coursename: string;
+  coursetype: string;
   description: string;
-  price: string;
-  status: "active" | "inactive";
+  price: number;
+  duration: number;
+  created_time: string;
+  deleted_at: boolean;
 }
 
-export default function DashboardPage() {
-  const router = useRouter();
+export default function ProphetCoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
-  const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [editDescription, setEditDescription] = useState("");
-  const [editPrice, setEditPrice] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
-    async function fetchCourses() {
-      const mockCourses: Course[] = [
-        { id: "1", title: "How to Read the Stars", description: "Learn the basics of astrology.", price: "$49", status: "active" },
-        { id: "2", title: "Dream Interpretation 101", description: "Understand the meaning of dreams.", price: "$59", status: "active" },
-        { id: "3", title: "Life Path Guidance", description: "Discover your life path.", price: "$69", status: "inactive" },
-      ];
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      setCourses(mockCourses);
+    async function loadCourses() {
+      try {
+        if (!auth.currentUser) {
+          await new Promise<void>((resolve) => {
+            const unsubscribe = auth.onAuthStateChanged((user) => {
+              if (user) {
+                unsubscribe();
+                resolve();
+              }
+            });
+            setTimeout(() => {
+              unsubscribe();
+              resolve();
+            }, 1000);
+          });
+        }
+
+        const res = await api.get("/api/courses/prophet/courses");
+        const data = res.data.data;
+        setCourses(data);
+      } catch (err) {
+        toast("Failed to load prophet courses", {
+          description: (err as Error).message,
+          duration: 5000,
+          position: "top-right",
+        });
+      } finally {
+        setLoading(false);
+      }
     }
-    fetchCourses();
+    loadCourses();
   }, []);
 
-  const startEditing = (course: Course) => {
-    setEditingCourseId(course.id);
-    setEditTitle(course.title);
-    setEditDescription(course.description);
-    setEditPrice(course.price);
-  };
+  async function handleSaveEdit() {
+    if (!editingCourse) return;
 
-  const saveEdit = (id: string) => {
-    setCourses((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, title: editTitle, description: editDescription, price: editPrice } : c))
+    try {
+      setSaving(true);
+
+      const res = await api.patch(
+        `/api/courses/${editingCourse.id}`,
+        editingCourse
+      );
+
+      if (res.status !== 200) {
+        throw new Error(res.data.message || "Failed to update course");
+      }
+
+      // Optimistically update the UI
+      setCourses((prev) =>
+        prev.map((c) => (c.id === editingCourse.id ? editingCourse : c))
+      );
+
+      toast.success("Course updated successfully!", { position: "top-right" });
+      setIsDialogOpen(false);
+    } catch (err) {
+      toast.error("Failed to update course", {
+        description: (err as Error).message,
+        position: "top-right",
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleEditCourse(course: Course) {
+    setEditingCourse(course);
+    setIsDialogOpen(true);
+  }
+
+  function handleCloseModal() {
+    setIsDialogOpen(false);
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen text-lg text-blue-600 dark:text-blue-300 animate-pulse">
+        Loading courses...
+      </div>
     );
-    setEditingCourseId(null);
-  };
-
-  const toggleStatus = (id: string) => {
-    setCourses((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, status: c.status === "active" ? "inactive" : "active" } : c))
-    );
-  };
-
-  const deleteCourse = (id: string) => {
-    setCourses((prev) => prev.filter((c) => c.id !== id));
-  };
+  }
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">My Courses</h1>
-        <button
-          onClick={() => router.push("/prophet/dashboard/createCourse")}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow transition"
+    <div className="min-h-screen px-6 py-12">
+      <div className="max-w-6xl mx-auto flex items-center justify-between mb-10">
+        <h1 className="text-4xl font-extrabold text-blue-800 dark:text-blue-300 tracking-tight">
+          Prophet Courses
+        </h1>
+        <Button
+          onClick={() => router.push("/prophet/create-course")}
+          className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg hover:-translate-y-[1px] transition-all duration-200 rounded-lg px-4 py-2"
         >
-          + Create Course
-        </button>
+          <Plus className="w-4 h-4" />
+          Create Course
+        </Button>
       </div>
 
-      {/* Courses Grid */}
-      <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {courses.map((course) => (
-          <li
-            key={course.id}
-            className={`relative rounded-xl border shadow-sm overflow-hidden transition-all duration-200 hover:shadow-lg hover:scale-[1.02] ${
-              course.status === "inactive" ? "opacity-70" : ""
-            }`}
-          >
-            <div className="p-5 flex flex-col justify-between h-full">
-              {editingCourseId === course.id ? (
-                <>
-                  <input
-                    type="text"
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    className="w-full border px-3 py-1 rounded mb-2"
-                    placeholder="Course Title"
-                  />
-                  <textarea
-                    value={editDescription}
-                    onChange={(e) => setEditDescription(e.target.value)}
-                    className="w-full border px-3 py-1 rounded mb-2"
-                    placeholder="Course Description"
-                  />
-                  <input
-                    type="text"
-                    value={editPrice}
-                    onChange={(e) => setEditPrice(e.target.value)}
-                    className="w-full border px-3 py-1 rounded mb-2"
-                    placeholder="Price"
-                  />
-                  <div className="flex gap-2 mt-2">
-                    <button
-                      onClick={() => saveEdit(course.id)}
-                      className="px-3 py-1 text-sm rounded bg-green-100 text-green-700 hover:bg-green-200"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => setEditingCourseId(null)}
-                      className="px-3 py-1 text-sm rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <h2 className="text-xl font-semibold mb-1">{course.title}</h2>
-                  <p className="text-gray-600 mb-2">{course.description}</p>
-                  <p className="text-gray-800 font-medium mb-4">Price: {course.price}</p>
+      {courses.length === 0 ? (
+        <p className="text-center text-zinc-500 dark:text-zinc-400">
+          No courses available.
+        </p>
+      ) : (
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+          {courses.map((course) => (
+            <CourseCard
+              key={course.id}
+              course={course}
+              onEdit={handleEditCourse}
+            />
+          ))}
+        </div>
+      )}
 
-                  {/* Action buttons row */}
-                  <div className="flex gap-2 mt-auto">
-                    <button
-                      onClick={() => startEditing(course)}
-                      className="flex-1 px-3 py-1 text-sm rounded bg-green-100 text-green-700 hover:bg-green-200"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => deleteCourse(course.id)}
-                      className="flex-1 px-3 py-1 text-sm rounded bg-red-100 text-red-700 hover:bg-red-200"
-                    >
-                      Delete
-                    </button>
-                    <button
-                      onClick={() => toggleStatus(course.id)}
-                      className={`relative w-14 h-7 rounded-full transition-colors duration-300 ${
-                        course.status === "active" ? "bg-blue-600" : "bg-gray-300"
-                      }`}
-                    >
-                      <span
-                        className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transform transition-transform duration-300 ${
-                          course.status === "active" ? "translate-x-7" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
+      <CourseEditModal
+        isOpen={isDialogOpen}
+        onClose={handleCloseModal}
+        course={editingCourse}
+        onCourseChange={setEditingCourse}
+        onSave={handleSaveEdit}
+        isSaving={saving}
+      />
     </div>
   );
 }

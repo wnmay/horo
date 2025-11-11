@@ -34,6 +34,8 @@ spec:
               value: "3005"
             - name: GRPC_PORT
               value: "50052"
+            - name: USER_MANAGEMENT_SERVICE_ADDR
+              value: "user-management-service:50051"
 
             # Database configuration
             - name: DB_NAME

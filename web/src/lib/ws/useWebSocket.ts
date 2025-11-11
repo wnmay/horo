@@ -1,17 +1,51 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { WSClient } from "./client";
 import { ChatMessage } from "@/types/ws_message";
-import { useAuth } from "@/context/mockAuthProvider"; 
+import { auth } from "@/firebase/firebase";
+import { onAuthStateChanged, onIdTokenChanged } from "firebase/auth";
 
 export function useWebSocket() {
-  const { token } = useAuth(); // TO DO: replace with the real auth when finished
   const [connected, setConnected] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const wsRef = useRef<WSClient | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // stable message handler
   const handleMessage = useCallback((msg: ChatMessage) => {
     setMessages((prev) => [...prev, msg]);
+  }, []);
+
+  useEffect(() => {
+    const unsubAuth = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        setToken(null);
+        setError("User not logged in");
+        return;
+      }
+      try {
+        const t = await user.getIdToken(true);
+        setToken(t);
+        setError(null);
+      } catch (e) {
+        setError("Failed to get token");
+      }
+    });
+
+    const unsubToken = onIdTokenChanged(auth, async (user) => {
+      if (!user) return;
+      try {
+        const t = await user.getIdToken(true);
+        setToken(t);
+      } catch (e) {
+        console.error("[WS] onIdTokenChanged getIdToken failed:", e);
+      }
+    });
+
+    return () => {
+      unsubAuth();
+      unsubToken();
+    };
   }, []);
 
   useEffect(() => {
@@ -25,7 +59,7 @@ export function useWebSocket() {
       onMessage: handleMessage,
     });
 
-    client.connect(token); 
+    client.connect(token);
     wsRef.current = client;
 
     return () => {

@@ -42,12 +42,12 @@ func main() {
 	authApp := app.NewAuthService(firebaseAdapter)
 
 	// Create grpc server
-	authServer := grpcadapter.NewAuthServer(authApp)
+	userServiceServer := grpcadapter.NewUserServer(userApp)
 
 	grpcServer := grpc.NewServer()
 
 	// Register auth service on gRPC (user registration is now HTTP)
-	proto.RegisterAuthServiceServer(grpcServer, authServer)
+	proto.RegisterUserServiceServer(grpcServer, userServiceServer)
 
 	// Create HTTP handler
 	httpHandler := httpadapter.NewHTTPHandler(userApp, authApp)
