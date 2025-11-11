@@ -1,0 +1,45 @@
+@startuml Course Service - Component Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Component Diagram for Course Service
+
+Container(apiGateway, "API Gateway", "Go", "Routes requests")
+Container(orderService, "Order Service", "Go", "Requests course data")
+Container(chatService, "Chat Service", "Go", "Requests course data")
+
+Container_Boundary(courseService, "Course Service") {
+    Component(httpHandler, "HTTP Handler", "Go, Fiber", "Handles REST API requests")
+    Component(grpcServer, "gRPC Server", "Go, gRPC", "Provides course data to other services")
+    
+    Component(courseApp, "Course Application", "Go", "Core business logic for course operations")
+    
+    Component(courseRepository, "Course Repository", "Go", "Data access for courses and reviews")
+    Component(userClient, "User gRPC Client", "Go", "Client for user service")
+}
+
+Container(userService, "User Management Service", "Go", "Provides user data")
+ContainerDb(mongodb, "MongoDB", "Course database")
+
+' External to Service
+Rel(apiGateway, httpHandler, "CRUD courses, reviews, filters", "HTTP/REST")
+Rel(orderService, grpcServer, "Gets course by ID, details", "gRPC")
+Rel(chatService, grpcServer, "Gets course information", "gRPC")
+
+' HTTP flow
+Rel(httpHandler, courseApp, "Calls course operations", "")
+
+' gRPC flow
+Rel(grpcServer, courseApp, "Calls course queries", "")
+
+' Application logic
+Rel(courseApp, courseRepository, "Reads/writes courses and reviews", "")
+Rel(courseApp, userClient, "Validates prophets, gets names", "")
+
+' Adapters to external
+Rel(userClient, userService, "Queries user data", "gRPC")
+Rel(courseRepository, mongodb, "Queries/persists", "MongoDB Protocol")
+
+@enduml
+

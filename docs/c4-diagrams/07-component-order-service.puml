@@ -1,0 +1,54 @@
+@startuml Order Service - Component Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Component Diagram for Order Service
+
+Container(apiGateway, "API Gateway", "Go", "Routes requests")
+
+Container_Boundary(orderService, "Order Service") {
+    Component(httpHandler, "HTTP Handler", "Go, Fiber", "Handles REST API requests for orders")
+    
+    Component(orderApp, "Order Application", "Go", "Core business logic for order lifecycle")
+    
+    Component(orderRepository, "Order Repository", "Go", "Data access layer for orders")
+    
+    Component(eventPublisher, "Event Publisher", "Go", "Publishes order events to message broker")
+    Component(paymentConsumer, "Payment Consumer", "Go", "Consumes payment success events")
+    
+    Component(courseClient, "Course gRPC Client", "Go", "Client for course service")
+    Component(paymentClient, "Payment gRPC Client", "Go", "Client for payment service")
+}
+
+Container(courseService, "Course Service", "Go", "Provides course data")
+Container(paymentService, "Payment Service", "Go", "Handles payments")
+ContainerDb(postgres, "PostgreSQL", "Order database")
+ContainerQueue(rabbitmq, "RabbitMQ", "Message broker")
+
+' External to Service
+Rel(apiGateway, httpHandler, "Creates orders, updates status", "HTTP/REST")
+
+' HTTP flow
+Rel(httpHandler, orderApp, "Order operations", "")
+
+' Messaging flow - consuming
+Rel(rabbitmq, paymentConsumer, "Payment success events", "AMQP")
+Rel(paymentConsumer, orderApp, "Processes payment completion", "")
+
+' Messaging flow - publishing
+Rel(orderApp, eventPublisher, "Publishes order events", "")
+Rel(eventPublisher, rabbitmq, "Order created, completed events", "AMQP")
+
+' Application logic
+Rel(orderApp, orderRepository, "Saves/retrieves orders", "")
+Rel(orderApp, courseClient, "Gets course details, price", "")
+Rel(orderApp, paymentClient, "Initiates payment", "")
+
+' Adapters to external
+Rel(courseClient, courseService, "Queries course data", "gRPC")
+Rel(paymentClient, paymentService, "Payment operations", "gRPC")
+Rel(orderRepository, postgres, "Persists", "SQL/TCP")
+
+@enduml
+

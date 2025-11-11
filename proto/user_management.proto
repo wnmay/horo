@@ -16,7 +16,7 @@ message MapProphetNamesRequest {
 }
 
 message MapProphetNamesResponse {
-  repeated ProphetData mappings = 1; // List of (user_id, prophet_name) pairs
+  map<string, string> prophet_names = 1; // Map of (user_id, prophet_name) pairs
 }
 
 message ProphetData {

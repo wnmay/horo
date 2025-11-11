@@ -1,0 +1,51 @@
+@startuml Real-time Chat Flow - Sequence Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title Sequence Diagram: Real-time Chat Flow
+
+actor Customer
+participant "Web App" as Web
+participant "API Gateway\n(WebSocket)" as Gateway
+participant "WebSocket Hub" as Hub
+participant "Chat Publisher" as Publisher
+database "RabbitMQ" as MQ
+participant "Chat Consumer" as Consumer
+participant "Chat Service" as Chat
+database "Chat DB" as ChatDB
+
+Customer -> Web: Open chat room
+Web -> Gateway: WebSocket connect
+Gateway -> Gateway: Validate JWT token
+Gateway -> Hub: Register connection\n{userId, roomId}
+Gateway --> Web: Connection established
+
+Customer -> Web: Send message
+Web -> Gateway: WebSocket message\n{roomId, senderId, content}
+Gateway -> Publisher: Publish message
+Publisher -> MQ: ChatMessageIncoming queue\n{roomId, senderId, content, type}
+
+MQ -> Chat: Consume incoming message
+Chat -> ChatDB: Get room details
+ChatDB --> Chat: Room info
+Chat -> Chat: Validate user access
+Chat -> ChatDB: Save message
+ChatDB --> Chat: Message saved\n{messageId, timestamp}
+
+Chat -> MQ: Publish to ChatMessageOutgoing queue\n{messageId, roomId, senderId, content, createdAt}
+
+MQ -> Consumer: Deliver outgoing message
+Consumer -> Hub: Broadcast to room connections
+Hub -> Gateway: Send to connected clients\n(in roomId)
+Gateway -> Web: WebSocket message\n{messageId, content, sender, timestamp}
+Web --> Customer: Display message
+
+...Another user in same room...
+
+actor Prophet
+participant "Prophet Web" as ProphetWeb
+
+Hub -> ProphetWeb: WebSocket message\n(if prophet connected to room)
+ProphetWeb --> Prophet: Display message
+
+@enduml
+

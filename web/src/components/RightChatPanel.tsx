@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWebSocket } from "@/lib/ws/useWebSocket";
 import api from "@/lib/api/api-client";
-import { ChatMessage } from "@/types/ws_message";
+import { ChatMessage } from "@/types/ws-message";
 import { Trigger } from "@/types/contracts";
 import { auth } from "@/firebase/firebase";
 import ReviewBox from "./ReviewBox";

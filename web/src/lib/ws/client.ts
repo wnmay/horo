@@ -1,5 +1,5 @@
 import { parseChatMessage } from "./parser";
-import { ChatMessage } from "@/types/ws_message";
+import { ChatMessage } from "@/types/ws-message";
 
 export class WSClient {
   private ws: WebSocket | null = null;

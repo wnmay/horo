@@ -10,6 +10,7 @@ type Message struct {
 	SenderID  string
 	Content   string
 	Type      MessageType   // text | notification
+	Trigger   string        // order.created | order.completed | order.payment.bound | order.paid | payment.completed | payment.created | payment.settled
 	Status    MessageStatus // sent | delivered | read
 	CreatedAt time.Time
 }
@@ -30,7 +31,7 @@ const (
 	MessageTypeNotification MessageType = "notification"
 )
 
-func CreateMessage(messageID, roomID, senderID, content string, messageType MessageType, status MessageStatus) *Message {
+func CreateMessage(messageID, roomID, senderID, content string, messageType MessageType, status MessageStatus, trigger string) *Message {
 	return &Message{
 		ID:        messageID,
 		RoomID:    roomID,
@@ -39,5 +40,6 @@ func CreateMessage(messageID, roomID, senderID, content string, messageType Mess
 		Type:      messageType,
 		Status:    status,
 		CreatedAt: time.Now(),
+		Trigger:   trigger,
 	}
 }

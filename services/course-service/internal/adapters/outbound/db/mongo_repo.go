@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"log"
 
 	"github.com/wnmay/horo/services/course-service/internal/domain"
 	"go.mongodb.org/mongo-driver/bson"
@@ -102,13 +103,16 @@ func (r *MongoCourseRepo) DeleteCourse(ctx context.Context, id string) error {
 }
 
 func (r *MongoCourseRepo) FindByFilter(ctx context.Context, filter CourseFilter, sort CourseSort) ([]*domain.Course, error) {
-	if len(filter.ProphetIDs) == 0 {
-		return []*domain.Course{}, nil
-	}
-
 	filterMongo, sortMongo, err := BuildMongoQuery(filter, sort)
 	if err != nil {
+		log.Printf("Error building MongoDB query: %v", err)
 		return nil, err
+	}
+
+	// If no filter criteria are provided, return all active courses
+	if filter.SearchTerm == "" && len(filter.ProphetIDs) == 0 && filter.Duration == "" && filter.CourseType == "" {
+		filterMongo = bson.M{"deleted_at": false}
+		log.Println("No filters provided — returning all courses.")
 	}
 
 	opts := options.Find()
@@ -205,4 +209,22 @@ func (r *MongoCourseRepo) FindReviewByID(ctx context.Context, id string) (*domai
 		return nil, err
 	}
 	return &rv, nil
+}
+
+func (r *MongoCourseRepo) FindPopularCourses(ctx context.Context, limit int) ([]*domain.Course, error) {
+	cur, err := r.courseCol.Find(ctx, bson.M{"deleted_at": false}, options.Find().SetLimit(int64(limit)).SetSort(bson.D{{Key: "review_score", Value: -1}}))
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+
+	var courses []*domain.Course
+	for cur.Next(ctx) {
+		var c domain.Course
+		if err := cur.Decode(&c); err != nil {
+			return nil, err
+		}
+		courses = append(courses, &c)
+	}
+	return courses, nil
 }
