@@ -5,7 +5,6 @@ import LeftChat, { ChatRoom } from './LeftChat';
 import api from "@/lib/api/api-client";
 import { auth } from '@/firebase/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { ChatRoomProps } from './chat-middle/ChatRoomMiddle';
 
 interface ChatRoomListProps {
   onRoomSelect?: (room: ChatRoom) => void;

@@ -1,70 +1,60 @@
 "use client";
 
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import ChatRoomList from '@/components/ChatRoomList'
-import ChatRoomMiddle, { ChatRoomProps } from '@/components/chat-middle/ChatRoomMiddle'
+import ChatRoomMiddle from '@/components/chat-middle/ChatRoomMiddle'
 import { auth } from "@/firebase/firebase";
-import { onAuthStateChanged } from 'firebase/auth';
 import { ChatRoom } from "@/components/LeftChat";
+import RightPanel from '@/components/RightChatPanel';
 
 function page() {
-  const [currentChatRoom, setCurrentChatRoom] = useState<ChatRoomProps | null>(null);
+  const [role, setRole] = useState<"customer" | "prophet" | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedRoom, setSelectedRoom] = useState<ChatRoom | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string>("");
+  const [userId, setUserId] = useState<string | null>(null);
 
-  // Wait for Firebase Auth to be ready
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsub = auth.onAuthStateChanged(async (user) => {
       if (user) {
-        setUserId(user.uid);
-        setError(null);
+        try {
+          const tokenResult = await user.getIdTokenResult();
+          const claims = tokenResult.claims;
+          const userRole =
+            (claims.role as "customer" | "prophet") ?? "customer";
+          setRole(userRole);
+          // const uid = claims.id as string;
+          const uid = user.uid;
+          setUserId(uid);
+        } catch (err) {
+          console.error("getIdTokenResult error:", err);
+          setRole("customer");
+          setUserId(null);
+        }
       } else {
-        setUserId("");
-        setError("Please login to view chat rooms");
+        setRole(null);
+        setUserId(null);
       }
       setLoading(false);
     });
-
-    return () => unsubscribe();
+    return () => unsub();
   }, []);
 
   const handleRoomSelect = (room: ChatRoom) => {
     setSelectedRoom(room);
   };
 
-  const handleRoomSelect = (room: ChatRoom) => {
-    setSelectedRoom(room);
-  };
-
-  /**TODO: fetch order from right chat */
-
-  if (loading)
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-500">
-        Loading...
-      </div>
-    );
-  
-  if (error)
-    return (
-      <div className="flex items-center justify-center h-screen text-red-500">
-        {error}
-      </div>
-    );
+  if (loading) return <p className="p-4 text-gray-500">Loading user...</p>;
+  if (!role || !userId) return <p className="p-4 text-red-500">No user signed in.</p>;
 
   return (
-    <div className='fixed inset-0 flex w-screen h-screen overflow-hidden'>
-      <div className='w-[30%]'>
-        <ChatRoomList setCurrentChatRoom={setCurrentChatRoom}/>
     <div className="flex w-full h-screen">
       <div className="w-[30%] border-r">
         <ChatRoomList onRoomSelect={handleRoomSelect} />
       </div>
 
       <div className="flex w-[50%] justify-center items-center h-full bg-gray-100">
-        <ChatRoomMiddle room={currentChatRoom} userId={userId} orderStatus="PENDING"/>
+        <ChatRoomMiddle room={selectedRoom} userId={userId} orderStatus="PENDING"/>
+      </div>
       <div className="flex-1">
         {selectedRoom ? (
           <RightPanel
@@ -81,3 +71,5 @@ function page() {
     </div>
   );
 }
+
+export default page

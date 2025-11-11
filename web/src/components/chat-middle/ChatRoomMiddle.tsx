@@ -3,27 +3,14 @@
 import MessagsInput from "./MessageInput";
 import { Message } from "./Message";
 import { NotificationMessage } from "./NotificationMessage";
-import { useWebSocket } from "@/lib/ws/useWebSocket";
 import { useEffect, useState } from "react";
+import { ChatRoom } from "../LeftChat";
+import { useWebSocket } from "@/lib/ws/useWebSocket";
 
 type orderStatusType = "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
 
-type NotiType = "create_order" | "order_done";
-
-export interface ChatRoomProps {
-	ID: string; 
-	ProphetID: string;
-	CustomerID: string;
-	CourseID: string; 
-	CreatedAt: string;
-	LastMessage: string; 
-	IsDone: boolean;
-	ProphetName: string;
-	CustomerName: string;
-}
-
 interface ChatMiddleProps {
-    room: ChatRoomProps | null;
+    room: ChatRoom | null;
     orderStatus: orderStatusType;
     userId: string;
 }
