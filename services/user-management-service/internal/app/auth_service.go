@@ -22,3 +22,7 @@ func (s *AuthService) GetClaims(ctx context.Context, token string) (*ports.Claim
 	}
 	return claims, nil
 }
+
+func (s *AuthService) SetCustomClaims(ctx context.Context, uid string, customClaims map[string]interface{}) error {
+	return s.authPort.SetCustomUserClaims(ctx, uid, customClaims)
+}
