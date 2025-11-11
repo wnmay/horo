@@ -8,14 +8,15 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { ChatRoomProps } from './chat-middle/ChatRoomMiddle';
 
 interface ChatRoomListProps {
-  setCurrentChatRoom: (data: ChatRoomProps) => void;
+  onRoomSelect?: (room: ChatRoom) => void;
 }
 
-const ChatRoomList = ({ setCurrentChatRoom }: ChatRoomListProps) => {
+const ChatRoomList: React.FC<ChatRoomListProps> = ({ onRoomSelect }) => {
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
 
   // Wait for Firebase Auth to be ready
   useEffect(() => {
@@ -38,7 +39,6 @@ const ChatRoomList = ({ setCurrentChatRoom }: ChatRoomListProps) => {
       
       const rooms = response.data?.data || [];
       
-      // Fetch course names for all rooms
       const roomsWithCourseNames = await Promise.all(
         // rooms.map(async (room: ChatRoom) => {
         rooms.map(async (room: ChatRoom) => {
@@ -78,10 +78,11 @@ const ChatRoomList = ({ setCurrentChatRoom }: ChatRoomListProps) => {
     }
   }, [authReady]);
 
-  const handleRoomClick = (room: ChatRoom, roomId: string) => {
-    console.log('Room clicked:', roomId);
-    // Add your navigation or room selection logic here
-    // setCurrentChatRoom(room);
+  const handleRoomClick = (room: ChatRoom) => {
+    setSelectedRoomId(room.ID);
+    if (onRoomSelect) {
+      onRoomSelect(room);
+    }
   };
 
   if (loading) {
@@ -106,11 +107,15 @@ const ChatRoomList = ({ setCurrentChatRoom }: ChatRoomListProps) => {
         <p className="text-gray-500 text-center p-4">No chat rooms found</p>
       ) : (
         chatRooms.map((room) => (
-          <LeftChat
+          <div 
             key={room.ID}
-            room={room}
-            onClick={() => handleRoomClick(room, room.ID)}
-          />
+            className={selectedRoomId === room.ID ? 'bg-blue-50' : ''}
+          >
+            <LeftChat
+              room={room}
+              onClick={() => handleRoomClick(room)}
+            />
+          </div>
         ))
       )}
     </div>
