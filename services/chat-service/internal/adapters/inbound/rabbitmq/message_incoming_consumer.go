@@ -49,7 +49,7 @@ func (c *Consumer) handleMessageIncoming(ctx context.Context, delivery amqp.Deli
 	content := messageIncoming.Content
 
 	// Save to db
-	messageID, err := c.chatService.SaveMessage(ctx, roomID, senderID, content, string(contract.ChatMessageIncomingEvent))
+	messageID, err := c.chatService.SaveMessage(ctx, roomID, senderID, content, domain.MessageTypeText, domain.MessageStatusSent, string(contract.ChatMessageIncomingEvent))
 	if err != nil {
 		log.Printf("Failed to save message %s: %v", content, err)
 		return err
