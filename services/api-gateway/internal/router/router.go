@@ -57,7 +57,8 @@ func (r *Router) setupUserRoutes(api fiber.Router) {
 
 	users := api.Group("/users")
 	users.Post("/register", userHandler.Register)
-	users.Get("/me", userHandler.GetMe)
+	users.Get("/me", r.authMiddleware.AddClaims, userHandler.GetMe)
+	users.Patch("/update-name", r.authMiddleware.AddClaims, userHandler.UpdateUsername)
 }
 
 func (r *Router) setupOrderRoutes(api fiber.Router) {
