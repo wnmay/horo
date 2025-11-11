@@ -15,3 +15,13 @@ export const courseTypes: Record<string, string> = {
   Finance: "finance",
   "Personal Growth": "personal_growth",
 };
+
+export interface MessageProps {
+	ID:        string;
+	RoomID:    string;
+	SenderID:  string;
+	Content:   string;
+	Type:      "text" | "notification";
+	Status:    "sent" | "delivered" | "read" | "failed";
+	CreatedAt: string;
+}

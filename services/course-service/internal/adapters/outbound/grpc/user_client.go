@@ -50,13 +50,13 @@ func (c *UserClient) MapProphetNamesByIDs(ctx context.Context, userIDs []string)
 		return nil, fmt.Errorf("nil response from user service")
 	}
 
-	log.Println("Successfully get prophet names mapping:", resp.Mappings)
+	log.Println("Successfully get prophet names mapping:", resp.ProphetNames)
 
 	var prophetNames []domain.ProphetName
-	for _, p := range resp.Mappings {
+	for userID, prophetName := range resp.ProphetNames {
 		prophetNames = append(prophetNames, domain.ProphetName{
-			UserID: p.UserId,
-			Name:   p.ProphetName,
+			UserID: userID,
+			Name:   prophetName,
 		})
 	}
 	return prophetNames, nil

@@ -7,8 +7,8 @@ import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import api from "@/lib/api/api-client";
 import { auth } from "@/firebase/firebase";
-import CourseCard from "@/components/courseEditCard";
-import CourseEditModal from "@/components/courseEditModal";
+import CourseCard from "@/components/CourseEditCard";
+import CourseEditModal from "@/components/CourseEditModal";
 
 interface Course {
   id: string;

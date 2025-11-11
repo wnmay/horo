@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { WSClient } from "./client";
-import { ChatMessage } from "@/types/ws_message";
+import { ChatMessage } from "@/types/ws-message";
 import { auth } from "@/firebase/firebase";
 import { onAuthStateChanged, onIdTokenChanged } from "firebase/auth";
 
@@ -72,5 +72,13 @@ export function useWebSocket() {
     wsRef.current?.send(data);
   }, []);
 
-  return { connected, messages, send };
+  const joinRoom = useCallback((roomId: string) => {
+    wsRef.current?.send({ action: "join_room", roomId });
+  }, []);
+
+  const sendMessage = useCallback((data: object) => {
+    wsRef.current?.send(data);
+  }, []);
+
+  return { connected, messages, send, joinRoom, sendMessage };
 }

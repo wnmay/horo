@@ -1,0 +1,27 @@
+@startuml Horo System - Context Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_WITH_LEGEND()
+
+title System Context Diagram for Horo Platform
+
+Person(customer, "Customer", "A user who wants to purchase courses and consult with prophets")
+Person(prophet, "Prophet/Astrologer", "A service provider who offers consultation courses")
+
+System(horoSystem, "Horo Platform", "Enables customers to browse courses, purchase consultations, and chat with prophets in real-time")
+
+System_Ext(firebase, "Firebase", "Provides authentication and authorization services")
+System_Ext(postgres, "PostgreSQL Database", "Stores transactional data (orders, payments)")
+System_Ext(mongodb, "MongoDB Database", "Stores user profiles, courses, chat messages")
+System_Ext(rabbitmq, "RabbitMQ", "Message broker for asynchronous event-driven communication")
+
+Rel(customer, horoSystem, "Browses courses, makes purchases, chats with prophets", "HTTPS/WebSocket")
+Rel(prophet, horoSystem, "Manages courses, responds to customers, receives payments", "HTTPS/WebSocket")
+
+Rel(horoSystem, firebase, "Authenticates users", "HTTPS/Firebase SDK")
+Rel(horoSystem, postgres, "Reads from and writes to", "SQL/TCP")
+Rel(horoSystem, mongodb, "Reads from and writes to", "MongoDB Protocol")
+Rel(horoSystem, rabbitmq, "Publishes and consumes events", "AMQP")
+
+@enduml
+

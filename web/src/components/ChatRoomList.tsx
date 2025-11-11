@@ -33,12 +33,20 @@ const ChatRoomList: React.FC<ChatRoomListProps> = ({ onRoomSelect }) => {
     try {
       setLoading(true);
       
+      console.log('Fetching chat rooms...');
+      console.log('Auth current user:', auth.currentUser?.uid);
+      
       const response = await api.get('/api/chat/user/rooms');
-      console.log('API Response:', response.data); // Debug log
+      console.log('Full API Response:', response);
+      console.log('Response data:', response.data);
+      console.log('Response data.data:', response.data?.data);
       
       const rooms = response.data?.data || [];
+      console.log('Parsed rooms:', rooms);
+      console.log('Number of rooms:', rooms.length);
       
       const roomsWithCourseNames = await Promise.all(
+        // rooms.map(async (room: ChatRoom) => {
         rooms.map(async (room: ChatRoom) => {
           try {
             const courseResponse = await api.get(`/api/courses/${room.CourseID}`);
@@ -56,8 +64,16 @@ const ChatRoomList: React.FC<ChatRoomListProps> = ({ onRoomSelect }) => {
         })
       );
       
+      console.log('Final rooms with course names:', roomsWithCourseNames);
       setChatRooms(roomsWithCourseNames);
     } catch (err: any) {
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response,
+        status: err.response?.status,
+        data: err.response?.data
+      });
+      
       // Check if it's a 401 Unauthorized error
       if (err?.response?.status === 401 || err?.status === 401) {
         setError('Please login to view chat rooms');

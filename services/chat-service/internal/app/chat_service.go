@@ -43,8 +43,8 @@ func NewChatService(messageRepo outbound_port.MessageRepository, roomRepo outbou
 	}
 }
 
-func (s *chatService) SaveMessage(ctx context.Context, roomID string, senderID string, content string) (string, error) {
-	message := domain.CreateMessage("", roomID, senderID, content, domain.MessageTypeText, domain.MessageStatusSent)
+func (s *chatService) SaveMessage(ctx context.Context, roomID string, senderID string, content string, messageType domain.MessageType, status domain.MessageStatus, trigger string) (string, error) {
+	message := domain.CreateMessage("", roomID, senderID, content, messageType, status, trigger)
 	messageID, err := s.messageRepo.SaveMessage(context.Background(), message)
 	if err != nil {
 		return "", err
@@ -80,6 +80,7 @@ func (s *chatService) PublishPaymentCreatedMessage(ctx context.Context, paymentI
 		GeneratePaymentCreatedMessage(paymentID, orderID, status, amount),
 		domain.MessageTypeNotification,
 		domain.MessageStatusSent,
+		contract.PaymentCreatedEvent,
 	)
 	messageID, err := s.messageRepo.SaveMessage(ctx, message)
 	if err != nil {
@@ -115,6 +116,7 @@ func (s *chatService) PublishOutgoingMessage(ctx context.Context, message *domai
 		Content:   message.Content,
 		Type:      string(message.Type),
 		CreatedAt: message.CreatedAt.Format(time.RFC3339),
+		Trigger:   message.Trigger,
 	}
 	data, err := json.Marshal(messageData)
 	if err != nil {
@@ -162,6 +164,12 @@ func (s *chatService) GetChatRoomsByUserID(ctx context.Context, userID string) (
 	if err != nil {
 		return nil, err
 	}
+
+	// Return empty array if no rooms found
+	if len(rooms) == 0 {
+		return []*domain.RoomWithName{}, nil
+	}
+
 	var userIDs []string
 	for _, r := range rooms {
 		userIDs = append(userIDs, r.CustomerID)

@@ -16,14 +16,14 @@ import (
 )
 
 type ChatWSHandler struct {
-	hub       *gwWS.Hub
-	publisher *publishers.ChatMessagePublisher
-	httpClient  *http.Client
+	hub            *gwWS.Hub
+	publisher      *publishers.ChatMessagePublisher
+	httpClient     *http.Client
 	chatServiceURL string
 }
 
 func NewChatWSHandler(hub *gwWS.Hub, pub *publishers.ChatMessagePublisher) *ChatWSHandler {
-	return &ChatWSHandler{hub: hub, publisher: pub,httpClient: &http.Client{},chatServiceURL: env.GetString("CHAT_SERVICE_URL", "http://localhost:3004"),}
+	return &ChatWSHandler{hub: hub, publisher: pub, httpClient: &http.Client{}, chatServiceURL: env.GetString("CHAT_SERVICE_URL", "http://localhost:3004")}
 }
 
 func (h *ChatWSHandler) RegisterRoutes(app *fiber.App) {
@@ -99,6 +99,8 @@ func (h *ChatWSHandler) handle(c *websocket.Conn) {
 				msg.Type,
 			); err != nil {
 				log.Printf("[ws] publish err: %v", err)
+			} else {
+				log.Printf("[ws] publish success")
 			}
 
 		default:
@@ -161,7 +163,6 @@ func (h *ChatWSHandler) validateAndJoinRoom(roomID, userID string, conn *gwWS.Co
 	h.hub.AddToRoom(roomID, conn)
 	return true
 }
-
 
 func (h *ChatWSHandler) sendAck(conn *gwWS.Connection, roomID string) {
 	ack := map[string]any{

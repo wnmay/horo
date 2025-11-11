@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.33.0
-// source: user_management.proto
+// source: proto/user_management.proto
 
 package usermanagement
 
@@ -54,11 +54,11 @@ func (x UserRole) String() string {
 }
 
 func (UserRole) Descriptor() protoreflect.EnumDescriptor {
-	return file_user_management_proto_enumTypes[0].Descriptor()
+	return file_proto_user_management_proto_enumTypes[0].Descriptor()
 }
 
 func (UserRole) Type() protoreflect.EnumType {
-	return &file_user_management_proto_enumTypes[0]
+	return &file_proto_user_management_proto_enumTypes[0]
 }
 
 func (x UserRole) Number() protoreflect.EnumNumber {
@@ -67,7 +67,7 @@ func (x UserRole) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use UserRole.Descriptor instead.
 func (UserRole) EnumDescriptor() ([]byte, []int) {
-	return file_user_management_proto_rawDescGZIP(), []int{0}
+	return file_proto_user_management_proto_rawDescGZIP(), []int{0}
 }
 
 type MapProphetNamesRequest struct {
@@ -79,7 +79,7 @@ type MapProphetNamesRequest struct {
 
 func (x *MapProphetNamesRequest) Reset() {
 	*x = MapProphetNamesRequest{}
-	mi := &file_user_management_proto_msgTypes[0]
+	mi := &file_proto_user_management_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -91,7 +91,7 @@ func (x *MapProphetNamesRequest) String() string {
 func (*MapProphetNamesRequest) ProtoMessage() {}
 
 func (x *MapProphetNamesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_user_management_proto_msgTypes[0]
+	mi := &file_proto_user_management_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -104,7 +104,7 @@ func (x *MapProphetNamesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MapProphetNamesRequest.ProtoReflect.Descriptor instead.
 func (*MapProphetNamesRequest) Descriptor() ([]byte, []int) {
-	return file_user_management_proto_rawDescGZIP(), []int{0}
+	return file_proto_user_management_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *MapProphetNamesRequest) GetUserIds() []string {
@@ -116,14 +116,14 @@ func (x *MapProphetNamesRequest) GetUserIds() []string {
 
 type MapProphetNamesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Mappings      []*ProphetData         `protobuf:"bytes,1,rep,name=mappings,proto3" json:"mappings,omitempty"` // List of (user_id, prophet_name) pairs
+	ProphetNames  map[string]string      `protobuf:"bytes,1,rep,name=prophet_names,json=prophetNames,proto3" json:"prophet_names,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // Map of (user_id, prophet_name) pairs
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *MapProphetNamesResponse) Reset() {
 	*x = MapProphetNamesResponse{}
-	mi := &file_user_management_proto_msgTypes[1]
+	mi := &file_proto_user_management_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -135,7 +135,7 @@ func (x *MapProphetNamesResponse) String() string {
 func (*MapProphetNamesResponse) ProtoMessage() {}
 
 func (x *MapProphetNamesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_user_management_proto_msgTypes[1]
+	mi := &file_proto_user_management_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -148,12 +148,12 @@ func (x *MapProphetNamesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MapProphetNamesResponse.ProtoReflect.Descriptor instead.
 func (*MapProphetNamesResponse) Descriptor() ([]byte, []int) {
-	return file_user_management_proto_rawDescGZIP(), []int{1}
+	return file_proto_user_management_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *MapProphetNamesResponse) GetMappings() []*ProphetData {
+func (x *MapProphetNamesResponse) GetProphetNames() map[string]string {
 	if x != nil {
-		return x.Mappings
+		return x.ProphetNames
 	}
 	return nil
 }
@@ -168,7 +168,7 @@ type ProphetData struct {
 
 func (x *ProphetData) Reset() {
 	*x = ProphetData{}
-	mi := &file_user_management_proto_msgTypes[2]
+	mi := &file_proto_user_management_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -180,7 +180,7 @@ func (x *ProphetData) String() string {
 func (*ProphetData) ProtoMessage() {}
 
 func (x *ProphetData) ProtoReflect() protoreflect.Message {
-	mi := &file_user_management_proto_msgTypes[2]
+	mi := &file_proto_user_management_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -193,7 +193,7 @@ func (x *ProphetData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProphetData.ProtoReflect.Descriptor instead.
 func (*ProphetData) Descriptor() ([]byte, []int) {
-	return file_user_management_proto_rawDescGZIP(), []int{2}
+	return file_proto_user_management_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ProphetData) GetUserId() string {
@@ -219,7 +219,7 @@ type GetProphetNameRequest struct {
 
 func (x *GetProphetNameRequest) Reset() {
 	*x = GetProphetNameRequest{}
-	mi := &file_user_management_proto_msgTypes[3]
+	mi := &file_proto_user_management_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -231,7 +231,7 @@ func (x *GetProphetNameRequest) String() string {
 func (*GetProphetNameRequest) ProtoMessage() {}
 
 func (x *GetProphetNameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_user_management_proto_msgTypes[3]
+	mi := &file_proto_user_management_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -244,7 +244,7 @@ func (x *GetProphetNameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProphetNameRequest.ProtoReflect.Descriptor instead.
 func (*GetProphetNameRequest) Descriptor() ([]byte, []int) {
-	return file_user_management_proto_rawDescGZIP(), []int{3}
+	return file_proto_user_management_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetProphetNameRequest) GetUserId() string {
@@ -263,7 +263,7 @@ type GetProphetNameResponse struct {
 
 func (x *GetProphetNameResponse) Reset() {
 	*x = GetProphetNameResponse{}
-	mi := &file_user_management_proto_msgTypes[4]
+	mi := &file_proto_user_management_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -275,7 +275,7 @@ func (x *GetProphetNameResponse) String() string {
 func (*GetProphetNameResponse) ProtoMessage() {}
 
 func (x *GetProphetNameResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_user_management_proto_msgTypes[4]
+	mi := &file_proto_user_management_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -288,7 +288,7 @@ func (x *GetProphetNameResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProphetNameResponse.ProtoReflect.Descriptor instead.
 func (*GetProphetNameResponse) Descriptor() ([]byte, []int) {
-	return file_user_management_proto_rawDescGZIP(), []int{4}
+	return file_proto_user_management_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetProphetNameResponse) GetProphetName() string {
@@ -307,7 +307,7 @@ type GetProphetIdsByNamesRequest struct {
 
 func (x *GetProphetIdsByNamesRequest) Reset() {
 	*x = GetProphetIdsByNamesRequest{}
-	mi := &file_user_management_proto_msgTypes[5]
+	mi := &file_proto_user_management_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -319,7 +319,7 @@ func (x *GetProphetIdsByNamesRequest) String() string {
 func (*GetProphetIdsByNamesRequest) ProtoMessage() {}
 
 func (x *GetProphetIdsByNamesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_user_management_proto_msgTypes[5]
+	mi := &file_proto_user_management_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -332,7 +332,7 @@ func (x *GetProphetIdsByNamesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProphetIdsByNamesRequest.ProtoReflect.Descriptor instead.
 func (*GetProphetIdsByNamesRequest) Descriptor() ([]byte, []int) {
-	return file_user_management_proto_rawDescGZIP(), []int{5}
+	return file_proto_user_management_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetProphetIdsByNamesRequest) GetProphetName() string {
@@ -351,7 +351,7 @@ type GetProphetIdsByNamesResponse struct {
 
 func (x *GetProphetIdsByNamesResponse) Reset() {
 	*x = GetProphetIdsByNamesResponse{}
-	mi := &file_user_management_proto_msgTypes[6]
+	mi := &file_proto_user_management_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -363,7 +363,7 @@ func (x *GetProphetIdsByNamesResponse) String() string {
 func (*GetProphetIdsByNamesResponse) ProtoMessage() {}
 
 func (x *GetProphetIdsByNamesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_user_management_proto_msgTypes[6]
+	mi := &file_proto_user_management_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -376,7 +376,7 @@ func (x *GetProphetIdsByNamesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProphetIdsByNamesResponse.ProtoReflect.Descriptor instead.
 func (*GetProphetIdsByNamesResponse) Descriptor() ([]byte, []int) {
-	return file_user_management_proto_rawDescGZIP(), []int{6}
+	return file_proto_user_management_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetProphetIdsByNamesResponse) GetProphetData() []*ProphetData {
@@ -395,7 +395,7 @@ type MapUserNamesRequest struct {
 
 func (x *MapUserNamesRequest) Reset() {
 	*x = MapUserNamesRequest{}
-	mi := &file_user_management_proto_msgTypes[7]
+	mi := &file_proto_user_management_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -407,7 +407,7 @@ func (x *MapUserNamesRequest) String() string {
 func (*MapUserNamesRequest) ProtoMessage() {}
 
 func (x *MapUserNamesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_user_management_proto_msgTypes[7]
+	mi := &file_proto_user_management_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -420,7 +420,7 @@ func (x *MapUserNamesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MapUserNamesRequest.ProtoReflect.Descriptor instead.
 func (*MapUserNamesRequest) Descriptor() ([]byte, []int) {
-	return file_user_management_proto_rawDescGZIP(), []int{7}
+	return file_proto_user_management_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *MapUserNamesRequest) GetUserIds() []string {
@@ -439,7 +439,7 @@ type MapUserNamesResponse struct {
 
 func (x *MapUserNamesResponse) Reset() {
 	*x = MapUserNamesResponse{}
-	mi := &file_user_management_proto_msgTypes[8]
+	mi := &file_proto_user_management_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -451,7 +451,7 @@ func (x *MapUserNamesResponse) String() string {
 func (*MapUserNamesResponse) ProtoMessage() {}
 
 func (x *MapUserNamesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_user_management_proto_msgTypes[8]
+	mi := &file_proto_user_management_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -464,7 +464,7 @@ func (x *MapUserNamesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MapUserNamesResponse.ProtoReflect.Descriptor instead.
 func (*MapUserNamesResponse) Descriptor() ([]byte, []int) {
-	return file_user_management_proto_rawDescGZIP(), []int{8}
+	return file_proto_user_management_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *MapUserNamesResponse) GetUsers() map[string]*UserData {
@@ -484,7 +484,7 @@ type UserData struct {
 
 func (x *UserData) Reset() {
 	*x = UserData{}
-	mi := &file_user_management_proto_msgTypes[9]
+	mi := &file_proto_user_management_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -496,7 +496,7 @@ func (x *UserData) String() string {
 func (*UserData) ProtoMessage() {}
 
 func (x *UserData) ProtoReflect() protoreflect.Message {
-	mi := &file_user_management_proto_msgTypes[9]
+	mi := &file_proto_user_management_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -509,7 +509,7 @@ func (x *UserData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserData.ProtoReflect.Descriptor instead.
 func (*UserData) Descriptor() ([]byte, []int) {
-	return file_user_management_proto_rawDescGZIP(), []int{9}
+	return file_proto_user_management_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *UserData) GetName() string {
@@ -526,15 +526,18 @@ func (x *UserData) GetRole() UserRole {
 	return UserRole_USER_ROLE_UNKNOWN
 }
 
-var File_user_management_proto protoreflect.FileDescriptor
+var File_proto_user_management_proto protoreflect.FileDescriptor
 
-const file_user_management_proto_rawDesc = "" +
+const file_proto_user_management_proto_rawDesc = "" +
 	"\n" +
-	"\x15user_management.proto\x12\x0eusermanagement\"3\n" +
+	"\x1bproto/user_management.proto\x12\x0eusermanagement\"3\n" +
 	"\x16MapProphetNamesRequest\x12\x19\n" +
-	"\buser_ids\x18\x01 \x03(\tR\auserIds\"R\n" +
-	"\x17MapProphetNamesResponse\x127\n" +
-	"\bmappings\x18\x01 \x03(\v2\x1b.usermanagement.ProphetDataR\bmappings\"I\n" +
+	"\buser_ids\x18\x01 \x03(\tR\auserIds\"\xba\x01\n" +
+	"\x17MapProphetNamesResponse\x12^\n" +
+	"\rprophet_names\x18\x01 \x03(\v29.usermanagement.MapProphetNamesResponse.ProphetNamesEntryR\fprophetNames\x1a?\n" +
+	"\x11ProphetNamesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"I\n" +
 	"\vProphetData\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
 	"\fprophet_name\x18\x02 \x01(\tR\vprophetName\"0\n" +
@@ -568,20 +571,20 @@ const file_user_management_proto_rawDesc = "" +
 	"\fMapUserNames\x12#.usermanagement.MapUserNamesRequest\x1a$.usermanagement.MapUserNamesResponseBBZ@github.com/wnmay/horo/shared/proto/usermanagement;usermanagementb\x06proto3"
 
 var (
-	file_user_management_proto_rawDescOnce sync.Once
-	file_user_management_proto_rawDescData []byte
+	file_proto_user_management_proto_rawDescOnce sync.Once
+	file_proto_user_management_proto_rawDescData []byte
 )
 
-func file_user_management_proto_rawDescGZIP() []byte {
-	file_user_management_proto_rawDescOnce.Do(func() {
-		file_user_management_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_user_management_proto_rawDesc), len(file_user_management_proto_rawDesc)))
+func file_proto_user_management_proto_rawDescGZIP() []byte {
+	file_proto_user_management_proto_rawDescOnce.Do(func() {
+		file_proto_user_management_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proto_user_management_proto_rawDesc), len(file_proto_user_management_proto_rawDesc)))
 	})
-	return file_user_management_proto_rawDescData
+	return file_proto_user_management_proto_rawDescData
 }
 
-var file_user_management_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_user_management_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
-var file_user_management_proto_goTypes = []any{
+var file_proto_user_management_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_proto_user_management_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_proto_user_management_proto_goTypes = []any{
 	(UserRole)(0),                        // 0: usermanagement.UserRole
 	(*MapProphetNamesRequest)(nil),       // 1: usermanagement.MapProphetNamesRequest
 	(*MapProphetNamesResponse)(nil),      // 2: usermanagement.MapProphetNamesResponse
@@ -593,12 +596,13 @@ var file_user_management_proto_goTypes = []any{
 	(*MapUserNamesRequest)(nil),          // 8: usermanagement.MapUserNamesRequest
 	(*MapUserNamesResponse)(nil),         // 9: usermanagement.MapUserNamesResponse
 	(*UserData)(nil),                     // 10: usermanagement.UserData
-	nil,                                  // 11: usermanagement.MapUserNamesResponse.UsersEntry
+	nil,                                  // 11: usermanagement.MapProphetNamesResponse.ProphetNamesEntry
+	nil,                                  // 12: usermanagement.MapUserNamesResponse.UsersEntry
 }
-var file_user_management_proto_depIdxs = []int32{
-	3,  // 0: usermanagement.MapProphetNamesResponse.mappings:type_name -> usermanagement.ProphetData
+var file_proto_user_management_proto_depIdxs = []int32{
+	11, // 0: usermanagement.MapProphetNamesResponse.prophet_names:type_name -> usermanagement.MapProphetNamesResponse.ProphetNamesEntry
 	3,  // 1: usermanagement.GetProphetIdsByNamesResponse.prophet_data:type_name -> usermanagement.ProphetData
-	11, // 2: usermanagement.MapUserNamesResponse.users:type_name -> usermanagement.MapUserNamesResponse.UsersEntry
+	12, // 2: usermanagement.MapUserNamesResponse.users:type_name -> usermanagement.MapUserNamesResponse.UsersEntry
 	0,  // 3: usermanagement.UserData.role:type_name -> usermanagement.UserRole
 	10, // 4: usermanagement.MapUserNamesResponse.UsersEntry.value:type_name -> usermanagement.UserData
 	1,  // 5: usermanagement.UserService.MapProphetNames:input_type -> usermanagement.MapProphetNamesRequest
@@ -616,27 +620,27 @@ var file_user_management_proto_depIdxs = []int32{
 	0,  // [0:5] is the sub-list for field type_name
 }
 
-func init() { file_user_management_proto_init() }
-func file_user_management_proto_init() {
-	if File_user_management_proto != nil {
+func init() { file_proto_user_management_proto_init() }
+func file_proto_user_management_proto_init() {
+	if File_proto_user_management_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_user_management_proto_rawDesc), len(file_user_management_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_user_management_proto_rawDesc), len(file_proto_user_management_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   11,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_user_management_proto_goTypes,
-		DependencyIndexes: file_user_management_proto_depIdxs,
-		EnumInfos:         file_user_management_proto_enumTypes,
-		MessageInfos:      file_user_management_proto_msgTypes,
+		GoTypes:           file_proto_user_management_proto_goTypes,
+		DependencyIndexes: file_proto_user_management_proto_depIdxs,
+		EnumInfos:         file_proto_user_management_proto_enumTypes,
+		MessageInfos:      file_proto_user_management_proto_msgTypes,
 	}.Build()
-	File_user_management_proto = out.File
-	file_user_management_proto_goTypes = nil
-	file_user_management_proto_depIdxs = nil
+	File_proto_user_management_proto = out.File
+	file_proto_user_management_proto_goTypes = nil
+	file_proto_user_management_proto_depIdxs = nil
 }

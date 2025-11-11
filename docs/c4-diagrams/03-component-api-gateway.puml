@@ -1,0 +1,65 @@
+@startuml API Gateway - Component Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Component Diagram for API Gateway
+
+Container(webApp, "Web Application", "Next.js", "User interface")
+
+Container_Boundary(apiGateway, "API Gateway") {
+    Component(router, "Router", "Go, Fiber", "Routes HTTP requests to appropriate handlers")
+    Component(middleware, "Middleware", "Go", "JWT validation, CORS, error handling")
+    
+    Component(userHandler, "User Handler", "Go", "Handles user registration, profile updates")
+    Component(courseHandler, "Course Handler", "Go", "Handles course CRUD operations, reviews")
+    Component(orderHandler, "Order Handler", "Go", "Handles order creation and status updates")
+    Component(paymentHandler, "Payment Handler", "Go", "Handles payment completion, balance queries")
+    Component(chatHandler, "Chat Handler", "Go", "Handles chat room and message queries")
+    Component(wsHandler, "WebSocket Handler", "Go", "Manages WebSocket connections for real-time chat")
+    
+    Component(hub, "WebSocket Hub", "Go", "Manages active WebSocket connections and message broadcasting")
+    Component(chatPublisher, "Chat Message Publisher", "Go", "Publishes chat messages to RabbitMQ")
+    Component(chatConsumer, "Chat Message Consumer", "Go", "Consumes outgoing chat messages from RabbitMQ")
+    Component(messagingManager, "Messaging Manager", "Go", "Manages RabbitMQ connection and message routing")
+}
+
+Container(userService, "User Management Service", "Go", "Manages users")
+Container(courseService, "Course Service", "Go", "Manages courses")
+Container(chatService, "Chat Service", "Go", "Manages chats")
+Container(orderService, "Order Service", "Go", "Manages orders")
+Container(paymentService, "Payment Service", "Go", "Manages payments")
+ContainerQueue(rabbitmq, "RabbitMQ", "Message Broker")
+
+' Client to Gateway
+Rel(webApp, router, "Makes requests", "HTTPS")
+Rel(webApp, wsHandler, "Establishes connection", "WebSocket")
+
+' Router flow
+Rel(router, middleware, "Applies", "")
+Rel(middleware, userHandler, "Routes user requests", "")
+Rel(middleware, courseHandler, "Routes course requests", "")
+Rel(middleware, orderHandler, "Routes order requests", "")
+Rel(middleware, paymentHandler, "Routes payment requests", "")
+Rel(middleware, chatHandler, "Routes chat requests", "")
+
+' Handlers to Services
+Rel(userHandler, userService, "Forwards requests", "HTTP/REST")
+Rel(courseHandler, courseService, "Forwards requests", "HTTP/REST")
+Rel(orderHandler, orderService, "Forwards requests", "HTTP/REST")
+Rel(paymentHandler, paymentService, "Forwards requests", "HTTP/REST")
+Rel(chatHandler, chatService, "Forwards requests", "HTTP/REST")
+
+' WebSocket flow
+Rel(wsHandler, hub, "Registers/unregisters connections", "")
+Rel(wsHandler, chatPublisher, "Publishes messages", "")
+Rel(hub, wsHandler, "Broadcasts to connections", "")
+
+' Messaging
+Rel(chatPublisher, messagingManager, "Sends to queue", "")
+Rel(messagingManager, rabbitmq, "Publishes", "AMQP")
+Rel(rabbitmq, chatConsumer, "Delivers messages", "AMQP")
+Rel(chatConsumer, hub, "Broadcasts messages", "")
+
+@enduml
+

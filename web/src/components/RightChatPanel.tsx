@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWebSocket } from "@/lib/ws/useWebSocket";
 import api from "@/lib/api/api-client";
-import { ChatMessage } from "@/types/ws_message";
+import { ChatMessage } from "@/types/ws-message";
 import { Trigger } from "@/types/contracts";
 import { auth } from "@/firebase/firebase";
 import ReviewBox from "./ReviewBox";
@@ -144,7 +144,7 @@ export default function RightPanel({
       setPaying(true);
       setError(null);
       const { data } = await api.get(`/api/payments/order/${order.order_id}`);
-      const paymentId = data.payment_id;
+      const paymentId = data.data.payment_id;
       await api.put(`/api/payments/${paymentId}/complete`);
     } catch (e: any) {
       setError(e?.message ?? "Payment failed");

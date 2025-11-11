@@ -16,8 +16,8 @@ type UserManagementService struct {
 	repo       ports.UserRepositoryPort
 }
 
-func NewUserManagementService(authCleint ports.AuthPort, repo ports.UserRepositoryPort) *UserManagementService {
-	return &UserManagementService{authClient: authCleint, repo: repo}
+func NewUserManagementService(authClient ports.AuthPort, repo ports.UserRepositoryPort) *UserManagementService {
+	return &UserManagementService{authClient: authClient, repo: repo}
 }
 
 func (s *UserManagementService) Register(ctx context.Context, idToken, fullName, role string) error {
@@ -41,8 +41,8 @@ func (s *UserManagementService) Register(ctx context.Context, idToken, fullName,
 		Email:    claims.Email,
 		Role:     role,
 	}
-
 	return s.repo.Save(ctx, user)
+
 }
 
 func (s *UserManagementService) GetMe(ctx context.Context, userID string) (*domain.User, error) {
@@ -52,6 +52,11 @@ func (s *UserManagementService) GetMe(ctx context.Context, userID string) (*doma
 	}
 
 	return user, nil
+}
+
+func (s *UserManagementService) UpdateFullName(ctx context.Context, userID string, newUsername string) (*domain.User, error) {
+	update := map[string]interface{}{"fullname": newUsername}
+	return s.repo.Update(ctx, userID, update)
 }
 
 func (s *UserManagementService) GetProphetNames(ctx context.Context, userIDs []string) ([]*domain.ProphetName, error) {
