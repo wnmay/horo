@@ -59,7 +59,7 @@ export default function RegisterPage() {
       );
 
       alert("Registration successful!");
-      router.push("/signin");
+      router.push("/");
     } catch (error: any) {
       console.error(
         "Error registering:",
