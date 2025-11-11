@@ -111,6 +111,7 @@ func (r *Router) setupCourseRoutes(api fiber.Router) {
 	courses.Post("/:courseId/review", authMiddleware.AddClaims, courseHandler.CreateReview)
 	courses.Get("/review/:id", courseHandler.GetReviewByID)
 	courses.Get("/:courseId/reviews", courseHandler.ListReviewsByCourse)
+	courses.Get("/popular", courseHandler.ListPopularCourses)
 }
 
 func (r *Router) setupTestRouter(api fiber.Router) {

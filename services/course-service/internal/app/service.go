@@ -126,7 +126,7 @@ func (s courseService) ListCoursesByProphet(ctx context.Context, prophetID strin
 }
 
 // Find courses by filter (supports filtering and sorting)
-func (s courseService) FindCoursesByFilter(ctx context.Context, filter CourseFilter, sort CourseSort) ([]*domain.Course, error) {
+func (s courseService) FindCoursesByFilter(ctx context.Context, filter CourseFilter, sort CourseSort) ([]*domain.CourseWithProphetName, error) {
 	prophets, err := s.user_provider.GetProphetIDsByNames(ctx, filter.ProphetName)
 	if err != nil {
 		return nil, err
@@ -149,7 +149,59 @@ func (s courseService) FindCoursesByFilter(ctx context.Context, filter CourseFil
 		Order:  sort.Order,
 	}
 
-	return s.repo.FindByFilter(ctx, repoFilter, repoSort)
+	courses, err := s.repo.FindByFilter(ctx, repoFilter, repoSort)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(courses) == 0 {
+		return []*domain.CourseWithProphetName{}, nil
+	}
+
+	// Collect unique prophet IDs from the filtered courses
+	prophetIDMap := make(map[string]bool)
+	for _, course := range courses {
+		prophetIDMap[course.ProphetID] = true
+	}
+
+	uniqueProphetIDs := make([]string, 0, len(prophetIDMap))
+	for id := range prophetIDMap {
+		uniqueProphetIDs = append(uniqueProphetIDs, id)
+	}
+
+	// Get prophet names map from gRPC
+	prophetNames, err := s.user_provider.MapProphetNamesByIDs(ctx, uniqueProphetIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to map for quick lookup
+	nameMap := make(map[string]string)
+	for _, pn := range prophetNames {
+		nameMap[pn.UserID] = pn.Name
+	}
+
+	// Map courses to CourseWithProphetName
+	results := make([]*domain.CourseWithProphetName, 0, len(courses))
+	for _, course := range courses {
+		prophetName := nameMap[course.ProphetID]
+		results = append(results, &domain.CourseWithProphetName{
+			ID:          course.ID,
+			ProphetID:   course.ProphetID,
+			ProphetName: prophetName,
+			CourseName:  course.CourseName,
+			CourseType:  course.CourseType,
+			Description: course.Description,
+			Price:       course.Price,
+			Duration:    course.Duration,
+			CreatedAt:   course.CreatedAt,
+			DeletedAt:   course.DeletedAt,
+			ReviewCount: course.ReviewCount,
+			ReviewScore: course.ReviewScore,
+		})
+	}
+
+	return results, nil
 }
 
 // Create a new review and automatically update course’s denormalized score
@@ -180,6 +232,62 @@ func (s courseService) GetReviewByID(ctx context.Context, id string) (*domain.Re
 // List all reviews for a given course
 func (s courseService) ListReviewsByCourse(ctx context.Context, courseID string) ([]*domain.Review, error) {
 	return s.repo.FindReviewsByCourse(ctx, courseID)
+}
+
+func (s courseService) ListPopularCourses(ctx context.Context, limit int) ([]*domain.CourseWithProphetName, error) {
+	courses, err := s.repo.FindPopularCourses(ctx, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(courses) == 0 {
+		return []*domain.CourseWithProphetName{}, nil
+	}
+
+	// Collect unique prophet IDs
+	prophetIDMap := make(map[string]bool)
+	for _, course := range courses {
+		prophetIDMap[course.ProphetID] = true
+	}
+
+	prophetIDs := make([]string, 0, len(prophetIDMap))
+	for id := range prophetIDMap {
+		prophetIDs = append(prophetIDs, id)
+	}
+
+	// Get prophet names map from gRPC - now returns map[userID]name directly
+	prophetNames, err := s.user_provider.MapProphetNamesByIDs(ctx, prophetIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to map for quick lookup
+	nameMap := make(map[string]string)
+	for _, pn := range prophetNames {
+		nameMap[pn.UserID] = pn.Name
+	}
+
+	// Map courses to CourseWithProphetName
+	results := make([]*domain.CourseWithProphetName, 0, len(courses))
+	for _, course := range courses {
+		prophetName := nameMap[course.ProphetID]
+		results = append(results, &domain.CourseWithProphetName{
+			ID:          course.ID,
+			ProphetID:   course.ProphetID,
+			ProphetName: prophetName,
+			CourseName:  course.CourseName,
+			CourseType:  course.CourseType,
+			Description: course.Description,
+			Price:       course.Price,
+			Duration:    course.Duration,
+			CreatedAt:   course.CreatedAt,
+			DeletedAt:   course.DeletedAt,
+			ReviewCount: course.ReviewCount,
+			ReviewScore: course.ReviewScore,
+		})
+	}
+
+	return results, nil
 }
 
 // helper

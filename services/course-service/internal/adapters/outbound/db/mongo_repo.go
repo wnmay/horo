@@ -206,3 +206,21 @@ func (r *MongoCourseRepo) FindReviewByID(ctx context.Context, id string) (*domai
 	}
 	return &rv, nil
 }
+
+func (r *MongoCourseRepo) FindPopularCourses(ctx context.Context, limit int) ([]*domain.Course, error) {
+	cur, err := r.courseCol.Find(ctx, bson.M{"deleted_at": false}, options.Find().SetLimit(int64(limit)).SetSort(bson.D{{Key: "review_score", Value: -1}}))
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+
+	var courses []*domain.Course
+	for cur.Next(ctx) {
+		var c domain.Course
+		if err := cur.Decode(&c); err != nil {
+			return nil, err
+		}
+		courses = append(courses, &c)
+	}
+	return courses, nil
+}
