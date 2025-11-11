@@ -41,7 +41,7 @@ const LeftChat: React.FC<LeftChatProps> = ({ room, onClick }) => {
             {room.courseName || 'Loading...'}
           </h3>
           <p className="text-sm text-gray-500 truncate">
-            {room.CourseID}
+            {`#${room.ID}`}
           </p>
         </div>
         <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">
@@ -50,11 +50,11 @@ const LeftChat: React.FC<LeftChatProps> = ({ room, onClick }) => {
       </div>
 
       {/* Middle section: Last message */}
-      <div className="mb-2">
+      {/* <div className="mb-2">
         <p className="text-sm text-gray-600 truncate">
           {room.LastMessage || 'No messages yet'}
         </p>
-      </div>
+      </div> */}
 
       {/* Bottom section: Room status */}
       <div className="flex justify-end">

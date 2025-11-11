@@ -7,7 +7,6 @@ import { useState, useEffect, useRef } from "react";
 import CourseCard from "@/components/CourseCard";
 import api from "@/lib/api/api-client";
 import CourseSearchBar from "@/components/CourseSearchBar";
-import FetchRoomsButton from "@/components/testFetch";
 export default function HomePage() {
   const router = useRouter();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -122,7 +121,6 @@ export default function HomePage() {
         )}
       </section>
 
-      <FetchRoomsButton />
     </div>
   );
 }
