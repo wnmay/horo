@@ -24,7 +24,9 @@ export default function SignInPage() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await doSignInWithEmailAndPassword(email, password);
+      const cred = await doSignInWithEmailAndPassword(email, password);
+      const token = await cred.user.getIdToken();
+      console.log("Token:", token);
       router.replace("/");
     } catch (err: any) {
       setError(err.message);
