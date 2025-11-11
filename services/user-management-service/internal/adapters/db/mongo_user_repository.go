@@ -74,6 +74,14 @@ func (r *MongoUserRepository) FindById(ctx context.Context, userId string) (*dom
 	return user, nil
 }
 
+func (r *MongoUserRepository) Update(ctx context.Context, userID string, update map[string]interface{}) (*domain.User, error) {
+	_, err := r.collection.UpdateOne(context.TODO(), bson.M{"user_id": userID}, bson.M{"$set": update})
+	if err != nil {
+		return nil, err
+	}
+	return r.FindById(ctx, userID)
+}
+
 func (r *MongoUserRepository) FindProphetNames(ctx context.Context, userIDs []string) ([]*domain.ProphetName, error) {
 	filter := bson.M{"user_id": bson.M{"$in": userIDs}}
 

@@ -6,11 +6,16 @@ import api from "@/lib/api/api-client";
 import { auth } from '@/firebase/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
-const ChatRoomList = () => {
+interface ChatRoomListProps {
+  onRoomSelect?: (room: ChatRoom) => void;
+}
+
+const ChatRoomList: React.FC<ChatRoomListProps> = ({ onRoomSelect }) => {
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
 
   // Wait for Firebase Auth to be ready
   useEffect(() => {
@@ -28,12 +33,18 @@ const ChatRoomList = () => {
     try {
       setLoading(true);
       
+      console.log('Fetching chat rooms...');
+      console.log('Auth current user:', auth.currentUser?.uid);
+      
       const response = await api.get('/api/chat/user/rooms');
-      console.log('API Response:', response.data); // Debug log
+      console.log('Full API Response:', response);
+      console.log('Response data:', response.data);
+      console.log('Response data.data:', response.data?.data);
       
       const rooms = response.data?.data || [];
+      console.log('Parsed rooms:', rooms);
+      console.log('Number of rooms:', rooms.length);
       
-      // Fetch course names for all rooms
       const roomsWithCourseNames = await Promise.all(
         rooms.map(async (room: ChatRoom) => {
           try {
@@ -52,8 +63,16 @@ const ChatRoomList = () => {
         })
       );
       
+      console.log('Final rooms with course names:', roomsWithCourseNames);
       setChatRooms(roomsWithCourseNames);
     } catch (err: any) {
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response,
+        status: err.response?.status,
+        data: err.response?.data
+      });
+      
       // Check if it's a 401 Unauthorized error
       if (err?.response?.status === 401 || err?.status === 401) {
         setError('Please login to view chat rooms');
@@ -72,9 +91,11 @@ const ChatRoomList = () => {
     }
   }, [authReady]);
 
-  const handleRoomClick = (roomId: string) => {
-    console.log('Room clicked:', roomId);
-    // Add your navigation or room selection logic here
+  const handleRoomClick = (room: ChatRoom) => {
+    setSelectedRoomId(room.ID);
+    if (onRoomSelect) {
+      onRoomSelect(room);
+    }
   };
 
   if (loading) {
@@ -99,11 +120,15 @@ const ChatRoomList = () => {
         <p className="text-gray-500 text-center p-4">No chat rooms found</p>
       ) : (
         chatRooms.map((room) => (
-          <LeftChat
+          <div 
             key={room.ID}
-            room={room}
-            onClick={() => handleRoomClick(room.ID)}
-          />
+            className={selectedRoomId === room.ID ? 'bg-blue-50' : ''}
+          >
+            <LeftChat
+              room={room}
+              onClick={() => handleRoomClick(room)}
+            />
+          </div>
         ))
       )}
     </div>

@@ -10,7 +10,9 @@ export interface ChatRoom {
   CreatedAt: string;
   LastMessage: string;
   IsDone: boolean;
-  courseName?: string; // Optional: will be populated by parent
+  ProphetName?: string;
+  CustomerName?: string;
+  courseName?: string; 
 }
 
 interface LeftChatProps {
