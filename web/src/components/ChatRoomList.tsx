@@ -46,6 +46,7 @@ const ChatRoomList: React.FC<ChatRoomListProps> = ({ onRoomSelect }) => {
       console.log('Number of rooms:', rooms.length);
       
       const roomsWithCourseNames = await Promise.all(
+        // rooms.map(async (room: ChatRoom) => {
         rooms.map(async (room: ChatRoom) => {
           try {
             const courseResponse = await api.get(`/api/courses/${room.CourseID}`);

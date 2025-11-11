@@ -10,8 +10,8 @@ export interface ChatRoom {
   CreatedAt: string;
   LastMessage: string;
   IsDone: boolean;
-  ProphetName?: string;
-  CustomerName?: string;
+  ProphetName: string;
+  CustomerName: string;
   courseName?: string; 
 }
 

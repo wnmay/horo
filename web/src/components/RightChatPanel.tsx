@@ -144,7 +144,7 @@ export default function RightPanel({
       setPaying(true);
       setError(null);
       const { data } = await api.get(`/api/payments/order/${order.order_id}`);
-      const paymentId = data.payment_id;
+      const paymentId = data.data.payment_id;
       await api.put(`/api/payments/${paymentId}/complete`);
     } catch (e: any) {
       setError(e?.message ?? "Payment failed");

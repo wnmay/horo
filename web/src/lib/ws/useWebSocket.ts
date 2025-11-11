@@ -72,5 +72,13 @@ export function useWebSocket() {
     wsRef.current?.send(data);
   }, []);
 
-  return { connected, messages, send };
+  const joinRoom = useCallback((roomId: string) => {
+    wsRef.current?.send({ action: "join_room", roomId });
+  }, []);
+
+  const sendMessage = useCallback((data: object) => {
+    wsRef.current?.send(data);
+  }, []);
+
+  return { connected, messages, send, joinRoom, sendMessage };
 }
