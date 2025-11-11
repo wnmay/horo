@@ -5,10 +5,10 @@ import { ChatTextMessage } from "@/types/ws_message";
 
 interface Props {
     connected: boolean;
-    send: (data: {
+    sendMessage: (data: {
+        action: string;
         type: string;
         roomId: string;
-        senderId: string;
         content: string;
     }) => void;
     roomId: string;
@@ -18,7 +18,7 @@ interface Props {
 
 export default function MessagsInput ({
   connected,
-  send,
+  sendMessage,
   roomId,
   senderId,
   username,
@@ -28,10 +28,10 @@ export default function MessagsInput ({
     // Handle sending a message
     const handleSendMessage = () => {
         if (!text.trim()) return;
-        send({
+        sendMessage({
+            action: "message",
             type: "text",
-            roomId: roomId,
-            senderId: senderId,
+            roomId,
             content: text,
         });
         setText("");

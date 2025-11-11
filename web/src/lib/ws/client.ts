@@ -32,27 +32,63 @@ export class WSClient {
     this.onError = onError;
   }
 
+  // connect(token?: string) {
+  //   // Append token as a query param if provided
+  //   const urlWithToken = token ? `${this.baseUrl}?token=${encodeURIComponent(token)}` : this.baseUrl;
+
+  //   this.ws = new WebSocket(urlWithToken);
+
+  //   this.ws.onopen = () => this.onOpen?.();
+  //   this.ws.onmessage = (event) => {
+  //     const msg = parseChatMessage(event.data);
+  //     if (msg) this.onMessage?.(msg);
+  //   };
+  //   this.ws.onerror = (e) => this.onError?.(e);
+  //   this.ws.onclose = () => this.onClose?.();
+  // }
+
   connect(token?: string) {
-    // Append token as a query param if provided
     const urlWithToken = token ? `${this.baseUrl}?token=${encodeURIComponent(token)}` : this.baseUrl;
+    console.log("[WS] connecting to", urlWithToken);
 
     this.ws = new WebSocket(urlWithToken);
 
-    this.ws.onopen = () => this.onOpen?.();
+    this.ws.onopen = () => {
+      console.log("[WS] ✅ connected!");
+      this.onOpen?.();
+    };
     this.ws.onmessage = (event) => {
+      console.log("[WS] 📩 got message", event.data);
       const msg = parseChatMessage(event.data);
       if (msg) this.onMessage?.(msg);
     };
-    this.ws.onerror = (e) => this.onError?.(e);
-    this.ws.onclose = () => this.onClose?.();
+    // this.ws.onerror = (e) => {
+    //   console.error("[WS] ❌ error:", e);
+    //   this.onError?.(e);
+    // };
+    this.ws.onclose = () => {
+      console.warn("[WS] 🔌 closed");
+      this.onClose?.();
+    };
   }
 
   send(data: object) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      console.log("[WS] Sending:", data);
       this.ws.send(JSON.stringify(data));
     } else {
       console.warn("WebSocket not connected");
     }
+  }
+
+  /** join chat room */
+  joinRoom(roomId: string) {
+    this.send({ action: "join_room", roomId });
+  }
+
+  /** send chat message */
+  sendMessage(roomId: string, content: string, type: string = "text") {
+    this.send({ action: "message", roomId, content, type });
   }
 
   disconnect() {
