@@ -25,20 +25,9 @@ export default function SignInPage() {
     if (isSigningIn) return;
     setIsSigningIn(true);
     try {
-      const userCredential = await doSignInWithEmailAndPassword(email, password);
-      console.log(userCredential.user.getIdToken())
-      
-      // Example: get user info
-      const user = {
-        name: userCredential.user.displayName || "",
-        email: userCredential.user.email,
-        role: "prophet", // or "customer" depending on your app logic
-      };
-
-      // Store in localStorage
-      localStorage.setItem("user", JSON.stringify(user));
-
-      // Redirect
+      const cred = await doSignInWithEmailAndPassword(email, password);
+      const token = await cred.user.getIdToken();
+      console.log("Token:", token);
       router.replace("/");
     } catch (err: any) {
       console.error(err);
@@ -46,7 +35,6 @@ export default function SignInPage() {
       setIsSigningIn(false);
     }
   };
-
 
   const handleGoogleSignIn = async () => {
     if (isSigningIn) return;
