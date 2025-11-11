@@ -196,6 +196,34 @@ func (h *HTTPHandler) VerifyToken(c *fiber.Ctx) error {
 			"error": "invalid token",
 		})
 	}
+
+	// If role is empty in Firebase claims, fetch from MongoDB and set custom claims
+	if claims.Role == "" {
+		log.Printf("Role is empty in claims for user %s, fetching from MongoDB", claims.UserID)
+		user, err := h.userService.GetMe(c.Context(), claims.UserID)
+		if err != nil {
+			log.Printf("Failed to fetch user from MongoDB: %v", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "failed to fetch user role",
+			})
+		}
+
+		// Set custom claims in Firebase with the role from MongoDB
+		customClaims := map[string]interface{}{
+			"role": user.Role,
+		}
+		if err := h.authService.SetCustomClaims(c.Context(), claims.UserID, customClaims); err != nil {
+			log.Printf("Failed to set custom claims: %v", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "failed to set custom claims",
+			})
+		}
+
+		// Update the claims with the role from MongoDB
+		claims.Role = user.Role
+		log.Printf("Successfully set role %s for user %s", user.Role, claims.UserID)
+	}
+
 	return c.Status(fiber.StatusOK).JSON(VerifyTokenResponse{
 		UserID: claims.UserID,
 		Email:  claims.Email,

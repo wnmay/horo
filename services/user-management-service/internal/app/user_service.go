@@ -4,6 +4,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/wnmay/horo/services/user-management-service/internal/domain"
 	"github.com/wnmay/horo/services/user-management-service/internal/ports"
@@ -31,6 +32,7 @@ func (s *UserManagementService) Register(ctx context.Context, idToken, fullName,
 		"role": role,
 	}
 
+	log.Printf("Setting custom claims for user %s: %v", uid, customClaims)
 	if err := s.authClient.SetCustomUserClaims(ctx, uid, customClaims); err != nil {
 		return status.Errorf(codes.Internal, "failed to set custom claims: %v", err)
 	}
@@ -42,7 +44,6 @@ func (s *UserManagementService) Register(ctx context.Context, idToken, fullName,
 		Role:     role,
 	}
 	return s.repo.Save(ctx, user)
-
 }
 
 func (s *UserManagementService) GetMe(ctx context.Context, userID string) (*domain.User, error) {
