@@ -15,7 +15,7 @@ import {
 import Card from "@/components/ui/card";
 import { toast } from "sonner";
 import api from "@/lib/api/api-client";
-import { courseTypesMap } from "@/types/common-type";
+import { courseTypesMap } from "@/types/course-type";
 
 export default function CreateCoursePage() {
   const [form, setForm] = useState({

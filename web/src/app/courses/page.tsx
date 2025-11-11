@@ -4,15 +4,13 @@ import { useSearchParams, useRouter } from "next/navigation";
 import CourseCard from "@/components/CourseCard";
 import api from "@/lib/api/api-client";
 import { Button } from "@/components/ui/button";
-import CourseSearchBar from "@/components/CourseSearchBar"; // 👈 Import reusable search bar
-import { courseTypes, TagImages } from "@/types/common-type";
+import CourseSearchBar from "@/components/CourseSearchBar";
 export default function CoursesPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
 
   useEffect(() => {
     async function fetchCourses() {
@@ -64,10 +62,7 @@ export default function CoursesPage() {
 
       {/* ✅ Reusable Course Search Bar */}
       <div className="max-w-6xl mx-auto px-4 mb-10">
-        <CourseSearchBar
-          courseTypes={courseTypes}
-          courseTypeImages={TagImages}
-        />
+        <CourseSearchBar />
       </div>
 
       {/* ✅ Course Grid */}

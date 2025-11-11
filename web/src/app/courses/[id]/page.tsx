@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api/api-client";
-import { TagImages } from "@/types/common-type";
+import { TagImages } from "@/types/course-type";
 import { toast } from "sonner";
 
 interface Course {

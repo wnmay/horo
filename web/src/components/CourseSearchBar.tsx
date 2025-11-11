@@ -3,21 +3,22 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import {
+  courseTypesMap,
+  courseTypes,
+  courseTypeImageMap,
+} from "@/types/course-type";
 
 interface CourseSearchBarProps {
   initialSearch?: string;
   initialSort?: "review_score" | "price" | "none";
   initialCourseType?: string | null;
-  courseTypes: string[];
-  courseTypeImages: Record<string, string>;
 }
 
 export default function CourseSearchBar({
   initialSearch = "",
   initialSort = "none",
   initialCourseType = null,
-  courseTypes,
-  courseTypeImages,
 }: CourseSearchBarProps) {
   const router = useRouter();
 
@@ -33,7 +34,13 @@ export default function CourseSearchBar({
     const params = new URLSearchParams();
 
     if (tempSearch) params.append("searchterm", tempSearch);
-    if (selectedCourseType) params.append("coursetype", selectedCourseType);
+
+    if (selectedCourseType) {
+      const courseSlug =
+        courseTypesMap[selectedCourseType] || selectedCourseType;
+      params.append("coursetype", courseSlug);
+    }
+
     if (tempSort !== "none") {
       params.append("sortby", tempSort);
       params.append("order", "asc");
@@ -50,7 +57,7 @@ export default function CourseSearchBar({
           Explore by Category
         </h2>
         <div className="flex flex-wrap justify-center gap-6">
-          {courseTypes.map((courseType) => (
+          {courseTypes.map((courseType: string) => (
             <button
               key={courseType}
               onClick={() =>
@@ -67,7 +74,11 @@ export default function CourseSearchBar({
             >
               <div className="w-10 h-10 mb-2 relative">
                 <Image
-                  src={courseTypeImages[courseType]}
+                  src={
+                    courseTypeImageMap[
+                      courseType as keyof typeof courseTypeImageMap
+                    ]
+                  }
                   alt={courseType}
                   fill
                   sizes="48px"
