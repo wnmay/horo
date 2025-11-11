@@ -27,7 +27,7 @@ func NewPublisher(rabbit *message.RabbitMQ, courseClient *grpc.CourseClient) out
 
 func (p *Publisher) PublishOrderCreated(ctx context.Context, order *domain.Order) error {
 	course, err := p.courseClient.GetCourseByID(ctx, order.CourseID)
-	
+
 	// Default values if course fetch fails
 	coursePrice := 200.0
 	if err != nil {
@@ -68,11 +68,11 @@ func (p *Publisher) PublishOrderCreated(ctx context.Context, order *domain.Order
 func (p *Publisher) PublishOrderCompleted(ctx context.Context, order *domain.Order) error {
 	// Fetch course details from course service
 	course, err := p.courseClient.GetCourseByID(ctx, order.CourseID)
-	
+
 	// Default values if course fetch fails
 	courseName := "Unknown Course"
 	prophetID := ""
-	
+
 	if err != nil {
 		log.Printf("Warning: Failed to fetch course details for %s: %v. Using default course name.", order.CourseID, err)
 	} else if course != nil {
@@ -86,6 +86,8 @@ func (p *Publisher) PublishOrderCompleted(ctx context.Context, order *domain.Ord
 		CourseName:  courseName,
 		OrderStatus: string(order.Status),
 		ProphetID:   prophetID,
+		RoomID:      order.RoomID,
+		CustomerID:  order.CustomerID,
 	}
 
 	data, err := json.Marshal(orderCompletedData)
@@ -108,18 +110,18 @@ func (p *Publisher) PublishOrderCompleted(ctx context.Context, order *domain.Ord
 
 func (p *Publisher) PublishOrderPaid(ctx context.Context, order *domain.Order) error {
 	course, err := p.courseClient.GetCourseByID(ctx, order.CourseID)
-	
+
 	// Default values if course fetch fails
 	courseName := "Unknown Course"
 	coursePrice := 200.0
-	
+
 	if err != nil {
 		log.Printf("Warning: Failed to fetch course details for %s: %v. Using defaults.", order.CourseID, err)
 	} else if course != nil {
 		courseName = course.Coursename
 		coursePrice = course.Price
 	}
-	
+
 	orderPaidData := message.OrderPaidData{
 		OrderID:       order.OrderID.String(),
 		PaymentID:     order.PaymentID.String(),
@@ -152,18 +154,18 @@ func (p *Publisher) PublishOrderPaid(ctx context.Context, order *domain.Order) e
 
 func (p *Publisher) PublishOrderPaymentBound(ctx context.Context, order *domain.Order) error {
 	course, err := p.courseClient.GetCourseByID(ctx, order.CourseID)
-	
+
 	// Default values if course fetch fails
 	courseName := "Unknown Course"
 	coursePrice := 200.0
-	
+
 	if err != nil {
 		log.Printf("Warning: Failed to fetch course details for %s: %v. Using defaults.", order.CourseID, err)
 	} else if course != nil {
 		courseName = course.Coursename
 		coursePrice = course.Price
 	}
-	
+
 	orderPaymentBoundData := message.OrderPaymentBoundData{
 		OrderID:       order.OrderID.String(),
 		PaymentID:     order.PaymentID.String(),
