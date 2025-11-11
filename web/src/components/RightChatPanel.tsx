@@ -51,6 +51,8 @@ export default function RightPanel({
   const [error, setError] = useState<string | null>(null);
   const [order, setOrder] = useState<OrderSummary | null>(null);
   const [paying, setPaying] = useState(false);
+  const [prophetDone, setProphetDone] = useState(false);
+  const [customerDone, setCutomerDone] = useState(false);
 
   const refreshOrder = useCallback(async () => {
     try {
@@ -157,11 +159,11 @@ export default function RightPanel({
     if (!order) return;
     setError(null);
     try {
-      const res = await api.patch(`/api/orders/customer/${order.order_id}`);
-      const updated: { data: OrderSummary } = res.data;
-      setOrder(updated.data);
+      const res = await api.patch(`/api/orders/customer/${order.order_id}`);      
     } catch (e: any) {
       setError(e?.message ?? "Failed to mark customer completed");
+    } finally {
+      setCutomerDone(true);
     }
   }, [order]);
 
@@ -170,10 +172,10 @@ export default function RightPanel({
     setError(null);
     try {
       const res = await api.patch(`/api/orders/prophet/${order.order_id}`);
-      const updated: { data: OrderSummary } = res.data;
-      setOrder(updated.data);
     } catch (e: any) {
       setError(e?.message ?? "Failed to mark prophet completed");
+    } finally {
+      setProphetDone(true);
     }
   }, [order]);
 
@@ -230,7 +232,7 @@ export default function RightPanel({
           <div>
             <button
               onClick={onProphetDone}
-              disabled={order.is_prophet_completed}
+              disabled={order.is_prophet_completed || prophetDone}
               className={`w-full rounded-xl px-4 py-3 font-semibold text-white ${
                 order.is_prophet_completed
                   ? "bg-gray-400 cursor-not-allowed"
@@ -253,7 +255,7 @@ export default function RightPanel({
           <div>
             <button
               onClick={onUserDone}
-              disabled={order.is_customer_completed}
+              disabled={order.is_customer_completed || customerDone}
               className={`w-full rounded-xl px-4 py-3 font-semibold text-white ${
                 order.is_customer_completed
                   ? "bg-gray-400 cursor-not-allowed"
