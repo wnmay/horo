@@ -1,0 +1,1 @@
+//The System shall support future growth to around 1,000 users without significant architectural changes.
