@@ -25,4 +25,5 @@ type CourseRepository interface {
 
 	//Course with review
 	FindCourseDetailByID(ctx context.Context, id string) (*domain.CourseDetail, error)
+	FindPopularCourses(ctx context.Context, limit int) ([]*domain.Course, error)
 }

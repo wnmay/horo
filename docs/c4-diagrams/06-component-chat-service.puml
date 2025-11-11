@@ -1,0 +1,58 @@
+@startuml Chat Service - Component Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Component Diagram for Chat Service
+
+Container(apiGateway, "API Gateway", "Go", "Routes requests and WebSocket")
+
+Container_Boundary(chatService, "Chat Service") {
+    Component(httpHandler, "HTTP Handler", "Go, Fiber", "Handles REST API requests for chat history")
+    
+    Component(chatApp, "Chat Application", "Go", "Core business logic for chat and rooms")
+    
+    Component(messageRepository, "Message Repository", "Go", "Data access for messages")
+    Component(roomRepository, "Room Repository", "Go", "Data access for chat rooms")
+    
+    Component(messageConsumer, "Message Consumer", "Go", "Consumes incoming chat messages")
+    Component(messagePublisher, "Message Publisher", "Go", "Publishes outgoing messages and notifications")
+    
+    Component(userClient, "User gRPC Client", "Go", "Client for user service")
+    Component(courseClient, "Course gRPC Client", "Go", "Client for course service")
+    
+    Component(messagingManager, "Messaging Manager", "Go", "Manages RabbitMQ connections and consumers")
+}
+
+Container(userService, "User Management Service", "Go", "Provides user data")
+Container(courseService, "Course Service", "Go", "Provides course data")
+ContainerDb(mongodb, "MongoDB", "Chat database")
+ContainerQueue(rabbitmq, "RabbitMQ", "Message broker")
+
+' External to Service
+Rel(apiGateway, httpHandler, "Gets chat history, rooms", "HTTP/REST")
+
+' HTTP flow
+Rel(httpHandler, chatApp, "Queries messages and rooms", "")
+
+' Messaging flow
+Rel(rabbitmq, messageConsumer, "Delivers incoming messages", "AMQP")
+Rel(messageConsumer, chatApp, "Processes messages", "")
+Rel(chatApp, messagePublisher, "Publishes outgoing messages", "")
+Rel(messagePublisher, messagingManager, "Sends to queues", "")
+Rel(messagingManager, rabbitmq, "Publishes", "AMQP")
+
+' Application logic
+Rel(chatApp, messageRepository, "Saves/retrieves messages", "")
+Rel(chatApp, roomRepository, "Manages rooms", "")
+Rel(chatApp, userClient, "Validates users, gets names", "")
+Rel(chatApp, courseClient, "Gets course info for rooms", "")
+
+' Adapters to external
+Rel(userClient, userService, "Queries user data", "gRPC")
+Rel(courseClient, courseService, "Queries course data", "gRPC")
+Rel(messageRepository, mongodb, "Persists", "MongoDB Protocol")
+Rel(roomRepository, mongodb, "Persists", "MongoDB Protocol")
+
+@enduml
+

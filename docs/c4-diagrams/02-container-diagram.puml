@@ -1,0 +1,71 @@
+@startuml Horo System - Container Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_TOP_DOWN()
+LAYOUT_WITH_LEGEND()
+
+title Container Diagram for Horo Platform
+
+Person(customer, "Customer", "Browses courses and chats with prophets")
+Person(prophet, "Prophet", "Offers courses and consultations")
+
+System_Boundary(horoSystem, "Horo Platform") {
+    Container(webApp, "Web Application", "Next.js, React", "Provides UI for users to interact with the platform")
+    Container(apiGateway, "API Gateway", "Go, Fiber", "Routes requests, handles WebSocket connections, JWT validation")
+    
+    Container(userService, "User Management Service", "Go", "Manages user profiles, authentication integration")
+    Container(courseService, "Course Service", "Go", "Manages courses, reviews, course catalog")
+    Container(chatService, "Chat Service", "Go", "Manages chat rooms and messages")
+    Container(orderService, "Order Service", "Go", "Handles order creation and lifecycle")
+    Container(paymentService, "Payment Service", "Go", "Processes payments and manages prophet balances")
+    
+    ContainerDb(userDB, "User Database", "MongoDB", "Stores user profiles and prophet information")
+    ContainerDb(courseDB, "Course Database", "MongoDB", "Stores courses, reviews, and related data")
+    ContainerDb(chatDB, "Chat Database", "MongoDB", "Stores chat rooms and message history")
+    ContainerDb(orderDB, "Order Database", "PostgreSQL", "Stores orders and order status")
+    ContainerDb(paymentDB, "Payment Database", "PostgreSQL", "Stores payment records and transactions")
+    
+    ContainerQueue(messageBroker, "Message Broker", "RabbitMQ", "Enables async event-driven communication")
+}
+
+System_Ext(firebase, "Firebase Auth", "Authentication service")
+
+' User interactions
+Rel(customer, webApp, "Uses", "HTTPS")
+Rel(prophet, webApp, "Uses", "HTTPS")
+Rel(webApp, apiGateway, "Makes API calls to", "HTTPS/WebSocket, JSON")
+
+' API Gateway to services
+Rel(apiGateway, userService, "Routes user requests", "HTTP/REST")
+Rel(apiGateway, courseService, "Routes course requests", "HTTP/REST")
+Rel(apiGateway, chatService, "Routes chat requests", "HTTP/REST")
+Rel(apiGateway, orderService, "Routes order requests", "HTTP/REST")
+Rel(apiGateway, paymentService, "Routes payment requests", "HTTP/REST")
+Rel(apiGateway, messageBroker, "Publishes/consumes chat messages", "AMQP")
+
+' Service to service communication (gRPC)
+Rel(courseService, userService, "Gets user/prophet info", "gRPC")
+Rel(chatService, userService, "Validates users", "gRPC")
+Rel(chatService, courseService, "Gets course info", "gRPC")
+Rel(orderService, courseService, "Gets course details", "gRPC")
+
+' Services to databases
+Rel(userService, userDB, "Reads/writes", "MongoDB Protocol")
+Rel(courseService, courseDB, "Reads/writes", "MongoDB Protocol")
+Rel(chatService, chatDB, "Reads/writes", "MongoDB Protocol")
+Rel(orderService, orderDB, "Reads/writes", "SQL/TCP")
+Rel(paymentService, paymentDB, "Reads/writes", "SQL/TCP")
+
+' Event-driven communication
+Rel(orderService, messageBroker, "Publishes order events", "AMQP")
+Rel(paymentService, messageBroker, "Publishes payment events", "AMQP")
+Rel(chatService, messageBroker, "Publishes/consumes messages", "AMQP")
+Rel_Back(orderService, messageBroker, "Consumes payment events", "AMQP")
+Rel_Back(paymentService, messageBroker, "Consumes order events", "AMQP")
+Rel_Back(chatService, messageBroker, "Consumes notification events", "AMQP")
+
+' External services
+Rel(userService, firebase, "Validates tokens", "Firebase SDK")
+
+@enduml
+

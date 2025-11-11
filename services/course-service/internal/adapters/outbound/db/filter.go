@@ -10,7 +10,7 @@ import (
 )
 
 type CourseFilter struct {
-	CourseName string
+	SearchTerm string
 	ProphetIDs []string
 	Duration   string
 	CourseType string
@@ -24,14 +24,34 @@ type CourseSort struct {
 func BuildMongoQuery(filter CourseFilter, sort CourseSort) (bson.M, bson.D, error) {
 	mongoFilter := bson.M{}
 
-	if filter.CourseName != "" {
+	// Always filter out deleted courses
+	mongoFilter["deleted_at"] = false
+
+	// Handle SearchTerm with OR logic: match course name OR prophet ID
+	if filter.SearchTerm != "" && len(filter.ProphetIDs) > 0 {
+		// If we have both search term and prophet IDs, use OR logic
+		log.Println("Building OR query with SearchTerm and ProphetIDs")
+		mongoFilter["$or"] = []bson.M{
+			{
+				"coursename": bson.M{
+					"$regex":   strings.TrimSpace(filter.SearchTerm),
+					"$options": "i",
+				},
+			},
+			{
+				"prophet_id": bson.M{"$in": filter.ProphetIDs},
+			},
+		}
+	} else if filter.SearchTerm != "" {
+		// Only search term, search by course name
+		log.Println("Building query with SearchTerm")
 		mongoFilter["coursename"] = bson.M{
-			"$regex":   strings.TrimSpace(filter.CourseName),
+			"$regex":   strings.TrimSpace(filter.SearchTerm),
 			"$options": "i",
 		}
-	}
-
-	if len(filter.ProphetIDs) > 0 {
+	} else if len(filter.ProphetIDs) > 0 {
+		log.Println("Building query with ProphetIDs")
+		// Only prophet IDs, search by prophet ID
 		mongoFilter["prophet_id"] = bson.M{"$in": filter.ProphetIDs}
 	}
 
@@ -58,9 +78,6 @@ func BuildMongoQuery(filter CourseFilter, sort CourseSort) (bson.M, bson.D, erro
 		}
 		mongoSort = append(mongoSort, bson.E{Key: sort.SortBy, Value: order})
 	}
-
-	log.Printf("Mongo Filter: %+v\n", mongoFilter)
-	log.Printf("Mongo Sort: %+v\n", mongoSort)
 
 	return mongoFilter, mongoSort, nil
 }
