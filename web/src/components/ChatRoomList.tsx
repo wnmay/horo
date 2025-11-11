@@ -6,11 +6,16 @@ import api from "@/lib/api/api-client";
 import { auth } from '@/firebase/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
-const ChatRoomList = () => {
+interface ChatRoomListProps {
+  onRoomSelect?: (room: ChatRoom) => void;
+}
+
+const ChatRoomList: React.FC<ChatRoomListProps> = ({ onRoomSelect }) => {
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
 
   // Wait for Firebase Auth to be ready
   useEffect(() => {
@@ -33,7 +38,6 @@ const ChatRoomList = () => {
       
       const rooms = response.data?.data || [];
       
-      // Fetch course names for all rooms
       const roomsWithCourseNames = await Promise.all(
         rooms.map(async (room: ChatRoom) => {
           try {
@@ -72,9 +76,11 @@ const ChatRoomList = () => {
     }
   }, [authReady]);
 
-  const handleRoomClick = (roomId: string) => {
-    console.log('Room clicked:', roomId);
-    // Add your navigation or room selection logic here
+  const handleRoomClick = (room: ChatRoom) => {
+    setSelectedRoomId(room.ID);
+    if (onRoomSelect) {
+      onRoomSelect(room);
+    }
   };
 
   if (loading) {
@@ -99,11 +105,15 @@ const ChatRoomList = () => {
         <p className="text-gray-500 text-center p-4">No chat rooms found</p>
       ) : (
         chatRooms.map((room) => (
-          <LeftChat
+          <div 
             key={room.ID}
-            room={room}
-            onClick={() => handleRoomClick(room.ID)}
-          />
+            className={selectedRoomId === room.ID ? 'bg-blue-50' : ''}
+          >
+            <LeftChat
+              room={room}
+              onClick={() => handleRoomClick(room)}
+            />
+          </div>
         ))
       )}
     </div>
