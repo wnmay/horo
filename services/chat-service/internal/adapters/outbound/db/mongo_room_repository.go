@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/wnmay/horo/services/chat-service/internal/domain"
@@ -133,15 +134,24 @@ func (r *mongoRoomRepository) GetChatRoomsByUserID(ctx context.Context, userID s
 		{"prophet_id": userID},
 		{"customer_id": userID},
 	}}
+	
+	log.Printf("[GetChatRoomsByUserID] Querying MongoDB with userID: %s, filter: %+v", userID, filter)
+	
 	cursor, err := r.collection.Find(ctx, filter)
 	if err != nil {
+		log.Printf("[GetChatRoomsByUserID] MongoDB Find error: %v", err)
 		return nil, err
 	}
 	defer cursor.Close(ctx)
+	
 	var rooms []*RoomModel
 	if err := cursor.All(ctx, &rooms); err != nil {
+		log.Printf("[GetChatRoomsByUserID] Cursor.All error: %v", err)
 		return nil, err
 	}
+	
+	log.Printf("[GetChatRoomsByUserID] Found %d rooms in MongoDB for userID: %s", len(rooms), userID)
+	
 	var domainRooms []*domain.Room
 	for _, rm := range rooms {
 		domainRooms = append(domainRooms, rm.ToDomain())
