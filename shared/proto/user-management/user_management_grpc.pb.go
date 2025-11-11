@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.33.0
-// source: user_management.proto
+// source: proto/user_management.proto
 
 package usermanagement
 
@@ -231,5 +231,5 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "user_management.proto",
+	Metadata: "proto/user_management.proto",
 }

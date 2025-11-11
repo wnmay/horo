@@ -22,12 +22,12 @@ type OrderData struct {
 }
 
 type OrderCompletedData struct {
-	OrderID    string `json:"orderId"`
-	CourseID   string `json:"courseId"`
-	CourseName string `json:"courseName"`
+	OrderID     string `json:"orderId"`
+	CourseID    string `json:"courseId"`
+	CourseName  string `json:"courseName"`
 	OrderStatus string `json:"orderStatus"`
-	ProphetID  string `json:"prophetId"`
-	RoomID     string `json:"roomId"`
+	ProphetID   string `json:"prophetId"`
+	RoomID      string `json:"roomId"`
 }
 
 type OrderPaymentBoundData struct {
@@ -84,6 +84,7 @@ type ChatMessageOutgoingData struct {
 	Content   string `json:"content"`
 	Type      string `json:"type"` // text | notification
 	CreatedAt string `json:"createdAt"`
+	Trigger   string `json:"trigger"`
 }
 
 type ChatNotificationOutgoingData[T any] struct {

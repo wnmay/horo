@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { WSClient } from "./client";
-import { ChatMessage } from "@/types/ws_message";
+import { ChatMessage } from "@/types/ws-message";
 import { auth } from "@/firebase/firebase";
 import { onAuthStateChanged, onIdTokenChanged } from "firebase/auth";
 

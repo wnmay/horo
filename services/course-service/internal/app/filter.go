@@ -7,8 +7,7 @@ import (
 )
 
 type CourseFilter struct {
-	CourseName  string
-	ProphetName string
+	SearchTerm  string
 	Duration    string
 	CourseType  domain.CourseType
 }
@@ -22,7 +21,7 @@ type SortType string
 
 const (
 	SortBy_Price  SortType = "price"
-	SortBy_Score SortType = "score"
+	SortBy_ReviewScore SortType = "review_score"
 )
 
 // Map plain string to domain.CourseType
@@ -50,8 +49,8 @@ func ParseSortType(input string) SortType {
 	switch strings.ToLower(input) {
 	case string(SortBy_Price):
 		return SortBy_Price
-	case string(SortBy_Score):
-		return SortBy_Score
+	case string(SortBy_ReviewScore):
+		return SortBy_ReviewScore
 	default:
 		return ""
 	}

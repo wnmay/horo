@@ -1,0 +1,47 @@
+@startuml Payment Service - Component Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Component Diagram for Payment Service
+
+Container(apiGateway, "API Gateway", "Go", "Routes requests")
+Container(orderService, "Order Service", "Go", "Initiates payments")
+
+Container_Boundary(paymentService, "Payment Service") {
+    Component(httpHandler, "HTTP Handler", "Go, Fiber", "Handles REST API requests for payments")
+    
+    Component(paymentApp, "Payment Application", "Go", "Core business logic for payment processing")
+    
+    Component(paymentRepository, "Payment Repository", "Go", "Data access layer for payments")
+    
+    Component(eventPublisher, "Event Publisher", "Go", "Publishes payment events to message broker")
+    Component(orderConsumer, "Order Consumer", "Go", "Consumes order creation events")
+}
+
+ContainerDb(postgres, "PostgreSQL", "Payment database")
+ContainerQueue(rabbitmq, "RabbitMQ", "Message broker")
+
+' External to Service
+Rel(apiGateway, httpHandler, "Completes payment, checks balance", "HTTP/REST")
+Rel(orderService, httpHandler, "Payment status queries", "HTTP/REST")
+
+' HTTP flow
+Rel(httpHandler, paymentApp, "Payment operations", "")
+
+' Messaging flow - consuming
+Rel(rabbitmq, orderConsumer, "Order created events", "AMQP")
+Rel(orderConsumer, paymentApp, "Creates payment record", "")
+
+' Messaging flow - publishing
+Rel(paymentApp, eventPublisher, "Publishes payment events", "")
+Rel(eventPublisher, rabbitmq, "Payment success, status events", "AMQP")
+
+' Application logic
+Rel(paymentApp, paymentRepository, "Saves/retrieves payments", "")
+
+' Adapters to external
+Rel(paymentRepository, postgres, "Persists", "SQL/TCP")
+
+@enduml
+

@@ -2,10 +2,11 @@
 package domain
 
 type UserRole string
+
 const (
-	USER_ROLE_PROPHET UserRole = "prophet"
+	USER_ROLE_PROPHET  UserRole = "prophet"
 	USER_ROLE_CUSTOMER UserRole = "customer"
-	USER_ROLE_UNKNOWN UserRole = "unknown"
+	USER_ROLE_UNKNOWN  UserRole = "unknown"
 )
 
 type User struct {
@@ -16,12 +17,17 @@ type User struct {
 }
 
 type ProphetName struct {
-	UserID   string
+	UserID      string
 	ProphetName string
 }
 
 type UserName struct {
-	UserID string
+	UserID   string
 	UserName string
 	UserRole UserRole
+}
+
+type Prophet struct {
+	User    *User
+	Balance float64
 }

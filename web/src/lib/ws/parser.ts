@@ -4,7 +4,7 @@ import {
   OrderCompletedNotification,
   OrderPaymentBoundNotification,
   OrderPaidNotification,
-} from "@/types/ws_message";
+} from "@/types/ws-message";
 import { Trigger } from "@/types/contracts";
 
 export function parseChatMessage(raw: string): ChatMessage | null {

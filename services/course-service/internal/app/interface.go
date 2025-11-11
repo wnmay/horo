@@ -13,8 +13,9 @@ type CourseService interface {
 	ListCoursesByProphet(ctx context.Context, prophetID string) ([]*domain.CourseWithProphetName, error)
 	UpdateCourse(ctx context.Context, id string, input *domain.UpdateCourseInput) (*domain.Course, error)
 	DeleteCourse(ctx context.Context, id string) error
-	FindCoursesByFilter(ctx context.Context, filter CourseFilter, sort CourseSort) ([]*domain.Course, error)
+	FindCoursesByFilter(ctx context.Context, filter CourseFilter, sort CourseSort) ([]*domain.CourseWithProphetName, error)
 	CreateReview(ctx context.Context, input CreateReviewInput) (*domain.Review, error)
 	GetReviewByID(ctx context.Context, id string) (*domain.Review, error)
 	ListReviewsByCourse(ctx context.Context, courseId string) ([]*domain.Review, error)
+	ListPopularCourses(ctx context.Context, limit int) ([]*domain.CourseWithProphetName, error)
 }
