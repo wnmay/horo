@@ -13,7 +13,7 @@ export default function CourseCard({ course }: any) {
 
   return (
     <div className="cursor-pointer hover:shadow-lg transition">
-      <Card className="relative p-4 w-[240px] h-[340px] flex flex-col justify-between shadow-md bg-white dark:bg-zinc-900">
+      <Card className="relative p-4 w-[260px] h-[340px] flex flex-col justify-between shadow-md bg-white dark:bg-zinc-900">
         {/* Top Right Rating */}
         <div className="absolute top-3 right-3 text-yellow-500 text-sm font-semibold flex items-center">
           ⭐{" "}

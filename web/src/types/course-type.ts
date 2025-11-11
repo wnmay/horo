@@ -1,10 +1,10 @@
 export const courseTypeImageMap: Record<string, string> = {
-    Love: "/images/Love.jpg",
-    Study: "/images/Study.jpg",
-    Work: "/images/Work.jpg",
-    Health: "/images/Health.jpg",
-    Finance: "/images/Finance.jpg",
-    "Personal Growth": "/images/Personal_Growth.jpg",
+    Love: "/images/Love.png",
+    Study: "/images/Study.png",
+    Work: "/images/Work.png",
+    Health: "/images/Health.png",
+    Finance: "/images/Finance.png",
+    "Personal Growth": "/images/Personal_Growth.png",
   };
 
 export const courseTypesMap: Record<string, string> = {
