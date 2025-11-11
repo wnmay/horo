@@ -2,17 +2,55 @@ import http from 'k6/http';
 
 // Firebase configuration
 const FIREBASE_API_KEY = __ENV.FIREBASE_API_KEY;
-const EMAIL = __ENV.FIREBASE_EMAIL;
-const PASSWORD = __ENV.FIREBASE_PASSWORD;
 
-export function getFirebaseToken() {
-  console.log('🔐 Authenticating with Firebase...');
+// Register a new Firebase user and return their token
+export function registerFirebaseUser(email, password) {
+  console.log(`🔐 Registering new Firebase user: ${email}`);
+  
+  const url = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_API_KEY}`;
+  
+  const payload = JSON.stringify({
+    email: email,
+    password: password,
+    returnSecureToken: true,
+  });
+
+  const params = {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  };
+
+  const response = http.post(url, payload, params);
+
+  if (response.status !== 200) {
+    console.error(`❌ Firebase registration failed for ${email}:`, response.body);
+    throw new Error(`Firebase registration failed with status ${response.status}`);
+  }
+
+  const data = JSON.parse(response.body);
+  
+  console.log(`✅ Successfully registered Firebase user: ${email}`);
+  console.log(`   User ID: ${data.localId}`);
+  
+  return {
+    idToken: data.idToken,
+    refreshToken: data.refreshToken,
+    expiresIn: data.expiresIn,
+    localId: data.localId,
+    email: data.email,
+  };
+}
+
+// Sign in with existing Firebase user
+export function getFirebaseToken(email, password) {
+  console.log(`🔐 Authenticating with Firebase: ${email}`);
   
   const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`;
   
   const payload = JSON.stringify({
-    email: EMAIL,
-    password: PASSWORD,
+    email: email,
+    password: password,
     returnSecureToken: true,
   });
 
@@ -33,7 +71,6 @@ export function getFirebaseToken() {
   
   console.log('✅ Successfully authenticated!');
   console.log(`   User ID: ${data.localId}`);
-  console.log(`   Email: ${data.email}`);
   console.log(`   Token expires in: ${data.expiresIn} seconds (~${Math.floor(data.expiresIn / 60)} minutes)`);
   
   return {

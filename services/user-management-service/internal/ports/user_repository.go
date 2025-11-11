@@ -14,8 +14,3 @@ type UserRepositoryPort interface {
 	SearchProphetIdsByName(ctx context.Context, prophetName string) ([]*domain.ProphetName, error)
 	MapUserNames(ctx context.Context, userIDs []string) ([]*domain.UserName, error)
 }
-
-type ProphetRepoPort interface {
-	Save(ctx context.Context, Prophet domain.Prophet) error
-	FindById(ctx context.Context, userId string) (*domain.Prophet, error)
-}
