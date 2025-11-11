@@ -24,7 +24,7 @@ func (s *CourseGRPCServer) CreateCourse(ctx context.Context, req *pb.CreateCours
 		Price:       req.GetPrice(),
 		Duration:    toDomainDuration(req.GetDuration()),
 	}
-	c, err := s.svc.CreateCourse(in)
+	c, err := s.svc.CreateCourse(ctx, in)
 	if err != nil {
 		return nil, err
 	}

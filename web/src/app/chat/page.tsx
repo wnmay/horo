@@ -54,7 +54,5 @@ function page() {
         <ChatRoomMiddle room={currentChatRoom} userId={userId} orderStatus="PENDING"/>
       </div>
     </div>
-  )
+  );
 }
-
-export default page

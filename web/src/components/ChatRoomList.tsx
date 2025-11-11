@@ -12,7 +12,7 @@ interface ChatRoomListProps {
 }
 
 const ChatRoomList = ({ setCurrentChatRoom }: ChatRoomListProps) => {
-  const [chatRooms, setChatRooms] = useState<ChatRoomProps[]>([]);
+  const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
@@ -41,7 +41,7 @@ const ChatRoomList = ({ setCurrentChatRoom }: ChatRoomListProps) => {
       // Fetch course names for all rooms
       const roomsWithCourseNames = await Promise.all(
         // rooms.map(async (room: ChatRoom) => {
-        rooms.map(async (room: ChatRoomProps) => {
+        rooms.map(async (room: ChatRoom) => {
           try {
             const courseResponse = await api.get(`/api/courses/${room.CourseID}`);
             return {
@@ -78,10 +78,10 @@ const ChatRoomList = ({ setCurrentChatRoom }: ChatRoomListProps) => {
     }
   }, [authReady]);
 
-  const handleRoomClick = (room: ChatRoomProps, roomId: string) => {
+  const handleRoomClick = (room: ChatRoom, roomId: string) => {
     console.log('Room clicked:', roomId);
     // Add your navigation or room selection logic here
-    setCurrentChatRoom(room);
+    // setCurrentChatRoom(room);
   };
 
   if (loading) {

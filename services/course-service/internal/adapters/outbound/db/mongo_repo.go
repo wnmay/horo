@@ -4,42 +4,80 @@ import (
 	"context"
 
 	"github.com/wnmay/horo/services/course-service/internal/domain"
-
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type MongoCourseRepo struct {
-	col *mongo.Collection
+	courseCol *mongo.Collection
+	reviewCol *mongo.Collection
 }
 
 func NewMongoCourseRepo(db *mongo.Database) *MongoCourseRepo {
-	return &MongoCourseRepo{col: db.Collection("courses")}
+	return &MongoCourseRepo{
+		courseCol: db.Collection("courses"),
+		reviewCol: db.Collection("reviews"),
+	}
 }
 
-func (r *MongoCourseRepo) SaveCourse(course *domain.Course) error {
-	_, err := r.col.InsertOne(context.TODO(), course)
+func (r *MongoCourseRepo) SaveCourse(ctx context.Context, course *domain.Course) error {
+	_, err := r.courseCol.InsertOne(ctx, course)
 	return err
 }
 
-func (r *MongoCourseRepo) FindCourseByID(id string) (*domain.Course, error) {
+func (r *MongoCourseRepo) FindCourseByID(ctx context.Context, id string) (*domain.Course, error) {
 	var c domain.Course
-	err := r.col.FindOne(context.TODO(), bson.M{"id": id, "deleted_at": false}).Decode(&c)
+	err := r.courseCol.FindOne(ctx, bson.M{"id": id, "deleted_at": false}).Decode(&c)
 	if err != nil {
 		return nil, err
 	}
 	return &c, nil
 }
 
-func (r *MongoCourseRepo) FindCoursesByProphet(prophetID string) ([]*domain.Course, error) {
-	cur, err := r.col.Find(context.TODO(), bson.M{"prophet_id": prophetID, "deleted_at": false})
+func (r *MongoCourseRepo) FindCourseDetailByID(ctx context.Context, id string) (*domain.CourseDetail, error) {
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: bson.M{"id": id, "deleted_at": false}}},
+		{{Key: "$lookup", Value: bson.M{
+			"from":         "reviews",
+			"localField":   "id",
+			"foreignField": "course_id",
+			"as":           "reviews",
+		}}},
+		// Optional: ensure fields exist, but don’t recalc
+		{{Key: "$addFields", Value: bson.M{
+			"review_count": bson.M{"$ifNull": []interface{}{"$review_count", 0}},
+			"review_score": bson.M{"$ifNull": []interface{}{"$review_score", 0.0}},
+		}}},
+	}
+
+	cur, err := r.courseCol.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, err
 	}
-	defer cur.Close(context.TODO())
+	defer cur.Close(ctx)
+
+	if !cur.Next(ctx) {
+		return nil, mongo.ErrNoDocuments
+	}
+
+	var detail domain.CourseDetail
+	if err := cur.Decode(&detail); err != nil {
+		return nil, err
+	}
+
+	return &detail, nil
+}
+
+func (r *MongoCourseRepo) FindCoursesByProphet(ctx context.Context, prophetID string) ([]*domain.Course, error) {
+	cur, err := r.courseCol.Find(ctx, bson.M{"prophet_id": prophetID, "deleted_at": false})
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
 
 	var courses []*domain.Course
-	for cur.Next(context.TODO()) {
+	for cur.Next(ctx) {
 		var c domain.Course
 		if err := cur.Decode(&c); err != nil {
 			return nil, err
@@ -49,30 +87,36 @@ func (r *MongoCourseRepo) FindCoursesByProphet(prophetID string) ([]*domain.Cour
 	return courses, nil
 }
 
-func (r *MongoCourseRepo) Update(id string, updates map[string]interface{}) (*domain.Course, error) {
-	_, err := r.col.UpdateOne(context.TODO(), bson.M{"id": id, "deleted_at": false}, bson.M{"$set": updates})
+func (r *MongoCourseRepo) UpdateCourse(ctx context.Context, id string, updates map[string]interface{}) (*domain.Course, error) {
+	_, err := r.courseCol.UpdateOne(ctx, bson.M{"id": id, "deleted_at": false}, bson.M{"$set": updates})
 	if err != nil {
 		return nil, err
 	}
-	return r.FindCourseByID(id)
+	return r.FindCourseByID(ctx, id)
 }
 
-func (r *MongoCourseRepo) Delete(id string) error {
+func (r *MongoCourseRepo) DeleteCourse(ctx context.Context, id string) error {
 	update := bson.M{"$set": bson.M{"deleted_at": true}}
-	_, err := r.col.UpdateOne(context.TODO(), bson.M{"id": id}, update)
+	_, err := r.courseCol.UpdateOne(ctx, bson.M{"id": id}, update)
 	return err
 }
 
-func (r *MongoCourseRepo) FindByFilter(ctx context.Context, filter CourseFilter) ([]*domain.Course, error) {
+func (r *MongoCourseRepo) FindByFilter(ctx context.Context, filter CourseFilter, sort CourseSort) ([]*domain.Course, error) {
 	if len(filter.ProphetIDs) == 0 {
 		return []*domain.Course{}, nil
 	}
 
-	filterMongo, err := filter.BuildMongoFilter()
+	filterMongo, sortMongo, err := BuildMongoQuery(filter, sort)
 	if err != nil {
 		return nil, err
 	}
-	cursor, err := r.col.Find(ctx, filterMongo)
+
+	opts := options.Find()
+	if len(sortMongo) > 0 {
+		opts.SetSort(sortMongo)
+	}
+
+	cursor, err := r.courseCol.Find(ctx, filterMongo, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -90,30 +134,61 @@ func (r *MongoCourseRepo) FindByFilter(ctx context.Context, filter CourseFilter)
 	return courses, nil
 }
 
-func (r *MongoCourseRepo) SaveReview(review *domain.Review) error {
-	_, err := r.col.InsertOne(context.TODO(), review)
-	return err
+func (r *MongoCourseRepo) SaveReview(ctx context.Context, review *domain.Review) error {
+	// Insert review
+	if _, err := r.reviewCol.InsertOne(ctx, review); err != nil {
+		return err
+	}
+
+	// Recalculate review count + average
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: bson.M{"course_id": review.CourseID, "deleted_at": false}}},
+		{{Key: "$group", Value: bson.M{
+			"_id":   "$course_id",
+			"count": bson.M{"$sum": 1},
+			"avg":   bson.M{"$avg": "$score"},
+		}}},
+	}
+
+	cur, err := r.reviewCol.Aggregate(ctx, pipeline)
+	if err != nil {
+		return err
+	}
+	defer cur.Close(ctx)
+
+	var agg struct {
+		ID    string  `bson:"_id"`
+		Count int     `bson:"count"`
+		Avg   float64 `bson:"avg"`
+	}
+
+	if cur.Next(ctx) {
+		if err := cur.Decode(&agg); err != nil {
+			return err
+		}
+
+		update := bson.M{"$set": bson.M{
+			"review_count": agg.Count,
+			"review_score": agg.Avg,
+		}}
+		_, err = r.courseCol.UpdateOne(ctx, bson.M{"id": review.CourseID}, update)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func (r *MongoCourseRepo) FindReviewByID(id string) (*domain.Review, error) {
-	var rv domain.Review
-	err := r.col.FindOne(context.TODO(), bson.M{"id": id, "deleted_at": false}).Decode(&rv)
+func (r *MongoCourseRepo) FindReviewsByCourse(ctx context.Context, courseID string) ([]*domain.Review, error) {
+	cur, err := r.reviewCol.Find(ctx, bson.M{"course_id": courseID, "deleted_at": false})
 	if err != nil {
 		return nil, err
 	}
-	return &rv, nil
-}
-
-func (r *MongoCourseRepo) FindReviewsByCourse(courseId string) ([]*domain.Review, error) {
-	cur, err := r.col.Find(context.TODO(), bson.M{"course_id": courseId, "deleted_at": false})
-	if err != nil {
-		return nil, err
-	}
-
-	defer cur.Close(context.TODO())
+	defer cur.Close(ctx)
 
 	var reviews []*domain.Review
-	for cur.Next(context.TODO()) {
+	for cur.Next(ctx) {
 		var rv domain.Review
 		if err := cur.Decode(&rv); err != nil {
 			return nil, err
@@ -123,11 +198,11 @@ func (r *MongoCourseRepo) FindReviewsByCourse(courseId string) ([]*domain.Review
 	return reviews, nil
 }
 
-func (r *MongoCourseRepo) FindCourseDetailByID(id string) (*domain.CourseDetail, error) {
-	var cd domain.CourseDetail
-	err := r.col.FindOne(context.TODO(), bson.M{"id": id, "deleted_at": false}).Decode(&cd)
+func (r *MongoCourseRepo) FindReviewByID(ctx context.Context, id string) (*domain.Review, error) {
+	var rv domain.Review
+	err := r.reviewCol.FindOne(ctx, bson.M{"id": id, "deleted_at": false}).Decode(&rv)
 	if err != nil {
 		return nil, err
 	}
-	return &cd, nil
+	return &rv, nil
 }
