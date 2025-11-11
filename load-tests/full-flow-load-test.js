@@ -14,6 +14,7 @@ const paymentCompletionDuration = new Trend('payment_completion_duration');
 
 // Configuration
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
+const FIREBASE_API_KEY = __ENV.FIREBASE_API_KEY;
 
 export const options = {
   stages: [
@@ -47,6 +48,14 @@ function generateRandomPassword() {
 }
 
 export default function () {
+  // Check if Firebase API Key is set
+  if (!FIREBASE_API_KEY) {
+    console.error('❌ FIREBASE_API_KEY environment variable not set!');
+    console.error('   Set it with: $env:FIREBASE_API_KEY="your-api-key"');
+    errorRate.add(1);
+    return;
+  }
+
   // Generate unique credentials for this virtual user
   const email = generateRandomEmail();
   const password = generateRandomPassword();
@@ -55,7 +64,7 @@ export default function () {
   
   let idToken, courseId, chatRoomId, orderId, paymentId;
 
-  // ===== STEP 0: Register Firebase user =====
+  // ===== STEP 1: Register Firebase user =====
   const startFirebaseReg = Date.now();
   let firebaseAuth;
   
@@ -64,7 +73,7 @@ export default function () {
     idToken = firebaseAuth.idToken;
     firebaseRegistrationDuration.add(Date.now() - startFirebaseReg);
   } catch (error) {
-    console.error(`Failed to register Firebase user ${email}: ${error}`);
+    console.error(`❌ Failed to register Firebase user ${email}: ${error}`);
     errorRate.add(1);
     return;
   }
@@ -73,7 +82,7 @@ export default function () {
   
   sleep(0.5);
 
-  // ===== STEP 1: Register user in backend =====
+  // ===== STEP 2: Register user in backend =====
   const registerPayload = JSON.stringify({
     idToken: idToken,
     fullName: fullName,
@@ -108,7 +117,7 @@ export default function () {
 
   sleep(0.5);
 
-  // ===== STEP 2: Get all courses =====
+  // ===== STEP 3: Get all courses =====
   const coursesParams = {
     headers: {
       'Authorization': bearerToken,
