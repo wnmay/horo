@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api/api-client";
-import { TagImages } from "@/types/common-type";
+import { courseTypeImageMap } from "@/types/course-type";
 import { toast } from "sonner";
 
 interface Course {
@@ -32,16 +32,14 @@ interface Course {
   }[];
 }
 
-interface CreateChatRoomRequest {
-  courseId: string;
-}
-
 function getImageForType(type: string): string {
   if (!type) return "/images/default.jpg";
-  const match = Object.keys(TagImages).find(
+  const match = Object.keys(courseTypeImageMap).find(
     (key) => key.toLowerCase() === type.toLowerCase()
   );
-  return match ? TagImages[match] : "/images/default.jpg";
+  return match
+    ? courseTypeImageMap[match as keyof typeof courseTypeImageMap]
+    : "/images/default.jpg";
 }
 
 export default function CourseDetailPage({
@@ -70,7 +68,7 @@ export default function CourseDetailPage({
           description: data.description,
           duration: data.duration,
           price: data.price,
-          rating: data.rating,
+          rating: data.review_score,
           prophetId: data.prophet_id,
           prophetName: data.prophetname,
           createdTime: data.created_time,
@@ -84,7 +82,7 @@ export default function CourseDetailPage({
               customerName: r.customername,
               title: r.title,
               comment: r.description,
-              rating: r.score,
+              rating: r.review_score,
               createdAt: r.created_at,
               deletedAt: r.deleted_at,
             })) || [],

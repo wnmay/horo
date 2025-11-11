@@ -59,3 +59,7 @@ func (h *CourseHandler) ListReviewsByCourse(c *fiber.Ctx) error {
 func (h *CourseHandler) ListCurrentProphetCourses(c *fiber.Ctx) error {
 	return ProxyRequest(c, h.client, "GET", h.courseServiceURL, "/api/courses/prophet/courses")
 }
+
+func (h *CourseHandler) ListPopularCourses(c *fiber.Ctx) error {
+	return ProxyRequest(c, h.client, "GET", h.courseServiceURL, "/api/courses/popular")
+}

@@ -47,16 +47,13 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <head />
       <body className="font-sans antialiased bg-white dark:bg-black min-h-screen flex flex-col">
         {/* Header bar */}
         <Navbar role={role} username={fullname} onNameUpdate={fetchUserData} />
 
-        {/* Main Content */}
+        {/* Main content */}
         <main className="flex-1 mt-20">{children}</main>
-
-        {/* Toast notifications */}
-        <Toaster richColors position="top-right" />
+        <Toaster />
       </body>
     </html>
   );

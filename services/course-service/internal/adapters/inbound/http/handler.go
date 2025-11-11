@@ -1,6 +1,8 @@
 package http
 
 import (
+	"log"
+	"strconv"
 	"time"
 
 	"github.com/wnmay/horo/services/course-service/internal/app"
@@ -22,6 +24,7 @@ func (h *Handler) Register(router fiber.Router) {
 	// Course
 	group := router.Group("/api")
 	group.Post("/courses", h.CreateCourse)
+	group.Get("/courses/popular", h.ListPopularCourses)
 	group.Get("/courses/:id", h.GetCourseByID)
 	group.Get("/prophets/:prophetID/courses", h.ListCoursesByProphet)
 	group.Patch("/courses/:id", h.UpdateCourse)
@@ -34,8 +37,31 @@ func (h *Handler) Register(router fiber.Router) {
 	group.Get("/courses/:courseID/reviews", h.GetReviewByCourseID)
 }
 
+func (h *Handler) ListPopularCourses(c *fiber.Ctx) error {
+	limit := c.Query("limit")
+	if limit == "" {
+		limit = "10"
+	}
+	limitInt, err := strconv.Atoi(limit)
+	log.Println("limitInt", limitInt)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid limit")
+	}
+	courses, err := h.service.ListPopularCourses(c.Context(), limitInt)
+	if err != nil {
+		log.Println("error", err)
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	return c.JSON(courses)
+}
+
 // CreateCourse — POST /courses
 func (h *Handler) CreateCourse(c *fiber.Ctx) error {
+	userRole := c.Get("X-User-Role")
+	if userRole != "prophet" {
+		return fiber.NewError(fiber.StatusForbidden, "only prophets can create courses")
+	}
+
 	prophetID := c.Get("X-User-ID")
 	var req struct {
 		CourseName  string  `json:"coursename"`
@@ -124,18 +150,16 @@ func (h *Handler) DeleteCourse(c *fiber.Ctx) error {
 // FindCoursesbyFilter — GET /courses?coursename=&prophet_name=&duration=
 // GetAllCourses — GET /courses
 func (h *Handler) FindCoursesByFilter(c *fiber.Ctx) error {
-	courseName := c.Query("coursename")
-	prophetName := c.Query("prophetname")
+	searchTerm := c.Query("searchterm")
 	duration := c.Query("duration")
 	courseType := c.Query("coursetype")
 	sortBy := c.Query("sortby")
 	order := c.Query("order")
 
 	filter := app.CourseFilter{
-		CourseName:  courseName,
-		ProphetName: prophetName,
-		Duration:    duration,
-		CourseType:  app.ParseCourseType(courseType),
+		SearchTerm: searchTerm,
+		Duration:   duration,
+		CourseType: app.ParseCourseType(courseType),
 	}
 
 	sort := app.CourseSort{

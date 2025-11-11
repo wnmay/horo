@@ -1,0 +1,48 @@
+@startuml User Management Service - Component Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Component Diagram for User Management Service
+
+Container(apiGateway, "API Gateway", "Go", "Routes requests")
+Container(courseService, "Course Service", "Go", "Requests user data")
+Container(chatService, "Chat Service", "Go", "Requests user data")
+
+Container_Boundary(userService, "User Management Service") {
+    Component(httpHandler, "HTTP Handler", "Go, Fiber", "Handles REST API requests for user operations")
+    Component(grpcServer, "gRPC Server", "Go, gRPC", "Provides user data to other services")
+    
+    Component(userManagementApp, "User Management App", "Go", "Core business logic for user operations")
+    Component(authApp, "Auth App", "Go", "Handles authentication operations")
+    
+    Component(firebaseAdapter, "Firebase Auth Adapter", "Go", "Integrates with Firebase for authentication")
+    Component(userRepository, "User Repository", "Go", "Data access layer for user data")
+}
+
+System_Ext(firebase, "Firebase", "Authentication service")
+ContainerDb(mongodb, "MongoDB", "User database")
+
+' External to Service
+Rel(apiGateway, httpHandler, "User registration, profile updates", "HTTP/REST")
+Rel(courseService, grpcServer, "Gets prophet names, user data", "gRPC")
+Rel(chatService, grpcServer, "Gets user names, roles", "gRPC")
+
+' HTTP flow
+Rel(httpHandler, userManagementApp, "Calls user operations", "")
+Rel(httpHandler, authApp, "Calls auth operations", "")
+
+' gRPC flow
+Rel(grpcServer, userManagementApp, "Calls user queries", "")
+
+' Application logic
+Rel(userManagementApp, firebaseAdapter, "Validates tokens", "")
+Rel(userManagementApp, userRepository, "Reads/writes user data", "")
+Rel(authApp, firebaseAdapter, "Creates/verifies tokens", "")
+
+' Adapters to external
+Rel(firebaseAdapter, firebase, "Authenticates", "Firebase SDK")
+Rel(userRepository, mongodb, "Queries/persists", "MongoDB Protocol")
+
+@enduml
+

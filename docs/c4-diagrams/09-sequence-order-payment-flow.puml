@@ -1,0 +1,64 @@
+@startuml Order and Payment Flow - Sequence Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title Sequence Diagram: Order and Payment Flow
+
+actor Customer
+participant "Web App" as Web
+participant "API Gateway" as Gateway
+participant "Order Service" as Order
+participant "Course Service" as Course
+participant "Payment Service" as Payment
+participant "Chat Service" as Chat
+database "RabbitMQ" as MQ
+database "Order DB" as OrderDB
+database "Payment DB" as PaymentDB
+
+Customer -> Web: Create order for course
+Web -> Gateway: POST /api/orders\n{customerId, courseId}
+Gateway -> Order: Forward request
+
+Order -> Course: GetCourseByID(courseId) [gRPC]
+Course --> Order: Course details (price, prophet)
+
+Order -> OrderDB: Save order\n(status: PENDING)
+OrderDB --> Order: Order created
+
+Order -> MQ: Publish OrderCreated event\n{orderId, amount, courseId, propherId}
+Order --> Gateway: 201 Created\n{orderId, status}
+Gateway --> Web: Order created
+Web --> Customer: Order confirmation
+
+MQ -> Payment: Consume OrderCreated event
+Payment -> PaymentDB: Create payment\n(status: PENDING)
+Payment -> MQ: Publish PaymentCreated event\n{paymentId, orderId}
+
+MQ -> Order: Consume PaymentCreated event
+Order -> OrderDB: Update order\n(paymentId bound)
+Order -> MQ: Publish PaymentBound event
+
+...User completes payment via payment gateway...
+
+Customer -> Web: Complete payment
+Web -> Gateway: PUT /api/payments/{id}/complete
+Gateway -> Payment: Forward request
+
+Payment -> PaymentDB: Update payment\n(status: COMPLETED)
+Payment -> MQ: Publish PaymentSuccess event\n{orderId, paymentId}
+Payment --> Gateway: 200 OK
+Gateway --> Web: Payment completed
+Web --> Customer: Payment successful
+
+MQ -> Order: Consume PaymentSuccess event
+Order -> OrderDB: Update order\n(status: COMPLETED)
+Order -> Course: GetCourseByID [gRPC]
+Course --> Order: Course details
+
+Order -> MQ: Publish OrderCompleted event\n{orderId, courseId, roomId, customerId, prophetId}
+
+MQ -> Chat: Consume OrderCompleted event
+Chat -> Chat: Create chat room\n(customer + prophet)
+Chat -> MQ: Publish notification\n(room created)
+
+@enduml
+

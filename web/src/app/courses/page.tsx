@@ -1,94 +1,58 @@
 "use client";
-
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import CourseCard from "@/components/course-card";
-import { useRouter } from "next/navigation";
-import CourseFilter from "@/components/CourseFilter";
+import { useSearchParams, useRouter } from "next/navigation";
+import CourseCard from "@/components/CourseCard";
 import api from "@/lib/api/api-client";
-
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  prophet: string;
-  price: string;
-  duration: number;
-  tags: string[];
-}
-
+import { Button } from "@/components/ui/button";
+import CourseSearchBar from "@/components/CourseSearchBar";
 export default function CoursesPage() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortOption, setSortOption] = useState<"title" | "price" | "none">("none");
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const [durationFilter, setDurationFilter] = useState<number | null>(null);
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
+  const searchParams = useSearchParams();
   const router = useRouter();
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const courseTags = ["Love", "Study", "Work", "Health", "Finance", "Personal_Growth"];
-  const tagImages: Record<string, string> = {
-    Love: "/images/Love.jpg",
-    Study: "/images/Study.jpg",
-    Work: "/images/Work.jpg",
-    Health: "/images/Health.jpg",
-    Finance: "/images/Finance.jpg",
-    Personal_Growth: "/images/Personal_Growth.jpg",
-  };
-
-  // Fetch courses
   useEffect(() => {
-    const fetchCourses = async () => {
+    async function fetchCourses() {
+      setLoading(true);
+      setError(null);
+
       try {
-        const res = await api.get("/api/courses");
-        const data = Array.isArray(res.data.data) ? res.data.data : [];
-        const mapped: Course[] = data.map((c: any) => ({
-          id: c.id || "no-id",
-          title: c.coursename || "Untitled",
-          description: c.description || "",
-          prophet: c.prophet || "Unknown",
-          price: c.price != null ? `${c.price}` : "0",
-          duration: c.duration != null ? c.duration : 0,
-          tags: c.coursetype ? [c.coursetype] : [],
-        }));
-        setCourses(mapped);
-        setFilteredCourses(mapped);
+        const params = new URLSearchParams();
+        const coursetype = searchParams.get("coursetype");
+        const sortby = searchParams.get("sortby");
+        const order = searchParams.get("order");
+        const duration = searchParams.get("duration");
+        const searchterm = searchParams.get("searchterm");
+
+        if (duration) params.append("duration", duration);
+        if (coursetype) params.append("coursetype", coursetype);
+        if (order) params.append("order", order);
+        if (sortby) params.append("sortby", sortby);
+        if (searchterm) params.append("searchterm", searchterm);
+
+        let url = "/api/courses";
+
+        const queryString = params.toString();
+        if (queryString) {
+          url += `?${queryString}`;
+        }
+
+        const res = await api.get(url);
+        setCourses(res.data.data || []);
       } catch (err) {
-        console.error("Error fetching courses:", err);
+        console.error(err);
+        setError("Failed to load courses");
+      } finally {
+        setLoading(false);
       }
-    };
-    fetchCourses();
-  }, []);
-
-  const handleApply = () => {
-    let filtered = [...courses];
-
-    if (selectedTag) filtered = filtered.filter(c => c.tags.includes(selectedTag));
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        c => c.title.toLowerCase().includes(q) || c.prophet.toLowerCase().includes(q)
-      );
     }
-    if (durationFilter !== null) filtered = filtered.filter(c => c.duration === durationFilter);
-    if (sortOption === "title") filtered.sort((a, b) => a.title.localeCompare(b.title));
-    if (sortOption === "price") filtered.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
 
-    setFilteredCourses(filtered);
-  };
+    fetchCourses();
+  }, [searchParams.toString()]);
 
-
-  // Handle Enter key
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleApply();
-      }
-    };
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [selectedTag, searchQuery, sortOption, durationFilter, courses]);
+  if (loading) return <p className="text-center mt-20">Loading...</p>;
+  if (error) return <p className="text-center text-red-500 mt-20">{error}</p>;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-zinc-100 dark:from-zinc-900 dark:to-zinc-950 py-12">
@@ -96,27 +60,36 @@ export default function CoursesPage() {
         All Courses
       </h1>
 
-      <CourseFilter
-        courseTags={courseTags}
-        tagImages={tagImages}
-        selectedTag={selectedTag}
-        searchQuery={searchQuery}
-        sortOption={sortOption}
-        durationFilter={durationFilter}
-        onTagChange={setSelectedTag}
-        onSearchChange={setSearchQuery}
-        onSortChange={setSortOption}
-        onDurationChange={setDurationFilter}
-        onApply={handleApply}
-      />
+      {/* ✅ Reusable Course Search Bar */}
+      <div className="max-w-6xl mx-auto px-4 mb-10">
+        <CourseSearchBar />
+      </div>
 
-      <div className="max-w-6xl mx-auto mt-8 px-6 grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-        {filteredCourses.map((course) => (
-          <CourseCard key={course.id} course={course} />
+      {/* ✅ Course Grid */}
+      <div className="max-w-6xl mx-auto px-6 grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        {courses.map((course) => (
+          <CourseCard
+            key={course.id}
+            course={{
+              id: course.id,
+              title: course.coursename,
+              description: course.description,
+              prophet: course.prophetname,
+              price: `$${course.price}`,
+              reviewScore: course.review_score,
+              reviewCount: course.review_count,
+              duration: course.duration,
+              coursetype: course.coursetype,
+              prophetId: course.prophet_id,
+              prophetName: course.prophetname,
+              createdTime: course.created_time,
+              deletedAt: course.deleted_at,
+            }}
+          />
         ))}
       </div>
 
-      {filteredCourses.length === 0 && (
+      {courses.length === 0 && (
         <p className="text-center text-zinc-500 mt-12">No courses found.</p>
       )}
 

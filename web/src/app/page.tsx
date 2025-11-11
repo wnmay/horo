@@ -2,162 +2,120 @@
 
 import Card from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
-import CourseCard from "@/components/course-card";
-import CourseFilter from "../components/CourseFilter";
+import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import CourseCard from "@/components/CourseCard";
 import api from "@/lib/api/api-client";
-
+import CourseSearchBar from "@/components/CourseSearchBar";
 export default function HomePage() {
-  const [page, setPage] = useState(0);
+  const router = useRouter();
+  const menuRef = useRef<HTMLDivElement>(null);
   const [adIndex, setAdIndex] = useState(0);
-  const [coursesPerPage, setCoursesPerPage] = useState(6);
-
-  // Filters
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortOption, setSortOption] = useState<"title" | "price" | "none">("none");
-  const [durationFilter, setDurationFilter] = useState<number | null>(null);
-
-  // Courses
   const [courses, setCourses] = useState<any[]>([]);
-  const [filteredCourses, setFilteredCourses] = useState<any[]>([]);
-
-  // --- Fetch courses from backend ---
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const res = await api.get("/api/courses");
-        if (Array.isArray(res.data.data)) {
-          const mapped = res.data.data.map((c: any) => ({
-            id: c.id,
-            title: c.coursename,
-            description: c.description,
-            prophet: c.prophet || "Unknown",
-            price: c.price ? c.price : 0,
-            duration: c.duration || 0,
-            tags: c.coursetype ? [c.coursetype] : [],
-          }));
-          setCourses(mapped);
-          setFilteredCourses(mapped); // initially show all
-        } else {
-          setCourses([]);
-          setFilteredCourses([]);
-        }
-      } catch (err) {
-        console.error("Error fetching courses:", err);
-        setCourses([]);
-        setFilteredCourses([]);
-      }
-    };
-    fetchCourses();
-  }, []);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // --- Ads ---
   const ads = [
-    { id: 0, title: "Welcome to Horo", description: "Your personalized horoscope app." },
-    { id: 1, title: "Get a free horoscope reading!", description: "Sign up now for your daily horoscope." },
-    { id: 2, title: "Exclusive Tarot Tips", description: "Learn top secrets for interpreting tarot." },
+    {
+      id: 0,
+      title: "Welcome to Horo",
+      description: "Your personalized horoscope app.",
+    },
+    {
+      id: 1,
+      title: "Get a free horoscope reading!",
+      description: "Sign up now for your daily horoscope.",
+    },
+    {
+      id: 2,
+      title: "Exclusive Tarot Tips",
+      description: "Learn top secrets for interpreting tarot.",
+    },
   ];
   useEffect(() => {
-    const interval = setInterval(() => setAdIndex((prev) => (prev + 1) % ads.length), 3000);
+    const interval = setInterval(
+      () => setAdIndex((prev) => (prev + 1) % ads.length),
+      3000
+    );
     return () => clearInterval(interval);
   }, []);
 
-  // --- Apply Handler ---
-  const handleApply = () => {
-    let filtered = [...courses];
-
-    if (selectedTag) filtered = filtered.filter((c) => c.tags.includes(selectedTag));
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (c) => c.title.toLowerCase().includes(q) || c.prophet.toLowerCase().includes(q)
-      );
-    }
-    if (durationFilter !== null) filtered = filtered.filter((c) => c.duration === durationFilter);
-    if (sortOption === "title") filtered.sort((a, b) => a.title.localeCompare(b.title));
-    if (sortOption === "price") filtered.sort((a, b) => a.price - b.price);
-
-    setFilteredCourses(filtered);
-    setPage(0); // reset pagination
-  };
-
-  // --- Handle Enter key ---
+  // --- Fetch courses ---
   useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleApply();
+    async function fetchCourses() {
+      try {
+        const res = await api.get("/api/courses/popular?limit=10");
+        setCourses(res.data.data || []);
+      } catch (err: any) {
+        console.error(err);
+        setError("Failed to load courses");
+      } finally {
+        setLoading(false);
       }
-    };
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [searchQuery, selectedTag, durationFilter, sortOption, courses]);
-
-  // --- Pagination ---
-  const startIndex = page * coursesPerPage;
-  const visibleCourses = filteredCourses.slice(startIndex, startIndex + coursesPerPage);
+    }
+    fetchCourses();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-zinc-100 dark:from-zinc-900 dark:to-zinc-950">
-      {/* Carousel */}
-      <div className="max-w-6xl mx-auto px-4 mb-12">
-        <Card className="transition-all duration-500 mx-auto w-full md:w-[600px] p-10 text-center bg-yellow-50 dark:bg-yellow-900 text-zinc-800 dark:text-yellow-100 min-h-[250px] flex flex-col justify-center">
-          <h3 className="font-bold text-4xl md:text-5xl mb-4">{ads[adIndex].title}</h3>
-          <p className="text-lg md:text-xl mt-2">{ads[adIndex].description}</p>
-        </Card>
+      <div className="max-w-6xl mx-auto px-4 py-10 space-y-12">
+        {/* Hero / Ads */}
+        <section className="flex justify-center">
+          <Card className="transition-all duration-500 w-full md:w-[650px] p-10 text-center bg-yellow-50 dark:bg-yellow-900 text-zinc-800 dark:text-yellow-100 rounded-2xl shadow-lg">
+            <h3 className="font-bold text-3xl md:text-4xl mb-3">
+              {ads[adIndex].title}
+            </h3>
+            <p className="text-base md:text-lg mt-1">
+              {ads[adIndex].description}
+            </p>
+          </Card>
+        </section>
+
+        {/* Search + Filter + Sort */}
+        <CourseSearchBar />
       </div>
 
-      {/* Filter */}
-      <CourseFilter
-        courseTags={["Love", "Study", "Work", "Health", "Finance", "Personal_Growth"]}
-        tagImages={{
-          Love: "/images/Love.jpg",
-          Study: "/images/Study.jpg",
-          Work: "/images/Work.jpg",
-          Health: "/images/Health.jpg",
-          Finance: "/images/Finance.jpg",
-          Personal_Growth: "/images/Personal_Growth.jpg",
-        }}
-        selectedTag={selectedTag}
-        searchQuery={searchQuery}
-        sortOption={sortOption}
-        durationFilter={durationFilter}
-        onTagChange={setSelectedTag}
-        onSearchChange={setSearchQuery}
-        onSortChange={setSortOption}
-        onDurationChange={setDurationFilter}
-        onApply={handleApply}
-      />
-
-      {/* Suggested Courses */}
-      <div className="px-6 py-12 to-zinc-100 dark:bg-zinc-900">
+      {/* Featured Courses */}
+      <section className="px-6 py-12 bg-white dark:bg-zinc-900 mt-4">
         <h2 className="text-3xl font-semibold text-center text-zinc-800 dark:text-zinc-100 mb-8">
-          Suggested Courses
+          Featured Courses
         </h2>
 
-        <div className="max-w-full mx-auto overflow-x-auto">
-          <div className="flex gap-6 min-w-max px-2 justify-center">
-            {visibleCourses.map((course) => (
-              <CourseCard key={course.id} course={course} />
-            ))}
-          </div>
-        </div>
+        {loading ? (
+          <p className="text-center text-zinc-500">Loading courses...</p>
+        ) : error ? (
+          <p className="text-center text-red-500">{error}</p>
+        ) : (
+          <>
+            <div className="max-w-6xl mx-auto overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-400 dark:scrollbar-thumb-zinc-600 scrollbar-track-transparent">
+              <div className="flex gap-6 min-w-max px-2 pb-4">
+                {courses.map((course) => (
+                  <div key={course.id} className="w-[240px] flex-shrink-0">
+                    <CourseCard
+                      course={{
+                        title: course.coursename,
+                        description: course.description,
+                        prophet: course.prophetname,
+                        price: `$${course.price}`,
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
 
-        {/* Pagination Buttons */}
-        <div className="flex items-center justify-between mt-8 max-w-6xl mx-auto px-2">
-          <div className="w-1/3"></div>
-
-          <div className="w-1/3 flex justify-end">
-            <Button
-              className="bg-blue-600 text-white hover:bg-blue-700 px-6 py-3 rounded-lg"
-              onClick={handleApply}
-            >
-              See More Courses →
-            </Button>
-          </div>
-        </div>
-      </div>
+            <div className="flex justify-center mt-8">
+              <Button
+                className="bg-blue-600 text-white hover:bg-blue-700 px-6 py-3 rounded-lg"
+                onClick={() => router.push("/courses")}
+              >
+                See More Courses →
+              </Button>
+            </div>
+          </>
+        )}
+      </section>
     </div>
   );
 }
