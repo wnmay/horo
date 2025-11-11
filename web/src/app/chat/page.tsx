@@ -47,7 +47,7 @@ function page() {
   if (!role || !userId) return <p className="p-4 text-red-500">No user signed in.</p>;
 
   return (
-    <div className="flex w-full h-screen">
+    <div className="flex h-screen self-end w-full">
       <div className="w-[30%] border-r">
         <ChatRoomList onRoomSelect={handleRoomSelect} />
       </div>

@@ -5,7 +5,7 @@ import { NotificationMessage } from "./NotificationMessage";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChatRoom } from "../LeftChat";
 import { useWebSocket } from "@/lib/ws/useWebSocket";
-import { ChatMessage } from "@/types/ws_message";
+import { ChatMessage } from "@/types/ws-message";
 import api from "@/lib/api/api-client";
 import MessagsInput from "./MessageInput";
 import { MessageProps } from "@/types/common-type";

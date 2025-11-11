@@ -23,7 +23,6 @@ export default function CreateCoursePage() {
     description: "",
     price: "",
     duration: "",
-    prophetname: "",
     courseType: "",
   });
 
@@ -43,8 +42,7 @@ export default function CreateCoursePage() {
       !form.coursename ||
       !form.description ||
       !form.price ||
-      !form.duration ||
-      !form.prophetname
+      !form.duration
     ) {
       toast("Please fill out all fields.", { position: "top-right" });
       return;
@@ -58,7 +56,6 @@ export default function CreateCoursePage() {
         description: form.description.trim(),
         price: parseInt(form.price, 10),
         duration: parseInt(form.duration, 10),
-        prophetname: form.prophetname.trim(),
         courseType: form.courseType.trim(),
       };
 
