@@ -7,8 +7,7 @@ import (
 )
 
 type CourseFilter struct {
-	CourseName  string
-	ProphetName string
+	SearchTerm  string
 	Duration    string
 	CourseType  domain.CourseType
 }

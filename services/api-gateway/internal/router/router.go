@@ -101,17 +101,20 @@ func (r *Router) setupCourseRoutes(api fiber.Router) {
 
 	courses := api.Group("/courses")
 
-	courses.Post("/", authMiddleware.AddClaims, courseHandler.CreateCourse)
-	courses.Get("/:id", courseHandler.GetCourseByID)
-	courses.Get("/prophet/:prophetId/courses", courseHandler.ListCoursesByProphet)
-	courses.Get("/prophet/courses", authMiddleware.AddClaims, courseHandler.ListCurrentProphetCourses)
-	courses.Patch("/:id", authMiddleware.AddClaims, courseHandler.UpdateCourse)
-	courses.Patch("/delete/:id", authMiddleware.AddClaims, courseHandler.DeleteCourse)
+	// --- Public Routes (no auth) ---
 	courses.Get("/", courseHandler.FindCoursesByFilter)
-	courses.Post("/:courseId/review", authMiddleware.AddClaims, courseHandler.CreateReview)
+	courses.Get("/popular", courseHandler.ListPopularCourses)
+	courses.Get("/prophet/:prophetId/courses", courseHandler.ListCoursesByProphet)
 	courses.Get("/review/:id", courseHandler.GetReviewByID)
 	courses.Get("/:courseId/reviews", courseHandler.ListReviewsByCourse)
-	courses.Get("/popular", courseHandler.ListPopularCourses)
+	courses.Get("/:id", courseHandler.GetCourseByID) // ← Keep this LAST among GET routes!
+
+	// --- Authenticated Routes (require auth) ---
+	courses.Post("/", authMiddleware.AddClaims, courseHandler.CreateCourse)
+	courses.Patch("/:id", authMiddleware.AddClaims, courseHandler.UpdateCourse)
+	courses.Patch("/delete/:id", authMiddleware.AddClaims, courseHandler.DeleteCourse)
+	courses.Get("/prophet/courses", authMiddleware.AddClaims, courseHandler.ListCurrentProphetCourses)
+	courses.Post("/:courseId/review", authMiddleware.AddClaims, courseHandler.CreateReview)
 }
 
 func (r *Router) setupTestRouter(api fiber.Router) {

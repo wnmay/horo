@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -127,18 +128,25 @@ func (s courseService) ListCoursesByProphet(ctx context.Context, prophetID strin
 
 // Find courses by filter (supports filtering and sorting)
 func (s courseService) FindCoursesByFilter(ctx context.Context, filter CourseFilter, sort CourseSort) ([]*domain.CourseWithProphetName, error) {
-	prophets, err := s.user_provider.GetProphetIDsByNames(ctx, filter.ProphetName)
-	if err != nil {
-		return nil, err
-	}
+	var prophetIDs []string
 
-	prophetIDs := make([]string, len(prophets))
-	for i, p := range prophets {
-		prophetIDs[i] = p.UserID
+	if filter.SearchTerm != "" {
+		prophets, err := s.user_provider.GetProphetIDsByNames(ctx, filter.SearchTerm)
+		if err != nil {
+			log.Printf("Warning: Failed to get prophet IDs for search term '%s': %v. Continuing with course name search only.", filter.SearchTerm, err)
+			// Don't return error, just use empty prophetIDs
+			prophetIDs = []string{}
+		} else {
+			prophetIDs = make([]string, len(prophets))
+			for i, p := range prophets {
+				prophetIDs[i] = p.UserID
+			}
+			log.Printf("Found %d prophets matching search term '%s'", len(prophetIDs), filter.SearchTerm)
+		}
 	}
 
 	repoFilter := db.CourseFilter{
-		CourseName: filter.CourseName,
+		SearchTerm: filter.SearchTerm,
 		ProphetIDs: prophetIDs,
 		Duration:   filter.Duration,
 		CourseType: string(filter.CourseType),
@@ -149,6 +157,7 @@ func (s courseService) FindCoursesByFilter(ctx context.Context, filter CourseFil
 		Order:  sort.Order,
 	}
 
+	log.Printf("Calling repo.FindByFilter with SearchTerm='%s', ProphetIDs count=%d", filter.SearchTerm, len(prophetIDs))
 	courses, err := s.repo.FindByFilter(ctx, repoFilter, repoSort)
 	if err != nil {
 		return nil, err

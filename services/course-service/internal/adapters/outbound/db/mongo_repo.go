@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"log"
 
 	"github.com/wnmay/horo/services/course-service/internal/domain"
 	"go.mongodb.org/mongo-driver/bson"
@@ -102,12 +103,15 @@ func (r *MongoCourseRepo) DeleteCourse(ctx context.Context, id string) error {
 }
 
 func (r *MongoCourseRepo) FindByFilter(ctx context.Context, filter CourseFilter, sort CourseSort) ([]*domain.Course, error) {
-	if len(filter.ProphetIDs) == 0 {
+	// Only return empty if there's no search criteria at all
+	if filter.SearchTerm == "" && len(filter.ProphetIDs) == 0 && filter.Duration == "" && filter.CourseType == "" {
+		log.Printf("No search criteria provided, returning empty result")
 		return []*domain.Course{}, nil
 	}
 
 	filterMongo, sortMongo, err := BuildMongoQuery(filter, sort)
 	if err != nil {
+		log.Printf("Error building MongoDB query: %v", err)
 		return nil, err
 	}
 
