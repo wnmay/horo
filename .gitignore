@@ -69,3 +69,8 @@ infra/development/k8s/**/secrets.yml
 infra/development/k8s/**/secret.yml
 infra/development/k8s/**/secrets.yaml
 infra/development/k8s/**/secret.yaml
+
+
+load-tests/load-test-results.json
+load-tests/mock-load-test-results.json
+load-tests/mock-load-test.js
