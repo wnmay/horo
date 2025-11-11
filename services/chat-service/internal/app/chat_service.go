@@ -162,6 +162,12 @@ func (s *chatService) GetChatRoomsByUserID(ctx context.Context, userID string) (
 	if err != nil {
 		return nil, err
 	}
+	
+	// Return empty array if no rooms found
+	if len(rooms) == 0 {
+		return []*domain.RoomWithName{}, nil
+	}
+	
 	var userIDs []string
 	for _, r := range rooms {
 		userIDs = append(userIDs, r.CustomerID)
