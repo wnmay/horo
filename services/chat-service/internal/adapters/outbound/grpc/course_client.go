@@ -64,6 +64,21 @@ func (c *CourseClient) GetCourseByID(ctx context.Context, courseID string) (*pb.
 	return resp.Course, nil
 }
 
+// GetProphetIDByCourseID fetches the prophet ID for a given course
+func (c *CourseClient) GetProphetIDByCourseID(ctx context.Context, courseID string) (string, error) {
+	course, err := c.GetCourseByID(ctx, courseID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get course for prophet ID: %w", err)
+	}
+
+	if course.ProphetId == "" {
+		return "", fmt.Errorf("course %s has no prophet ID", courseID)
+	}
+
+	log.Printf("Found prophet ID %s for course %s", course.ProphetId, courseID)
+	return course.ProphetId, nil
+}
+
 // Close closes the gRPC connection
 func (c *CourseClient) Close() error {
 	if c.conn != nil {
