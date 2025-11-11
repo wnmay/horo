@@ -104,12 +104,17 @@ func (h *ChatHandler) GetChatRoomsByProphetID(c *fiber.Ctx) error {
 
 func (h *ChatHandler) GetChatRoomsByUserID(c *fiber.Ctx) error {
 	userID := c.Get("X-User-Id")
+	log.Printf("[GetChatRoomsByUserID] Fetching rooms for userID: %s", userID)
+	
 	rooms, err := h.chatService.GetChatRoomsByUserID(c.Context(), userID)
 	if err != nil {
+		log.Printf("[GetChatRoomsByUserID] Error: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
+	
+	log.Printf("[GetChatRoomsByUserID] Found %d rooms for userID: %s", len(rooms), userID)
 	return c.JSON(rooms)
 }
 

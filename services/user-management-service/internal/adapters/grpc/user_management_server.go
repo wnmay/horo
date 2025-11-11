@@ -23,12 +23,12 @@ func (s *UserServer) MapProphetNames(ctx context.Context, req *proto.MapProphetN
 	if err != nil {
 		return nil, err
 	}
-	protoMappings := make([]*proto.ProphetData, len(mappings))
-	for i, mapping := range mappings {
-		protoMappings[i] = toProtoProphetName(mapping)
+	prophetNames := make(map[string]string, len(mappings))
+	for _, mapping := range mappings {
+		prophetNames[mapping.UserID] = mapping.ProphetName
 	}
 	return &proto.MapProphetNamesResponse{
-		Mappings: protoMappings,
+		ProphetNames: prophetNames,
 	}, nil
 }
 

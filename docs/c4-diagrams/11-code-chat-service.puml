@@ -1,0 +1,108 @@
+@startuml Chat Service - Code Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Code Diagram for Chat Service (Hexagonal Architecture)
+
+Container_Boundary(chatService, "Chat Service") {
+    
+    ' Domain Layer (Core)
+    Component(Message, "Message", "domain.Message", "Domain entity: Message\n+ ID, RoomID, SenderID\n+ Content, Type, Status\n+ CreatedAt")
+    Component(Room, "Room", "domain.Room", "Domain entity: Room\n+ ID, ProphetID, CustomerID\n+ CourseID, LastMessage\n+ IsDone, CreatedAt")
+    Component(RoomWithName, "RoomWithName", "domain.RoomWithName", "Domain entity with names\n+ Room fields\n+ ProphetName, CustomerName")
+    Component(User, "User", "domain.User", "Domain entity: User\n+ ID, Name, Role")
+    
+    ' Application Layer
+    Component(ChatServiceImpl, "chatService", "app.chatService", "Service implementation\n- messageRepo\n- roomRepo\n- messagePublisher\n- userProvider\n- courseProvider\n\nMethods:\n+ SaveMessage()\n+ InitiateChatRoom()\n+ PublishPaymentCreatedMessage()\n+ GetMessagesByRoomID()\n+ GetChatRoomsByCustomerID()\n+ GetChatRoomsByProphetID()\n+ GetChatRoomsByUserID()\n+ PublishOutgoingMessage()\n+ ValidateRoomAccess()\n+ UpdateRoomIsDone()")
+    
+    ' Inbound Ports
+    Component(ChatServicePort, "<<interface>>\nChatService", "ports.inbound.ChatService", "Inbound port interface\nDefines service contract")
+    Component(MessageConsumerPort, "<<interface>>\nMessageConsumer", "ports.inbound.MessageConsumer", "Consumer interface\n+ StartListening()")
+    
+    ' Outbound Ports
+    Component(MessageRepositoryPort, "<<interface>>\nMessageRepository", "ports.outbound.MessageRepository", "Repository interface\n+ SaveMessage()\n+ FindMessagesByRoomID()")
+    Component(RoomRepositoryPort, "<<interface>>\nRoomRepositoryPort", "ports.outbound.RoomRepositoryPort", "Repository interface\n+ FindRoomByID()\n+ CreateRoom()\n+ GetChatRoomsByCustomerID()\n+ GetChatRoomsByProphetID()\n+ GetChatRoomsByUserID()\n+ RoomExists()\n+ IsUserInRoom()\n+ UpdateRoomIsDoneByRoomID()")
+    Component(MessagePublisherPort, "<<interface>>\nMessagePublisher", "ports.outbound.MessagePublisher", "Publisher interface\n+ Publish()")
+    Component(UserProviderPort, "<<interface>>\nUserProvider", "ports.outbound.UserProvider", "User provider interface\n+ MapUserNamesByIDs()")
+    Component(CourseProviderPort, "<<interface>>\nCourseProvider", "ports.outbound.CourseProvider", "Course provider interface\n+ GetProphetIDByCourseID()")
+    
+    ' Inbound Adapters
+    Component(HTTPHandler, "ChatHandler", "adapters.inbound.http.ChatHandler", "HTTP handler\n+ GetMessagesByRoomID()\n+ CreateRoom()\n+ GetChatRoomsByCustomerID()\n+ GetChatRoomsByProphetID()\n+ GetChatRoomsByUserID()\n+ ValidateRoomAccess()")
+    Component(GRPCServer, "ChatGRPCServer", "adapters.inbound.grpc.server", "gRPC handler\n+ ValidateRoomAccess()")
+    Component(MessageIncomingConsumer, "MessageIncomingConsumer", "adapters.inbound.rabbitmq.Consumer", "RabbitMQ consumer\n+ StartListening()\n- handleMessageIncoming()")
+    Component(NotificationConsumer, "NotificationConsumer", "adapters.inbound.rabbitmq.NotificationConsumer", "RabbitMQ consumer\n+ StartListening()\n- handleOrderCompleted()\n- handleOrderPaymentBound()\n- handleOrderPaid()")
+    
+    ' Outbound Adapters
+    Component(MongoMessageRepo, "MongoMessageRepository", "adapters.outbound.db.MongoMessageRepository", "MongoDB adapter\n+ SaveMessage()\n+ FindMessagesByRoomID()")
+    Component(MongoRoomRepo, "MongoRoomRepository", "adapters.outbound.db.MongoRoomRepository", "MongoDB adapter\n+ FindRoomByID()\n+ CreateRoom()\n+ GetChatRoomsByCustomerID()\n+ GetChatRoomsByProphetID()\n+ GetChatRoomsByUserID()\n+ RoomExists()\n+ IsUserInRoom()\n+ UpdateRoomIsDoneByRoomID()")
+    Component(MessageOutgoingPublisher, "MessageOutgoingPublisher", "adapters.outbound.rabbitmq.Publisher", "RabbitMQ publisher\n+ Publish()")
+    Component(UserGRPCClient, "UserClient", "adapters.outbound.grpc.UserClient", "User gRPC client\n+ MapUserNamesByIDs()\n+ Close()")
+    Component(CourseGRPCClient, "CourseClient", "adapters.outbound.grpc.CourseClient", "Course gRPC client\n+ GetProphetIDByCourseID()\n+ Close()")
+    
+    Component(MessageModel, "MessageModel", "adapters.outbound.db.MessageModel", "MongoDB document\nmaps Message entity")
+    Component(RoomModel, "RoomModel", "adapters.outbound.db.RoomModel", "MongoDB document\nmaps Room entity")
+    
+    ' Infrastructure
+    Component(FiberApp, "Fiber Setup", "infrastructure.fiber", "HTTP server config")
+    Component(MongoSetup, "MongoDB Setup", "infrastructure.mongo", "Database connection")
+    Component(RabbitMQManager, "RabbitMQ Manager", "messaging.RabbitMQManager", "Message broker manager")
+}
+
+' External Dependencies
+ContainerDb(mongodb, "MongoDB", "Database", "Stores messages and rooms")
+ContainerQueue(rabbitmq, "RabbitMQ", "Message Broker", "Event messaging")
+Container(userService, "User Service", "Go, gRPC", "User data provider")
+Container(courseService, "Course Service", "Go, gRPC", "Course data provider")
+
+' Core relationships - Service layer
+Rel(ChatServiceImpl, ChatServicePort, "implements", "")
+Rel(ChatServiceImpl, Message, "creates/uses", "")
+Rel(ChatServiceImpl, Room, "creates/uses", "")
+Rel(ChatServiceImpl, RoomWithName, "creates", "")
+
+' Service to outbound ports (dependency injection)
+Rel(ChatServiceImpl, MessageRepositoryPort, "depends on", "")
+Rel(ChatServiceImpl, RoomRepositoryPort, "depends on", "")
+Rel(ChatServiceImpl, MessagePublisherPort, "depends on", "")
+Rel(ChatServiceImpl, UserProviderPort, "depends on", "")
+Rel(ChatServiceImpl, CourseProviderPort, "depends on", "")
+
+' Inbound adapters to service
+Rel(HTTPHandler, ChatServicePort, "calls", "")
+Rel(GRPCServer, ChatServicePort, "calls", "")
+Rel(MessageIncomingConsumer, ChatServicePort, "calls", "")
+Rel(NotificationConsumer, ChatServicePort, "calls", "")
+Rel(MessageIncomingConsumer, MessageConsumerPort, "implements", "")
+Rel(NotificationConsumer, MessageConsumerPort, "implements", "")
+
+' Outbound adapters implement ports
+Rel(MongoMessageRepo, MessageRepositoryPort, "implements", "")
+Rel(MongoRoomRepo, RoomRepositoryPort, "implements", "")
+Rel(MessageOutgoingPublisher, MessagePublisherPort, "implements", "")
+Rel(UserGRPCClient, UserProviderPort, "implements", "")
+Rel(CourseGRPCClient, CourseProviderPort, "implements", "")
+
+' Repository to models and domain
+Rel(MongoMessageRepo, MessageModel, "uses", "")
+Rel(MongoRoomRepo, RoomModel, "uses", "")
+Rel(MessageModel, Message, "maps", "")
+Rel(RoomModel, Room, "maps", "")
+
+' Adapters to external systems
+Rel(MongoMessageRepo, mongodb, "persists to", "MongoDB protocol")
+Rel(MongoRoomRepo, mongodb, "persists to", "MongoDB protocol")
+Rel(MessageOutgoingPublisher, rabbitmq, "publishes to", "AMQP")
+Rel(MessageIncomingConsumer, rabbitmq, "consumes from", "AMQP")
+Rel(NotificationConsumer, rabbitmq, "consumes from", "AMQP")
+Rel(UserGRPCClient, userService, "calls", "gRPC")
+Rel(CourseGRPCClient, courseService, "calls", "gRPC")
+
+' Infrastructure relationships
+Rel(FiberApp, HTTPHandler, "configures", "")
+Rel(MongoSetup, mongodb, "connects", "")
+Rel(RabbitMQManager, MessageIncomingConsumer, "manages", "")
+Rel(RabbitMQManager, NotificationConsumer, "manages", "")
+Rel(RabbitMQManager, rabbitmq, "connects", "")
+
+@enduml

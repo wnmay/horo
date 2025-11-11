@@ -15,7 +15,7 @@ import {
 import Card from "@/components/ui/card";
 import { toast } from "sonner";
 import api from "@/lib/api/api-client";
-import { courseTypes } from "@/types/common-type";
+import { courseTypesMap } from "@/types/common-type";
 
 export default function CreateCoursePage() {
   const [form, setForm] = useState({
@@ -168,8 +168,8 @@ export default function CreateCoursePage() {
                   <SelectValue placeholder="Select course type" />
                 </SelectTrigger>
                 <SelectContent className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-md">
-                  {Object.keys(courseTypes).map((type) => (
-                    <SelectItem key={type} value={courseTypes[type]}>
+                  {Object.keys(courseTypesMap).map((type) => (
+                    <SelectItem key={type} value={courseTypesMap[type]}>
                       {type}
                     </SelectItem>
                   ))}

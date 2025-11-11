@@ -7,7 +7,7 @@ export const TagImages: Record<string, string> = {
     Personal_Growth: "/images/Personal_Growth.jpg",
   };
 
-export const courseTypes: Record<string, string> = {
+export const courseTypesMap: Record<string, string> = {
   Love: "love",
   Study: "study",
   Work: "work",
@@ -15,3 +15,12 @@ export const courseTypes: Record<string, string> = {
   Finance: "finance",
   "Personal Growth": "personal_growth",
 };
+
+export const courseTypes = [
+    "Love",
+    "Study",
+    "Work",
+    "Health",
+    "Finance",
+    "Personal_Growth",
+  ];

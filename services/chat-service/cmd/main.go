@@ -57,8 +57,14 @@ func main() {
 	}
 	defer userProvider.Close()
 
+	courseProvider, err := grpc.NewCourseClient(config.CourseServiceAddr)
+	if err != nil {
+		log.Fatalf("Failed to initialize course provider: %v", err)
+	}
+	defer courseProvider.Close()
+
 	// Create chat service with repositories and publisher
-	chatService := service.NewChatService(messageRepo, roomRepo, messagePublisher, userProvider)
+	chatService := service.NewChatService(messageRepo, roomRepo, messagePublisher, userProvider, courseProvider)
 
 	// Initialize consumers now that chat service is ready
 	messagingManager.InitializeConsumers(chatService)
