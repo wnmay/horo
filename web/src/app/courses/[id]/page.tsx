@@ -4,7 +4,6 @@ import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api/api-client";
 import { courseTypeImageMap } from "@/types/course-type";
-import { toast } from "sonner";
 
 interface Course {
   id: string;
@@ -13,7 +12,8 @@ interface Course {
   description: string;
   duration: number;
   price: number;
-  rating: number;
+  review_score: number;
+  review_count: number;
   prophetId: string;
   prophetName: string;
   createdTime: string;
@@ -25,8 +25,8 @@ interface Course {
     customerId: string;
     customerName: string;
     title: string;
-    comment: string;
-    rating: number;
+    description: string;
+    score: number;
     createdAt: string;
     deletedAt: boolean;
   }[];
@@ -68,7 +68,8 @@ export default function CourseDetailPage({
           description: data.description,
           duration: data.duration,
           price: data.price,
-          rating: data.review_score,
+          review_score: data.review_score,
+          review_count: data.review_count,
           prophetId: data.prophet_id,
           prophetName: data.prophetname,
           createdTime: data.created_time,
@@ -81,8 +82,8 @@ export default function CourseDetailPage({
               customerId: r.customer_id,
               customerName: r.customername,
               title: r.title,
-              comment: r.description,
-              rating: r.review_score,
+              description: r.description,
+              score: r.score,
               createdAt: r.created_at,
               deletedAt: r.deleted_at,
             })) || [],
@@ -185,7 +186,7 @@ export default function CourseDetailPage({
                 <span className="flex items-center gap-1">
                   <span className="text-yellow-500">⭐</span>
                   <span className="font-medium">
-                    {course.rating.toFixed(1)}
+                    {course.review_score.toFixed(1)}
                   </span>
                 </span>
               </div>
@@ -250,12 +251,12 @@ export default function CourseDetailPage({
                         <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded">
                           <span className="text-yellow-500">⭐</span>
                           <span className="font-semibold text-gray-900">
-                            {review.rating.toFixed(1)}
+                            {review.score?.toFixed(1)}
                           </span>
                         </div>
                       </div>
                       <p className="text-gray-700 leading-relaxed">
-                        {review.comment}
+                        {review.description}
                       </p>
                       <p className="text-xs text-gray-500 mt-3">
                         {new Date(review.createdAt).toLocaleDateString(
