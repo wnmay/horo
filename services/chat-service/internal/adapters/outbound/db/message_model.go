@@ -13,8 +13,9 @@ type MessageModel struct {
 	RoomID    primitive.ObjectID `bson:"room_id,omitempty" json:"roomId"`
 	SenderID  string             `bson:"sender_id" json:"senderId"`
 	Content   string             `bson:"content" json:"content"`
-	Type      string             `bson:"type" json:"type"`     // text | notification
-	Status    string             `bson:"status" json:"status"` // sent | delivered | read
+	Type      string             `bson:"type" json:"type"`       // text | notification
+	Trigger   string             `bson:"trigger" json:"trigger"` // order.created | order.completed | order.payment.bound | order.paid | payment.completed | payment.created | payment.settled
+	Status    string             `bson:"status" json:"status"`   // sent | delivered | read
 	CreatedAt time.Time          `bson:"created_at" json:"createdAt"`
 }
 
@@ -25,6 +26,7 @@ func ToDomain(model *MessageModel) *domain.Message {
 		SenderID:  model.SenderID,
 		Content:   model.Content,
 		Type:      domain.MessageType(model.Type),
+		Trigger:   model.Trigger,
 		Status:    domain.MessageStatus(model.Status),
 		CreatedAt: model.CreatedAt,
 	}
@@ -42,6 +44,7 @@ func ToModel(entity *domain.Message) *MessageModel {
 		SenderID:  entity.SenderID,
 		Content:   entity.Content,
 		Type:      string(entity.Type),
+		Trigger:   entity.Trigger,
 		Status:    string(entity.Status),
 		CreatedAt: entity.CreatedAt,
 	}
