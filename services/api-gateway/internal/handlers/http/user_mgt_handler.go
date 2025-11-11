@@ -107,16 +107,16 @@ func (h *UserHandler) Register(c *fiber.Ctx) error {
 }
 
 func (h *UserHandler) GetMe(c *fiber.Ctx) error {
-	// Get the Authorization header
-	authHeader := c.Get("Authorization")
-	if authHeader == "" {
+	// Get the user ID from the auth middleware
+	userID := c.Get("X-User-Id")
+	if userID == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "missing authorization header",
+			"error": "missing user ID",
 		})
 	}
 
 	// Forward the request to the user management service
-	url := fmt.Sprintf("%s/users/me", h.userManagementURL)
+	url := fmt.Sprintf("%s/api/users/%s", h.userManagementURL, userID)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -124,9 +124,6 @@ func (h *UserHandler) GetMe(c *fiber.Ctx) error {
 			"details": err.Error(),
 		})
 	}
-
-	// Set the Authorization header
-	req.Header.Set("Authorization", authHeader)
 
 	// Perform the HTTP request
 	resp, err := h.httpClient.Do(req)
@@ -166,10 +163,10 @@ func (h *UserHandler) GetMe(c *fiber.Ctx) error {
 }
 
 func (h *UserHandler) UpdateUsername(c *fiber.Ctx) error {
-	authHeader := c.Get("Authorization")
-	if authHeader == "" {
+	userID := c.Get("X-User-Id")
+	if userID == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "missing authorization header",
+			"error": "missing user ID",
 		})
 	}
 
@@ -187,7 +184,7 @@ func (h *UserHandler) UpdateUsername(c *fiber.Ctx) error {
 		})
 	}
 
-	url := fmt.Sprintf("%s/api/users/update-name", h.userManagementURL)
+	url := fmt.Sprintf("%s/api/users/%s/update-name", h.userManagementURL, userID)
 
 	jsonData, err := json.Marshal(req)
 	if err != nil {
@@ -203,7 +200,6 @@ func (h *UserHandler) UpdateUsername(c *fiber.Ctx) error {
 			"details": err.Error(),
 		})
 	}
-	httpReq.Header.Set("Authorization", authHeader)
 	httpReq.Header.Set("Content-Type", "application/json")
 
 	resp, err := h.httpClient.Do(httpReq)
