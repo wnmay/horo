@@ -86,8 +86,6 @@ export default function RightPanel({
     };
   }, [roomId, auth.currentUser]);
 
-  const { connected, messages } = useWebSocket();
-
   useEffect(() => {
     if (connected) {
       refreshOrder();
@@ -107,6 +105,7 @@ export default function RightPanel({
           setOrder((prev) => (prev ? { ...prev, amount: amt } : prev));
         }
         refreshOrder();
+
         break;
       }
       case Trigger.OrderPaid: {
@@ -161,7 +160,7 @@ export default function RightPanel({
     if (!order) return;
     setError(null);
     try {
-      const res = await api.patch(`/api/orders/customer/${order.order_id}`);      
+      const res = await api.patch(`/api/orders/customer/${order.order_id}`);
     } catch (e: any) {
       setError(e?.message ?? "Failed to mark customer completed");
     } finally {
@@ -184,7 +183,6 @@ export default function RightPanel({
   const onProphetDone = markProphetCompleted;
   const onUserDone = markCustomerCompleted;
 
-  const onWriteReview = () => console.log("write");
   const StatusBadge = ({ status }: { status: OrderStatus }) => {
     const map: Record<OrderStatus, string> = {
       PENDING: "bg-yellow-100 text-yellow-700",
@@ -236,7 +234,7 @@ export default function RightPanel({
               onClick={onProphetDone}
               disabled={order.is_prophet_completed || prophetDone}
               className={`w-full rounded-xl px-4 py-3 font-semibold text-white ${
-                order.is_prophet_completed
+                order.is_prophet_completed || prophetDone
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-indigo-600 hover:bg-indigo-700"
               }`}
@@ -259,7 +257,7 @@ export default function RightPanel({
               onClick={onUserDone}
               disabled={order.is_customer_completed || customerDone}
               className={`w-full rounded-xl px-4 py-3 font-semibold text-white ${
-                order.is_customer_completed
+                order.is_customer_completed || customerDone
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-emerald-600 hover:bg-emerald-700"
               }`}
