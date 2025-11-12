@@ -25,7 +25,7 @@ export default function ChatRoomMiddle({
     orderStatus,
     userId,
 }: ChatMiddleProps) {
-  const { messages, connected, joinRoom, sendMessage } = useWebSocketCtx();
+  const { messages, connected, joinRoom, sendMessage } = useWebSocket();
     const [historyMessage, setHistoryMessage] = useState<ChatMessage[]>([]);
     const [loading, setLoading] = useState(false);
     const chatContainerRef = useRef<HTMLDivElement | null>(null);

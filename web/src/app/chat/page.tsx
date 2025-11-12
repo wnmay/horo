@@ -50,7 +50,6 @@ function page() {
     return <p className="p-4 text-red-500">No user signed in.</p>;
 
   return (
-    <WebSocketProvider>
       <div className="flex h-screen self-end w-full">
         <div className="w-[30%] border-r">
           <ChatRoomList onRoomSelect={handleRoomSelect} />
@@ -75,7 +74,6 @@ function page() {
         )}
       </div>
     </div>
-    </ WebSocketProvider>
   );
 }
 

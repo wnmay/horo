@@ -54,7 +54,7 @@ export default function RightPanel({
   const [paying, setPaying] = useState(false);
   const [prophetDone, setProphetDone] = useState(false);
   const [customerDone, setCutomerDone] = useState(false);
-  const { messages, connected } = useWebSocketCtx();
+  const { messages, connected } = useWebSocket();
 
   const refreshOrder = useCallback(async () => {
     try {
