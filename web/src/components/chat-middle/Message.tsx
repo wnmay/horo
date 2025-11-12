@@ -6,6 +6,7 @@ interface messageProps {
     userId: string;
     senderId: string;
     senderName: string;
+    receiverName: string;
     content: string;
     status: statusType;
     createdAt: string;
@@ -15,6 +16,7 @@ export function Message({
     userId,
     senderId,
     senderName,
+    receiverName,
     content,
     status,
     createdAt
@@ -30,7 +32,7 @@ export function Message({
     return (
         <div className={`w-full h-auto flex flex-col ${isMine? "items-end":"items-start"} gap-2 p-3`}>
             <div className="flex gap-2">
-                <p className={`font-bold text-lg ${isMine && "order-2"}`}>{senderName}</p>
+                <p className={`font-bold text-lg ${isMine && "order-2"}`}>{isMine? senderName:receiverName}</p>
             </div>
 
             <div className={`flex gap-2`}>

@@ -17,6 +17,7 @@ export interface ChatTextMessage extends BaseMessage {
 /** Generic notification message shape */
 interface BaseNotification<TTrigger extends Trigger, TDetail> extends BaseMessage {
   type: "notification";
+  content: string;
   trigger: TTrigger;
   messageDetail: TDetail;
 }

@@ -86,6 +86,7 @@ export default function ChatRoomMiddle({
         return (<div className="w-full h-full border-r-2 border-l-2 border-gray-300"/>);
 
     const username = room.CustomerID === userId? room.CustomerName: room.ProphetName;
+    const rec_username = room.CustomerID === userId? room.ProphetName: room.CustomerName;
     const display_coursename = (!room.courseName? "Horoscope Session":
                                 room.courseName?.length <= 24? room.courseName: room.courseName?.slice(0,24)+"...");
     
@@ -113,6 +114,7 @@ export default function ChatRoomMiddle({
                             userId={userId}
                             senderId={msg.senderId}
                             senderName={username}
+                            receiverName={rec_username}
                             content={msg.content}
                             status={"sent"}
                             createdAt={msg.createdAt}

@@ -26,26 +26,23 @@ export function NotificationMessage({ msg }: { msg: ChatMessage }) {
 
   switch (msg.trigger) {
     case Trigger.OrderPaymentBound: {
-      const data = (msg as OrderPaymentBoundNotification).messageDetail;
       icon = "💰";
       title = "Payment Started";
-      desc = `Customer ${data?.customerId ?? "Unknown"} started payment for ${data?.courseName ?? "unknown"}.`;
+      desc = msg.content;
       color = "blue";
       break;
     }
     case Trigger.OrderPaid: {
-      const data = (msg as OrderPaidNotification).messageDetail;
       icon = "✅";
       title = "Payment Successful";
-      desc = `Order ${data?.orderId ?? "Unknown"} (${data?.courseName ?? "Unknown"}) has been paid successfully.`;
+      desc = msg.content;
       color = "green";
       break;
     }
     case Trigger.OrderCompleted: {
-      const data = (msg as OrderCompletedNotification).messageDetail;
       icon = "🎉";
       title = "Order Completed";
-      desc = `Course "${data?.courseName?? "Unknown"}" has been marked completed.`;
+      desc = msg.content;
       color = "purple";
       break;
     }
