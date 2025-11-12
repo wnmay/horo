@@ -7,6 +7,7 @@ import { ChatMessage } from "@/types/ws-message";
 import { Trigger } from "@/types/contracts";
 import { auth } from "@/firebase/firebase";
 import ReviewBox from "./ReviewBox";
+import { useWebSocketCtx } from "@/context/webSocketProvider";
 
 type Role = "customer" | "prophet";
 
@@ -53,6 +54,7 @@ export default function RightPanel({
   const [paying, setPaying] = useState(false);
   const [prophetDone, setProphetDone] = useState(false);
   const [customerDone, setCutomerDone] = useState(false);
+  const { messages, connected } = useWebSocketCtx();
 
   const refreshOrder = useCallback(async () => {
     try {
