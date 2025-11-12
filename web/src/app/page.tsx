@@ -121,8 +121,6 @@ export default function HomePage() {
           </>
         )}
       </section>
-
-      <FetchRoomsButton />
     </div>
   );
 }
