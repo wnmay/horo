@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, Wallet } from "lucide-react";
 import api from "@/lib/api/api-client";
 import { auth } from "@/firebase/firebase";
 import CourseCard from "@/components/CourseEditCard";
@@ -23,9 +23,15 @@ interface Course {
   deleted_at: boolean;
 }
 
+interface Balance {
+  balance: number;
+}
+
 export default function ProphetCoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [balance, setBalance] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [balanceLoading, setBalanceLoading] = useState(true);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -63,6 +69,40 @@ export default function ProphetCoursesPage() {
       }
     }
     loadCourses();
+  }, []);
+
+  useEffect(() => {
+    async function loadBalance() {
+      try {
+        if (!auth.currentUser) {
+          await new Promise<void>((resolve) => {
+            const unsubscribe = auth.onAuthStateChanged((user) => {
+              if (user) {
+                unsubscribe();
+                resolve();
+              }
+            });
+            setTimeout(() => {
+              unsubscribe();
+              resolve();
+            }, 1000);
+          });
+        }
+
+        const res = await api.get<{ data: Balance }>("/api/balance");
+        const data = res.data.data;
+        setBalance(data.balance);
+      } catch (err) {
+        toast.error("Failed to load balance", {
+          description: (err as Error).message,
+          duration: 5000,
+          position: "top-right",
+        });
+      } finally {
+        setBalanceLoading(false);
+      }
+    }
+    loadBalance();
   }, []);
 
   async function handleSaveEdit() {
@@ -116,17 +156,42 @@ export default function ProphetCoursesPage() {
 
   return (
     <div className="min-h-screen px-6 py-12">
-      <div className="max-w-6xl mx-auto flex items-center justify-between mb-10">
-        <h1 className="text-4xl font-extrabold text-blue-800 dark:text-blue-300 tracking-tight">
-          Prophet Courses
-        </h1>
-        <Button
-          onClick={() => router.push("/prophet/create-course")}
-          className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg hover:-translate-y-[1px] transition-all duration-200 rounded-lg px-4 py-2"
-        >
-          <Plus className="w-4 h-4" />
-          Create Course
-        </Button>
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-4xl font-extrabold text-blue-800 dark:text-blue-300 tracking-tight">
+            Prophet Courses
+          </h1>
+          <Button
+            onClick={() => router.push("/prophet/create-course")}
+            className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg hover:-translate-y-[1px] transition-all duration-200 rounded-lg px-4 py-2"
+          >
+            <Plus className="w-4 h-4" />
+            Create Course
+          </Button>
+        </div>
+
+        {/* Balance Card */}
+        <div className="mb-10 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-blue-600 rounded-lg">
+              <Wallet className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                Current Balance
+              </p>
+              {balanceLoading ? (
+                <p className="text-2xl font-bold text-blue-800 dark:text-blue-300 animate-pulse">
+                  Loading...
+                </p>
+              ) : (
+                <p className="text-3xl font-bold text-blue-800 dark:text-blue-300">
+                  ฿{balance !== null ? balance.toFixed(2) : "0.00"}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {courses.length === 0 ? (
