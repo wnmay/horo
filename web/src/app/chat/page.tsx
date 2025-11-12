@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from 'react'
-import ChatRoomList from '@/components/ChatRoomList'
-import ChatRoomMiddle from '@/components/chat-middle/ChatRoomMiddle'
+import { useEffect, useState } from "react";
+import ChatRoomList from "@/components/ChatRoomList";
+import ChatRoomMiddle from "@/components/chat-middle/ChatRoomMiddle";
 import { auth } from "@/firebase/firebase";
 import { ChatRoom } from "@/components/LeftChat";
-import RightPanel from '@/components/RightChatPanel';
+import RightPanel from "@/components/RightChatPanel";
+import { WebSocketProvider } from "@/context/webSocketProvider";
 
 function page() {
   const [role, setRole] = useState<"customer" | "prophet" | null>(null);
@@ -44,32 +45,39 @@ function page() {
   };
 
   if (loading) return <p className="p-4 text-gray-500">Loading user...</p>;
-  if (!role || !userId) return <p className="p-4 text-red-500">No user signed in.</p>;
+  if (!role || !userId)
+    return <p className="p-4 text-red-500">No user signed in.</p>;
 
   return (
-    <div className="flex w-full h-screen">
-      <div className="w-[30%] border-r">
-        <ChatRoomList onRoomSelect={handleRoomSelect} />
-      </div>
+    <WebSocketProvider>
+      <div className="flex h-screen self-end w-full">
+        <div className="w-[30%] border-r">
+          <ChatRoomList onRoomSelect={handleRoomSelect} />
+        </div>
 
-      <div className="flex w-[50%] justify-center items-center h-full bg-gray-100">
-        <ChatRoomMiddle room={selectedRoom} userId={userId} orderStatus="PENDING"/>
-      </div>
-      <div className="flex-1">
-        {selectedRoom ? (
-          <RightPanel
-            roomId={selectedRoom.ID}
-            role={role}
-            courseId={selectedRoom.CourseID}
+        <div className="flex w-[50%] justify-center items-center h-full bg-gray-100">
+          <ChatRoomMiddle
+            room={selectedRoom}
+            userId={userId}
+            orderStatus="PENDING"
           />
-        ) : (
-          <div className="flex items-center justify-center h-full text-gray-500">
-            Select a chat room to start messaging
-          </div>
-        )}
+        </div>
+        <div className="flex-1">
+          {selectedRoom ? (
+            <RightPanel
+              roomId={selectedRoom.ID}
+              role={role}
+              courseId={selectedRoom.CourseID}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-500">
+              Select a chat room to start messaging
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </WebSocketProvider>
   );
 }
 
-export default page
+export default page;

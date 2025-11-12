@@ -7,6 +7,7 @@ import { ChatMessage } from "@/types/ws-message";
 import { Trigger } from "@/types/contracts";
 import { auth } from "@/firebase/firebase";
 import ReviewBox from "./ReviewBox";
+import { useWebSocketCtx } from "@/context/webSocketProvider";
 
 type Role = "customer" | "prophet";
 
@@ -51,6 +52,9 @@ export default function RightPanel({
   const [error, setError] = useState<string | null>(null);
   const [order, setOrder] = useState<OrderSummary | null>(null);
   const [paying, setPaying] = useState(false);
+  const [prophetDone, setProphetDone] = useState(false);
+  const [customerDone, setCutomerDone] = useState(false);
+  const { messages, connected } = useWebSocketCtx();
 
   const refreshOrder = useCallback(async () => {
     try {
@@ -82,8 +86,6 @@ export default function RightPanel({
     };
   }, [roomId, auth.currentUser]);
 
-  const { connected, messages } = useWebSocket();
-
   useEffect(() => {
     if (connected) {
       refreshOrder();
@@ -103,6 +105,7 @@ export default function RightPanel({
           setOrder((prev) => (prev ? { ...prev, amount: amt } : prev));
         }
         refreshOrder();
+
         break;
       }
       case Trigger.OrderPaid: {
@@ -158,10 +161,10 @@ export default function RightPanel({
     setError(null);
     try {
       const res = await api.patch(`/api/orders/customer/${order.order_id}`);
-      const updated: { data: OrderSummary } = res.data;
-      setOrder(updated.data);
     } catch (e: any) {
       setError(e?.message ?? "Failed to mark customer completed");
+    } finally {
+      setCutomerDone(true);
     }
   }, [order]);
 
@@ -170,17 +173,16 @@ export default function RightPanel({
     setError(null);
     try {
       const res = await api.patch(`/api/orders/prophet/${order.order_id}`);
-      const updated: { data: OrderSummary } = res.data;
-      setOrder(updated.data);
     } catch (e: any) {
       setError(e?.message ?? "Failed to mark prophet completed");
+    } finally {
+      setProphetDone(true);
     }
   }, [order]);
 
   const onProphetDone = markProphetCompleted;
   const onUserDone = markCustomerCompleted;
 
-  const onWriteReview = () => console.log("write");
   const StatusBadge = ({ status }: { status: OrderStatus }) => {
     const map: Record<OrderStatus, string> = {
       PENDING: "bg-yellow-100 text-yellow-700",
@@ -230,9 +232,9 @@ export default function RightPanel({
           <div>
             <button
               onClick={onProphetDone}
-              disabled={order.is_prophet_completed}
+              disabled={order.is_prophet_completed || prophetDone}
               className={`w-full rounded-xl px-4 py-3 font-semibold text-white ${
-                order.is_prophet_completed
+                order.is_prophet_completed || prophetDone
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-indigo-600 hover:bg-indigo-700"
               }`}
@@ -253,9 +255,9 @@ export default function RightPanel({
           <div>
             <button
               onClick={onUserDone}
-              disabled={order.is_customer_completed}
+              disabled={order.is_customer_completed || customerDone}
               className={`w-full rounded-xl px-4 py-3 font-semibold text-white ${
-                order.is_customer_completed
+                order.is_customer_completed || customerDone
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-emerald-600 hover:bg-emerald-700"
               }`}

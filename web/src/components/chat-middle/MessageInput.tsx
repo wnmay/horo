@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChatTextMessage } from "@/types/ws_message";
+import { ChatTextMessage } from "@/types/ws-message";
 
 interface Props {
     connected: boolean;

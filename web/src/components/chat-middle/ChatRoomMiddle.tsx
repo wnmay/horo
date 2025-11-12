@@ -5,10 +5,14 @@ import { NotificationMessage } from "./NotificationMessage";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChatRoom } from "../LeftChat";
 import { useWebSocket } from "@/lib/ws/useWebSocket";
-import { ChatMessage } from "@/types/ws_message";
+import { ChatMessage } from "@/types/ws-message";
 import api from "@/lib/api/api-client";
 import MessagsInput from "./MessageInput";
 import { MessageProps } from "@/types/common-type";
+import {
+  useWebSocketCtx,
+  WebSocketProvider,
+} from "@/context/webSocketProvider";
 
 type orderStatusType = "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
 
@@ -22,9 +26,8 @@ export default function ChatRoomMiddle({
     room = null,
     orderStatus,
     userId,
-}:ChatMiddleProps) 
-{
-    const { messages, connected, joinRoom, sendMessage } = useWebSocket();
+}: ChatMiddleProps) {
+  const { messages, connected, joinRoom, sendMessage } = useWebSocketCtx();
     const [historyMessage, setHistoryMessage] = useState<ChatMessage[]>([]);
     const [loading, setLoading] = useState(false);
     const chatContainerRef = useRef<HTMLDivElement | null>(null);

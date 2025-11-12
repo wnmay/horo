@@ -65,21 +65,35 @@ func (c *notificationConsumer) handleOrderCompleted(ctx context.Context, deliver
 		return err
 	}
 
-	if err := c.chatService.UpdateRoomIsDone(ctx, orderCompletedData.RoomID, true); err != nil {
+	// Handle case where roomID might be empty - try to create room if needed
+	roomID := orderCompletedData.RoomID
+	if roomID == "" {
+		log.Printf("RoomID is empty for order %s, attempting to create chat room", orderCompletedData.OrderID)
+		// Create a new chat room
+		newRoomID, err := c.chatService.InitiateChatRoom(ctx, orderCompletedData.CourseID, orderCompletedData.CustomerID)
+		if err != nil {
+			log.Printf("Failed to create chat room: %v", err)
+			return err
+		}
+		roomID = newRoomID
+		log.Printf("Created new chat room with ID: %s", roomID)
+	}
+
+	if err := c.chatService.UpdateRoomIsDone(ctx, roomID, true); err != nil {
 		log.Printf("Failed to update room is done: %v", err)
 		return err
 	}
 
 	content := service.GenerateOrderCompletedMessage(orderCompletedData.OrderID, orderCompletedData.CourseID, orderCompletedData.OrderStatus, orderCompletedData.CourseName)
 
-	messageID, err := c.chatService.SaveMessage(ctx, orderCompletedData.RoomID, "system", content, domain.MessageTypeNotification, domain.MessageStatusSent, string(contract.OrderCompletedEvent))
+	messageID, err := c.chatService.SaveMessage(ctx, roomID, "system", content, domain.MessageTypeNotification, domain.MessageStatusSent, string(contract.OrderCompletedEvent))
 	if err != nil {
 		log.Printf("Failed to save message: %v", err)
 		return err
 	}
 	notificationData := message.ChatNotificationOutgoingData[message.OrderCompletedNotificationData]{
 		MessageID: messageID,
-		RoomID:    orderCompletedData.RoomID,
+		RoomID:    roomID,
 		SenderID:  "system",
 		Type:      string(domain.MessageTypeNotification),
 		CreatedAt: time.Now().Format(time.RFC3339),

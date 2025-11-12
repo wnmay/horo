@@ -27,6 +27,7 @@ type OrderCompletedData struct {
 	CourseName  string `json:"courseName"`
 	OrderStatus string `json:"orderStatus"`
 	ProphetID   string `json:"prophetId"`
+	CustomerID  string `json:"customerId"`
 	RoomID      string `json:"roomId"`
 }
 
