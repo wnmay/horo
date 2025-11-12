@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from 'react'
-import ChatRoomList from '@/components/ChatRoomList'
-import ChatRoomMiddle from '@/components/chat-middle/ChatRoomMiddle'
+import { useEffect, useState } from "react";
+import ChatRoomList from "@/components/ChatRoomList";
+import ChatRoomMiddle from "@/components/chat-middle/ChatRoomMiddle";
 import { auth } from "@/firebase/firebase";
 import { ChatRoom } from "@/components/LeftChat";
-import RightPanel from '@/components/RightChatPanel';
+import RightPanel from "@/components/RightChatPanel";
+import { WebSocketProvider } from "@/context/webSocketProvider";
 
 function page() {
   const [role, setRole] = useState<"customer" | "prophet" | null>(null);
@@ -45,13 +46,14 @@ function page() {
   };
 
   if (loading) return <p className="p-4 text-gray-500">Loading user...</p>;
-  if (!role || !userId) return <p className="p-4 text-red-500">No user signed in.</p>;
+  if (!role || !userId)
+    return <p className="p-4 text-red-500">No user signed in.</p>;
 
   return (
-    <div className="flex h-screen self-end w-full">
-      <div className="w-[30%] border-r">
-        <ChatRoomList onRoomSelect={handleRoomSelect} />
-      </div>
+      <div className="flex h-screen self-end w-full">
+        <div className="w-[30%] border-r">
+          <ChatRoomList onRoomSelect={handleRoomSelect} />
+        </div>
 
       <div className="flex w-[50%] justify-center items-center h-full bg-gray-100">
         <ChatRoomMiddle room={selectedRoom} userId={userId} orderStatus={orderStatus}/>
@@ -75,4 +77,4 @@ function page() {
   );
 }
 
-export default page
+export default page;

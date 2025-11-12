@@ -26,8 +26,3 @@ type UserName struct {
 	UserName string
 	UserRole UserRole
 }
-
-type Prophet struct {
-	User    *User
-	Balance float64
-}

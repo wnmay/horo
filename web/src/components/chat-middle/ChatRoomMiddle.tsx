@@ -9,6 +9,10 @@ import { ChatMessage } from "@/types/ws-message";
 import api from "@/lib/api/api-client";
 import MessagsInput from "./MessageInput";
 import { MessageProps } from "@/types/common-type";
+import {
+  useWebSocketCtx,
+  WebSocketProvider,
+} from "@/context/webSocketProvider";
 
 interface ChatMiddleProps {
     room: ChatRoom | null;
@@ -20,9 +24,8 @@ export default function ChatRoomMiddle({
     room = null,
     orderStatus,
     userId,
-}:ChatMiddleProps) 
-{
-    const { messages, connected, joinRoom, sendMessage } = useWebSocket();
+}: ChatMiddleProps) {
+  const { messages, connected, joinRoom, sendMessage } = useWebSocketCtx();
     const [historyMessage, setHistoryMessage] = useState<ChatMessage[]>([]);
     const [loading, setLoading] = useState(false);
     const chatContainerRef = useRef<HTMLDivElement | null>(null);

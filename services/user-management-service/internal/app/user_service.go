@@ -17,8 +17,8 @@ type UserManagementService struct {
 	repo       ports.UserRepositoryPort
 }
 
-func NewUserManagementService(authClient ports.AuthPort, repo ports.UserRepositoryPort) *UserManagementService {
-	return &UserManagementService{authClient: authClient, repo: repo}
+func NewUserManagementService(authCleint ports.AuthPort, repo ports.UserRepositoryPort) *UserManagementService {
+	return &UserManagementService{authClient: authCleint, repo: repo}
 }
 
 func (s *UserManagementService) Register(ctx context.Context, idToken, fullName, role string) error {
@@ -43,6 +43,7 @@ func (s *UserManagementService) Register(ctx context.Context, idToken, fullName,
 		Email:    claims.Email,
 		Role:     role,
 	}
+
 	return s.repo.Save(ctx, user)
 }
 
